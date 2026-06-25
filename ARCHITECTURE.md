@@ -150,6 +150,10 @@ RenderedView
 
 `WebDocument` may reference external CSS and JavaScript resources, but it should not inline CSS by default and should not decide broader bundling or routing behavior. It should not write files; small preview/export helpers may do that as developer tooling.
 
+### Static Components
+
+Components such as `TabBar` are static-first until a client-state runtime exists. `TabBar(selection:)` renders the selected value into accessible tab markup and SwiftCSS-backed resources. The `Binding` initializer currently snapshots the binding value for render compatibility only; dynamic switching requires a future runtime that can lower binding writes into client-state actions. Tab styling must continue to lower through SwiftCSS declarations rather than direct CSS rendering in SwiftWebUI.
+
 ### SwiftJS
 
 `SwiftJS` is a possible future package for JavaScript generation and runtime primitives.
