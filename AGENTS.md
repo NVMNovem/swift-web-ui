@@ -10,3 +10,17 @@
 - Do not create SwiftMailUI or MailDocument yet.
 - Future SwiftMailUI must not depend on SwiftWebUI.
 - Never implement missing CSS properties, CSS values, or CSS rendering logic in SwiftWebUI. If a required CSS feature is missing from SwiftCSS, stop and clearly report what needs to be added to SwiftCSS first.
+
+# README Example Maintenance
+
+When public API changes add, remove, rename, or significantly improve user-facing SwiftWebUI features, review README.md.
+If README.md contains an example, update that example so it reflects the current recommended API.
+If README.md does not contain an example, add a small, focused example.
+The README example should show the best current way to use SwiftWebUI, but it must stay concise.
+Do not showcase every feature.
+Prefer one realistic example that demonstrates the core flow: define a View, apply a few common modifiers, render it through WebDocument or PreviewExporter when relevant.
+Do not include experimental or placeholder-only APIs unless they are essential to the current recommended usage.
+Do not show unsupported dynamic behavior as if it works.
+If a feature is static-only, keep the example honest.
+After updating README.md, make sure the example compiles or is clearly marked as illustrative if it cannot be compiled directly.
+
