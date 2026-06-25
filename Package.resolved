@@ -1,0 +1,24 @@
+{
+  "originHash" : "1cdae7ed848bfb969efb525445aa45e59a3fb3d0f332e7bc2f5a01d4d5ed35f2",
+  "pins" : [
+    {
+      "identity" : "swift-css",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/NVMNovem/swift-css",
+      "state" : {
+        "revision" : "9a98a31822f9e9a33927b85c383c496a938b2103",
+        "version" : "0.0.6"
+      }
+    },
+    {
+      "identity" : "swift-html",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/NVMNovem/swift-html",
+      "state" : {
+        "revision" : "e84764b2595f52930c490c6f177127facb22821f",
+        "version" : "0.0.8"
+      }
+    }
+  ],
+  "version" : 3
+}
