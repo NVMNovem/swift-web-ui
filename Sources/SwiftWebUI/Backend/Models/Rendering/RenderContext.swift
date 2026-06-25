@@ -48,10 +48,21 @@ extension RenderContext {
         _ baseAttributes: [SwiftHTML.Attribute] = [],
         css baseCSS: [any CSSProperty] = []
     ) -> ElementAttributes {
-        var attributes = baseAttributes
         var cssProperties = baseCSS
         var classNames: [String] = []
         var id: String?
+        var attributes: [SwiftHTML.Attribute] = []
+
+        for attribute in baseAttributes {
+            switch attribute.key {
+            case "class":
+                classNames.append(attribute.value)
+            case "id":
+                id = attribute.value
+            default:
+                attributes.append(attribute)
+            }
+        }
 
         let expandedModifiers = modifiers.flatMap { modifier -> [ViewModifierData] in
             switch modifier {

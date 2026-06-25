@@ -113,6 +113,72 @@ extension Button: SwiftHTMLRenderable {
     }
 }
 
+extension Tab: SwiftHTMLRenderable {
+    func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        renderSwiftHTML(context: &context, selected: false)
+    }
+
+    func renderSwiftHTML(context: inout RenderContext, selected: Bool) -> [any SwiftHTML.HTMLNode] {
+        let attributes = context.elementAttributes(
+            [
+                .init("type", "button"),
+                .init("role", "tab"),
+                .init("aria-selected", selected ? "true" : "false"),
+                .class(selected ? "swiftwebui-tab swiftwebui-tab-selected" : "swiftwebui-tab")
+            ],
+            css: tabCSS(selected: selected)
+        )
+        var childContext = context.clearingModifiers()
+        return [
+            SwiftHTMLButton(attributes.attributes) {
+                label.renderSwiftHTML(context: &childContext)
+            }
+        ]
+    }
+
+    private func tabCSS(selected: Bool) -> [any CSSProperty] {
+        [
+            Display(.inlineFlex),
+            AlignItems(.center),
+            Gap(.px(6)),
+            Padding(.init("0.5rem 0.875rem")),
+            BorderRadius(.px(999)),
+            Border(selected ? "1px solid var(--color-accent, #2563eb)" : "1px solid var(--color-border, #d1d5db)"),
+            BackgroundColor(selected ? Color.accent.cssColor : Color.surface.cssColor),
+            SwiftCSS.Color(selected ? Color.white.cssColor : Color.secondary.cssColor),
+            FontWeight(selected ? "700" : "600")
+        ]
+    }
+}
+
+extension TabBar: SwiftHTMLRenderable {
+    func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        let attributes = context.elementAttributes(
+            [
+                .init("role", "tablist"),
+                .class("swiftwebui-tab-bar")
+            ],
+            css: [
+                Display(.flex),
+                RawProperty("flex-direction", "row"),
+                AlignItems(.center),
+                Gap(.px(8))
+            ]
+        )
+        var childContext = context.clearingModifiers()
+        return [
+            SwiftHTML.Div(attributes.attributes) {
+                tabs.flatMap { tab in
+                    tab.renderSwiftHTML(
+                        context: &childContext,
+                        selected: tab.value == selection
+                    )
+                }
+            }
+        ]
+    }
+}
+
 extension Section: SwiftHTMLRenderable {
     func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
         let attributes = context.elementAttributes()

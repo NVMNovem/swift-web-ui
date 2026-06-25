@@ -8,6 +8,12 @@ enum TimeLineNavigation: String, Sendable {
     case funico
 }
 
+enum PortfolioTab: String, CaseIterable {
+    case work
+    case personal
+    case contact
+}
+
 struct SwiftWebUIDummy: View {
     @State private var activeTimeline = TimeLineNavigation.novem
     
@@ -240,6 +246,75 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     binding.wrappedValue = 3
     #expect(binding.wrappedValue == 3)
     #expect(HTMLRenderer().render(view).contains("data-swiftwebui-state-value=\"4\""))
+}
+
+@Test func tabBarStaticSelectionCompilesAndRendersAccessibleTabs() {
+    let rendered = HTMLRenderer().renderView(
+        TabBar(selection: PortfolioTab.work) {
+            Tab("Werk", value: PortfolioTab.work)
+            Tab("Persoonlijk", value: PortfolioTab.personal)
+            Tab("Contact", value: PortfolioTab.contact)
+        }
+    )
+    let html = rendered.htmlString()
+    let css = rendered.cssString()
+
+    #expect(html.contains("<div role=\"tablist\" class=\"swiftwebui-tab-bar swui-1\">"))
+    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"true\" class=\"swiftwebui-tab swiftwebui-tab-selected swui-2\"><span>Werk</span></button>"))
+    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"swiftwebui-tab swui-3\"><span>Persoonlijk</span></button>"))
+    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"swiftwebui-tab swui-3\"><span>Contact</span></button>"))
+    #expect(!html.contains("style="))
+    #expect(css.contains(".swui-1"))
+    #expect(css.contains("display: flex"))
+    #expect(css.contains("gap: 8px"))
+    #expect(css.contains(".swui-2"))
+    #expect(css.contains("background-color: var(--color-accent, #2563eb)"))
+    #expect(css.contains("color: #fff"))
+    #expect(css.contains(".swui-3"))
+    #expect(css.contains("background-color: var(--color-surface, #ffffff)"))
+    #expect(css.contains("color: var(--color-secondary, #4b5563)"))
+}
+
+@Test func tabBarSupportsViewLabelsAndConditionalTabs() {
+    let includeContact = true
+    let rendered = HTMLRenderer().renderView(
+        TabBar(selection: PortfolioTab.personal) {
+            Tab(value: PortfolioTab.work) {
+                Image("/briefcase.svg", alt: "Werk")
+                Text("Werk")
+            }
+            Tab("Persoonlijk", value: PortfolioTab.personal)
+            if includeContact {
+                Tab("Contact", value: PortfolioTab.contact)
+            }
+        }
+    )
+    let html = rendered.htmlString()
+
+    #expect(html.contains("<img src=\"/briefcase.svg\" alt=\"Werk\"><span>Werk</span>"))
+    #expect(html.contains("<span>Persoonlijk</span>"))
+    #expect(html.contains("<span>Contact</span>"))
+    #expect(html.contains("aria-selected=\"true\""))
+    #expect(html.contains("aria-selected=\"false\""))
+}
+
+@Test func tabBarBindingSelectionRendersCurrentSnapshotOnly() {
+    struct BoundTabs: View {
+        @State var selection = PortfolioTab.contact
+
+        var body: some View {
+            TabBar(selection: $selection) {
+                Tab("Werk", value: PortfolioTab.work)
+                Tab("Contact", value: PortfolioTab.contact)
+            }
+        }
+    }
+
+    let html = HTMLRenderer().render(BoundTabs())
+
+    #expect(html.contains("<span>Contact</span></button>"))
+    #expect(html.contains("aria-selected=\"true\""))
+    #expect(!html.contains("data-swiftwebui-action=\"set-state\""))
 }
 
 @Test func proofOfConceptPageRendersStableHTML() {
