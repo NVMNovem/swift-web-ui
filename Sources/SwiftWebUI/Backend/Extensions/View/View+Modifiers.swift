@@ -6,6 +6,7 @@
 //
 
 import SwiftCSS
+import SwiftHTML
 
 public extension View {
     // Modifiers stay as data so later renderers can emit extracted CSS classes
@@ -16,6 +17,10 @@ public extension View {
     
     func id(_ value: String) -> ModifiedView<Self> {
         modified(.id(value))
+    }
+    
+    func attribute(_ name: String, _ value: String) -> ModifiedView<Self> {
+        modified(.attribute(SwiftHTML.Attribute(name, value)))
     }
     
     func padding(_ value: Length) -> ModifiedView<Self> {
@@ -92,8 +97,28 @@ public extension View {
         modified(.setState(ClientStateMutation(key: key, value: value)))
     }
     
+    func set<Value: ClientStateValue>(_ binding: Binding<Value>, to value: Value) -> ModifiedView<Self> {
+        setClientState(binding, to: value.clientStateValue)
+    }
+    
+    func set<Value: RawRepresentable>(_ binding: Binding<Value>, to value: Value) -> ModifiedView<Self> where Value.RawValue == String {
+        setClientState(binding, to: value.rawValue)
+    }
+    
+    func set<Value: RawRepresentable>(_ binding: Binding<Value>, to value: Value) -> ModifiedView<Self> where Value.RawValue == Int {
+        setClientState(binding, to: String(value.rawValue))
+    }
+    
     private func modified(_ modifier: ViewModifierData) -> ModifiedView<Self> {
         ModifiedView(content: self, modifiers: [modifier])
+    }
+    
+    private func setClientState<Value>(_ binding: Binding<Value>, to value: String) -> ModifiedView<Self> {
+        guard let clientState = binding.clientState else {
+            return setState("", to: value)
+        }
+        
+        return setState(clientState.key, to: value)
     }
 }
 
@@ -104,6 +129,10 @@ public extension ModifiedView {
     
     func id(_ value: String) -> ModifiedView<Content> {
         appending(.id(value))
+    }
+    
+    func attribute(_ name: String, _ value: String) -> ModifiedView<Content> {
+        appending(.attribute(SwiftHTML.Attribute(name, value)))
     }
     
     func padding(_ value: Length) -> ModifiedView<Content> {
@@ -178,7 +207,27 @@ public extension ModifiedView {
         appending(.setState(ClientStateMutation(key: key, value: value)))
     }
     
+    func set<Value: ClientStateValue>(_ binding: Binding<Value>, to value: Value) -> ModifiedView<Content> {
+        setClientState(binding, to: value.clientStateValue)
+    }
+    
+    func set<Value: RawRepresentable>(_ binding: Binding<Value>, to value: Value) -> ModifiedView<Content> where Value.RawValue == String {
+        setClientState(binding, to: value.rawValue)
+    }
+    
+    func set<Value: RawRepresentable>(_ binding: Binding<Value>, to value: Value) -> ModifiedView<Content> where Value.RawValue == Int {
+        setClientState(binding, to: String(value.rawValue))
+    }
+    
     private func appending(_ modifier: ViewModifierData) -> ModifiedView<Content> {
         ModifiedView(content: content, modifiers: modifiers + [modifier])
+    }
+    
+    private func setClientState<Value>(_ binding: Binding<Value>, to value: String) -> ModifiedView<Content> {
+        guard let clientState = binding.clientState else {
+            return setState("", to: value)
+        }
+        
+        return setState(clientState.key, to: value)
     }
 }

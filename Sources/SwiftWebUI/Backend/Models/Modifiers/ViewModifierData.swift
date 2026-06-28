@@ -6,11 +6,13 @@
 //
 
 import SwiftCSS
+import SwiftHTML
 
 public enum ViewModifierData {
     
     case cssClass(String)
     case id(String)
+    case attribute(SwiftHTML.Attribute)
     case padding(Edge.Set, Length)
     case frame(width: Length?, height: Length?, maxWidth: Length?)
     case background(Background)

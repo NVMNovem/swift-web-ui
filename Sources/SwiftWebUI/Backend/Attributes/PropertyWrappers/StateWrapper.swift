@@ -9,6 +9,9 @@
 public struct State<Value> {
     private final class Storage {
         var value: Value
+        var clientStateKey: String {
+            "state-\(String(UInt(bitPattern: ObjectIdentifier(self)), radix: 16))"
+        }
 
         init(_ value: Value) {
             self.value = value
@@ -29,7 +32,11 @@ public struct State<Value> {
     public var projectedValue: Binding<Value> {
         Binding(
             get: { storage.value },
-            set: { storage.value = $0 }
+            set: { storage.value = $0 },
+            clientState: ClientStateBinding(
+                key: storage.clientStateKey,
+                initialValue: clientStateValueString(storage.value)
+            )
         )
     }
 }

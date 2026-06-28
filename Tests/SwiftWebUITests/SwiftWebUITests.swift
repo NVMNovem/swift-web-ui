@@ -9,30 +9,29 @@ enum TimeLineNavigation: String, Sendable {
 }
 
 enum PortfolioTab: String, CaseIterable {
-    case work
+    case info
     case personal
     case contact
 }
 
-struct SwiftWebUIDummy: View {
-    @State private var activeTimeline = TimeLineNavigation.novem
-    
-    init() {}
+struct PortfolioPreview: View {
+    @State private var selectedTab = PortfolioTab.info
     
     var body: some View {
-        VStack(spacing: 28) {
+        VStack(alignment: .leading, spacing: 24) {
             Text("Maak websites met Swift.")
                 .font(.heroTitle)
                 .foregroundStyle(.primary)
-            HStack(spacing: 12) {
-                Link("Bekijk mijn werk", destination: "#work")
-                    .buttonStyle(.primary)
-                Link("Neem contact op", destination: "#contact")
-                    .buttonStyle(.secondary)
-                Button("Funico")
-                    .buttonStyle(.secondary)
-                    .setState("activeTimeline", to: TimeLineNavigation.funico.rawValue)
+            
+            TabBar(selection: $selectedTab) {
+                Tab("Info", value: PortfolioTab.info)
+                Tab("Persoonlijk", value: PortfolioTab.personal)
+                Tab("Contact", value: PortfolioTab.contact)
             }
+            
+            Button("Toon contact")
+                .set($selectedTab, to: .contact)
+                .buttonStyle(.primary)
         }
         .padding(24)
     }
@@ -58,9 +57,71 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let renderer = HTMLRenderer()
     let nodes = renderer.renderNodes(Text("Hello <Swift>"))
     let html = nodes.map { $0.render(prettyPrinted: false) }.joined()
-
+    
     #expect(nodes.first is Span)
     #expect(html == "<span>Hello &lt;Swift&gt;</span>")
+}
+
+@Test func rendersTextSemanticRoleH1() {
+    let renderer = HTMLRenderer()
+    let nodes = renderer.renderNodes(Text("Title").semanticRole(.h1))
+    let html = nodes.map { $0.render(prettyPrinted: false) }.joined()
+
+    #expect(nodes.first is H1)
+    #expect(html == "<h1>Title</h1>")
+}
+
+@Test func rendersTextSemanticRoleParagraph() {
+    let html = HTMLRenderer().render(
+        Text("Intro").semanticRole(.p)
+    )
+
+    #expect(html == "<p>Intro</p>")
+}
+
+@Test func semanticTextRoleKeepsClassIDAndAttributeModifiers() {
+    let html = HTMLRenderer().render(
+        Text("Title")
+            .semanticRole(.h1)
+            .attribute("data-kind", "hero")
+            .class("hero-title")
+            .id("title")
+    )
+
+    #expect(html == "<h1 data-kind=\"hero\" class=\"hero-title\" id=\"title\">Title</h1>")
+}
+
+@Test func semanticTextRoleKeepsStylingModifiers() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Styled")
+            .semanticRole(.p)
+            .font(.heroTitle)
+            .foregroundStyle(.primary)
+    )
+    let html = rendered.htmlString()
+    let css = rendered.cssString()
+
+    #expect(html == "<p class=\"swui-1\">Styled</p>")
+    #expect(css.contains("font-weight: 760"))
+    #expect(css.contains("color: var(--color-primary, #111827)"))
+}
+
+@Test func semanticTextRolesRenderInsideVStackGroupAndSection() {
+    let rendered = HTMLRenderer().renderView(
+        VStack(spacing: 12) {
+            Group {
+                Text("Title").semanticRole(.h1)
+                Text("Intro").semanticRole(.p)
+            }
+            Section {
+                Text("Details").semanticRole(.h2)
+            }
+        }
+    )
+    let html = rendered.htmlString()
+
+    #expect(html.contains("<h1>Title</h1><p>Intro</p>"))
+    #expect(html.contains("<section><h2>Details</h2></section>"))
 }
 
 @Test func rendersNestedStacks() {
@@ -75,7 +136,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
-
+    
     #expect(html.contains("<div class=\"swui-1\">"))
     #expect(html.contains("<span>Top</span>"))
     #expect(html.contains("<div class=\"swui-2\">"))
@@ -104,7 +165,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
-
+    
     #expect(html == "<span class=\"swui-1\">Styled</span>")
     #expect(!html.contains("style="))
     #expect(css.contains("padding-left: 16px"))
@@ -127,8 +188,177 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
             .class("primary")
             .id("work-link")
     )
-
+    
     #expect(html == "<a href=\"#work\" class=\"button primary\" id=\"work-link\">Work</a>")
+}
+
+@Test func rendersGenericDataAttribute() {
+    let html = HTMLRenderer().render(
+        Text("Item")
+            .attribute("data-scroll-target", "work")
+    )
+    
+    #expect(html == "<span data-scroll-target=\"work\">Item</span>")
+}
+
+@Test func rendersGenericAriaAttribute() {
+    let html = HTMLRenderer().render(
+        Div {
+            Text("Details")
+        }
+        .attribute("aria-label", "Expertise")
+    )
+    
+    #expect(html == "<div aria-label=\"Expertise\"><span>Details</span></div>")
+}
+
+@Test func genericAttributesCombineWithClassAndIDModifiers() {
+    let html = HTMLRenderer().render(
+        Div {
+            Text("Panel")
+        }
+        .attribute("data-kind", "summary")
+        .class("card")
+        .id("panel")
+    )
+    
+    #expect(html == "<div data-kind=\"summary\" class=\"card\" id=\"panel\"><span>Panel</span></div>")
+}
+
+@Test func groupRendersWithoutWrapperWhenUnmodified() {
+    let html = HTMLRenderer().render(
+        Group {
+            Text("A")
+            Text("B")
+        }
+    )
+
+    #expect(html == "<span>A</span><span>B</span>")
+}
+
+@Test func groupClassModifierRendersImplicitDivWrapper() {
+    let html = HTMLRenderer().render(
+        Group {
+            Text("A")
+            Text("B")
+        }
+        .class("test")
+    )
+
+    #expect(html == "<div class=\"test\"><span>A</span><span>B</span></div>")
+}
+
+@Test func groupIDModifierRendersImplicitDivWrapper() {
+    let html = HTMLRenderer().render(
+        Group {
+            Text("A")
+            Text("B")
+        }
+        .id("test")
+    )
+
+    #expect(html == "<div id=\"test\"><span>A</span><span>B</span></div>")
+}
+
+@Test func groupAttributeModifierRendersImplicitDivWrapper() {
+    let html = HTMLRenderer().render(
+        Group {
+            Text("A")
+            Text("B")
+        }
+        .attribute("data-test", "true")
+    )
+
+    #expect(html == "<div data-test=\"true\"><span>A</span><span>B</span></div>")
+}
+
+@Test func nestedGroupsRenderWithoutExtraWrappers() {
+    let html = HTMLRenderer().render(
+        Group {
+            Group {
+                Text("A")
+            }
+        }
+    )
+
+    #expect(html == "<span>A</span>")
+}
+
+@Test func groupInsideStacksRendersAsTransparentStackContent() {
+    let vstack = HTMLRenderer().renderView(
+        VStack {
+            Group {
+                Text("A")
+                Text("B")
+            }
+        }
+    )
+    let hstack = HTMLRenderer().renderView(
+        HStack {
+            Group {
+                Text("A")
+                Text("B")
+            }
+        }
+    )
+
+    #expect(vstack.htmlString() == "<div class=\"swui-1\"><span>A</span><span>B</span></div>")
+    #expect(vstack.cssString().contains("flex-direction: column"))
+    #expect(hstack.htmlString() == "<div class=\"swui-1\"><span>A</span><span>B</span></div>")
+    #expect(hstack.cssString().contains("flex-direction: row"))
+}
+
+@Test func stacksInsideGroupRenderNormally() {
+    let rendered = HTMLRenderer().renderView(
+        Group {
+            VStack {
+                Text("A")
+            }
+            HStack {
+                Text("B")
+            }
+        }
+    )
+    let html = rendered.htmlString()
+    let css = rendered.cssString()
+
+    #expect(html == "<div class=\"swui-1\"><span>A</span></div><div class=\"swui-2\"><span>B</span></div>")
+    #expect(css.contains("flex-direction: column"))
+    #expect(css.contains("flex-direction: row"))
+}
+
+@Test func linkAttributePreservesHref() {
+    let html = HTMLRenderer().render(
+        Link("Open", destination: "#target")
+            .attribute("data-scroll-target", "target")
+    )
+    
+    #expect(html == "<a href=\"#target\" data-scroll-target=\"target\">Open</a>")
+}
+
+@Test func nestedSectionDivAndHStackRenderValidOutputWithAttributes() {
+    let rendered = HTMLRenderer().renderView(
+        Section {
+            Div {
+                HStack {
+                    Text("One")
+                    Text("Two")
+                }
+                .class("row")
+            }
+            .attribute("data-kind", "content")
+        }
+        .attribute("aria-label", "Group")
+    )
+    let html = rendered.htmlString()
+    let css = rendered.cssString()
+    
+    #expect(html.contains("<section aria-label=\"Group\">"))
+    #expect(html.contains("<div data-kind=\"content\">"))
+    #expect(html.contains("<div class=\"row swui-1\">"))
+    #expect(html.contains("<span>One</span><span>Two</span>"))
+    #expect(html.contains("</div></div></section>"))
+    #expect(css.contains("flex-direction: row"))
 }
 
 @Test func renderViewReturnsContentAndResourcesSeparately() {
@@ -136,7 +366,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         Text("Hello")
             .foregroundStyle(.primary)
     )
-
+    
     #expect(rendered.htmlString() == "<span class=\"swui-1\">Hello</span>")
     #expect(rendered.cssString().contains(".swui-1"))
     #expect(rendered.cssString().contains("color: var(--color-primary, #111827)"))
@@ -150,7 +380,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         Text("Hello")
             .foregroundStyle(.primary)
     )
-
+    
     #expect(html == "<span class=\"swui-1\">Hello</span>")
     #expect(!html.contains("color: var(--color-primary, #111827)"))
 }
@@ -161,7 +391,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
             .class("button primary")
             .padding(12)
     )
-
+    
     #expect(rendered.htmlString() == "<a href=\"#work\" class=\"button primary swui-1\">Work</a>")
     #expect(rendered.cssString().contains("padding: 12px"))
 }
@@ -173,7 +403,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
-
+    
     #expect(html == "<button class=\"swui-1\">Funico</button>")
     #expect(!html.contains("<span"))
     #expect(!html.contains("<a"))
@@ -194,7 +424,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
-
+    
     #expect(html == "<a href=\"#work\" class=\"swui-1\">Bekijk mijn werk</a>")
     #expect(!html.contains("<button"))
     #expect(!html.contains("<span"))
@@ -219,7 +449,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
-
+    
     #expect(html.contains("<a href=\"#primary\" class=\"button primary swui-2\">Primary</a>"))
     #expect(html.contains("<button class=\"button secondary swui-3\">Secondary</button>"))
     #expect(css.contains("background-color: var(--color-accent, #2563eb)"))
@@ -229,38 +459,59 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func stateAndBindingCompileAndCarryValues() {
     struct CounterView: View {
         @State var count = 1
-
+        
         var body: some View {
             Button("Increment")
                 .setState("count", to: "\(count + 1)")
         }
-
+        
         var binding: Binding<Int> {
             $count
         }
     }
-
+    
     let view = CounterView()
     let binding = view.binding
     #expect(binding.wrappedValue == 1)
     binding.wrappedValue = 3
     #expect(binding.wrappedValue == 3)
+    #expect(binding.clientState?.key.isEmpty == false)
+    #expect(binding.clientState?.initialValue == "1")
     #expect(HTMLRenderer().render(view).contains("data-swiftwebui-state-value=\"4\""))
+}
+
+@Test func stateProjectedValueExposesClientStateMetadata() {
+    struct BoundTabs: View {
+        @State var selection = PortfolioTab.contact
+        
+        var body: some View {
+            EmptyView()
+        }
+        
+        var binding: Binding<PortfolioTab> {
+            $selection
+        }
+    }
+    
+    let metadata = BoundTabs().binding.clientState
+    
+    #expect(metadata?.key.isEmpty == false)
+    #expect(metadata?.initialValue == "contact")
 }
 
 @Test func tabBarStaticSelectionCompilesAndRendersAccessibleTabs() {
     let rendered = HTMLRenderer().renderView(
-        TabBar(selection: PortfolioTab.work) {
-            Tab("Werk", value: PortfolioTab.work)
+        TabBar(selection: PortfolioTab.info) {
+            Tab("Info", value: PortfolioTab.info)
             Tab("Persoonlijk", value: PortfolioTab.personal)
             Tab("Contact", value: PortfolioTab.contact)
         }
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
-
+    
     #expect(html.contains("<div role=\"tablist\" class=\"swiftwebui-tab-bar swui-1\">"))
-    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"true\" class=\"swiftwebui-tab swiftwebui-tab-selected swui-2\"><span>Werk</span></button>"))
+    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"true\" class=\"swiftwebui-tab swiftwebui-tab-selected swui-2\"><span>Info</span></button>"))
     #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"swiftwebui-tab swui-3\"><span>Persoonlijk</span></button>"))
     #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"swiftwebui-tab swui-3\"><span>Contact</span></button>"))
     #expect(!html.contains("style="))
@@ -279,7 +530,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let includeContact = true
     let rendered = HTMLRenderer().renderView(
         TabBar(selection: PortfolioTab.personal) {
-            Tab(value: PortfolioTab.work) {
+            Tab(value: PortfolioTab.info) {
                 Image("/briefcase.svg", alt: "Werk")
                 Text("Werk")
             }
@@ -290,7 +541,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         }
     )
     let html = rendered.htmlString()
-
+    
     #expect(html.contains("<img src=\"/briefcase.svg\" alt=\"Werk\"><span>Werk</span>"))
     #expect(html.contains("<span>Persoonlijk</span>"))
     #expect(html.contains("<span>Contact</span>"))
@@ -298,54 +549,169 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(html.contains("aria-selected=\"false\""))
 }
 
-@Test func tabBarBindingSelectionRendersCurrentSnapshotOnly() {
+@Test func tabBarBindingSelectionRendersClientStateAttributesAndRuntime() {
     struct BoundTabs: View {
         @State var selection = PortfolioTab.contact
-
+        
         var body: some View {
             TabBar(selection: $selection) {
-                Tab("Werk", value: PortfolioTab.work)
+                Tab("Info", value: PortfolioTab.info)
                 Tab("Contact", value: PortfolioTab.contact)
             }
         }
     }
-
-    let html = HTMLRenderer().render(BoundTabs())
-
+    
+    let rendered = HTMLRenderer().renderView(BoundTabs())
+    let html = rendered.htmlString()
+    let js = rendered.jsString()
+    
     #expect(html.contains("<span>Contact</span></button>"))
     #expect(html.contains("aria-selected=\"true\""))
-    #expect(!html.contains("data-swiftwebui-action=\"set-state\""))
+    #expect(html.contains("role=\"tablist\""))
+    #expect(html.contains("data-swiftwebui-state-key=\"state-"))
+    #expect(html.contains("data-swiftwebui-state-initial-value=\"contact\""))
+    #expect(html.contains("data-swiftwebui-action=\"set-state\""))
+    #expect(html.contains("data-swiftwebui-state-value=\"info\""))
+    #expect(html.contains("data-swiftwebui-state-value=\"contact\""))
+    #expect(html.contains("data-swiftwebui-selected=\"true\""))
+    #expect(!js.isEmpty)
+    #expect(js.contains("document.addEventListener(\"click\""))
+    #expect(js.contains("data-swiftwebui-action"))
+    #expect(js.contains("set-state"))
+    #expect(js.contains("aria-selected"))
+    #expect(js.contains("dataset.swiftwebuiSelected"))
+    #expect(js.contains("swiftwebui-tab-selected"))
+    #expect(js.contains("data-swiftwebui-state-panel-key"))
+}
+
+@Test func setBindingToValueRendersStateMutationAttributes() {
+    struct ContactButton: View {
+        @State var selection = PortfolioTab.info
+        
+        var body: some View {
+            Button("Show Contact")
+                .set($selection, to: .contact)
+        }
+    }
+    
+    let rendered = HTMLRenderer().renderView(ContactButton())
+    let html = rendered.htmlString()
+    
+    #expect(html.contains("<button"))
+    #expect(html.contains("data-swiftwebui-action=\"set-state\""))
+    #expect(html.contains("data-swiftwebui-state-key=\"state-"))
+    #expect(html.contains("data-swiftwebui-state-value=\"contact\""))
+    #expect(!html.contains("closure-placeholder"))
+    
+    let js = rendered.jsString()
+    #expect(js.contains("document.addEventListener(\"click\""))
+    #expect(js.contains("set-state"))
+    #expect(js.contains("data-swiftwebui-action"))
+    #expect(js.contains("dataset.swiftwebuiStateKey"))
+    #expect(js.contains("dataset.swiftwebuiStateValue"))
+}
+
+
+@Test func clientStateRuntimeIsRegisteredOnlyOnceForMultipleStateControls() {
+    struct MultipleControls: View {
+        @State var selection = PortfolioTab.info
+        
+        var body: some View {
+            VStack {
+                TabBar(selection: $selection) {
+                    Tab("Info", value: PortfolioTab.info)
+                    Tab("Contact", value: PortfolioTab.contact)
+                }
+                
+                Button("Show Info")
+                    .set($selection, to: .info)
+                
+                Button("Show Contact")
+                    .set($selection, to: .contact)
+            }
+        }
+    }
+    
+    let rendered = HTMLRenderer().renderView(MultipleControls())
+    let js = rendered.jsString()
+    
+    #expect(!js.isEmpty)
+    #expect(rendered.resources.scripts.count == 1)
+    #expect(js.components(separatedBy: "document.addEventListener(\"click\"").count == 2)
+}
+
+
+@Test func clientStateRuntimeUpdatesTabsAndPanelsByMatchingStateKeyAndValue() {
+    struct BoundTabs: View {
+        @State var selection = PortfolioTab.info
+        
+        var body: some View {
+            TabBar(selection: $selection) {
+                Tab("Info", value: PortfolioTab.info)
+                Tab("Contact", value: PortfolioTab.contact)
+            }
+        }
+    }
+    
+    let rendered = HTMLRenderer().renderView(BoundTabs())
+    let js = rendered.jsString()
+    
+    #expect(js.contains("querySelectorAll"))
+    #expect(js.contains("role=\"tab\""))
+    #expect(js.contains("aria-selected"))
+    #expect(js.contains("dataset.swiftwebuiSelected"))
+    #expect(js.contains("classList.toggle"))
+    #expect(js.contains("swiftwebui-tab-selected"))
+    #expect(js.contains("data-swiftwebui-state-panel-key"))
+    #expect(js.contains("hidden"))
+}
+
+
+@Test func clientStateRuntimeIsNotEmittedForStaticTabBarWithoutActions() {
+    let rendered = HTMLRenderer().renderView(
+        TabBar(selection: PortfolioTab.info) {
+            Tab("Info", value: PortfolioTab.info)
+            Tab("Contact", value: PortfolioTab.contact)
+        }
+    )
+    
+    #expect(rendered.jsString().isEmpty)
+    #expect(rendered.resources.scripts.isEmpty)
 }
 
 @Test func proofOfConceptPageRendersStableHTML() {
-    let rendered = HTMLRenderer().renderView(SwiftWebUIDummy())
+    let rendered = HTMLRenderer().renderView(PortfolioPreview())
     let html = rendered.htmlString()
     let css = rendered.cssString()
     
-    #expect(html == """
-    <div class="swui-1"><span class="swui-2">Maak websites met Swift.</span><div class="swui-3"><a href="#work" class="button primary swui-4">Bekijk mijn werk</a><a href="#contact" class="button secondary swui-5">Neem contact op</a><button data-swiftwebui-action="set-state" data-swiftwebui-state-key="activeTimeline" data-swiftwebui-state-value="funico" class="button secondary swui-5">Funico</button></div></div>
-    """)
+    #expect(html.contains("<div class=\"swui-1\">"))
+    #expect(html.contains("<span class=\"swui-2\">Maak websites met Swift.</span>"))
+    #expect(html.contains("role=\"tablist\""))
+    #expect(html.contains("data-swiftwebui-state-key=\"state-"))
+    #expect(html.contains("data-swiftwebui-state-initial-value=\"info\""))
+    #expect(html.contains("data-swiftwebui-action=\"set-state\""))
+    #expect(html.contains("data-swiftwebui-state-value=\"contact\""))
+    #expect(html.contains("<button data-swiftwebui-action=\"set-state\""))
+    #expect(html.contains("Toon contact</button>"))
     #expect(!html.contains("style="))
     #expect(css.contains(".swui-1"))
     #expect(css.contains("flex-direction: column"))
-    #expect(css.contains("gap: 28px"))
     #expect(css.contains("padding: 24px"))
     #expect(css.contains(".swui-2"))
     #expect(css.contains("font-size: clamp(2.5rem, 6vw, 5.5rem)"))
     #expect(css.contains("color: var(--color-primary, #111827)"))
     #expect(css.contains(".swui-3"))
     #expect(css.contains("flex-direction: row"))
-    #expect(css.contains("gap: 12px"))
     #expect(css.contains(".swui-4"))
     #expect(css.contains("background-color: var(--color-accent, #2563eb)"))
     #expect(css.contains(".swui-5"))
     #expect(css.contains("border: 1px solid var(--color-border, #d1d5db)"))
-    #expect(rendered.jsString().isEmpty)
+    #expect(!rendered.jsString().isEmpty)
 }
 
 @Test func proofOfConceptPageCanExportHTMLAndCSSStrings() {
-    let rendered = HTMLRenderer().renderView(SwiftWebUIDummy())
-
+    let rendered = HTMLRenderer().renderView(PortfolioPreview())
+    
     #expect(!rendered.htmlString(prettyPrinted: true).isEmpty)
     #expect(!rendered.cssString(prettyPrinted: true).isEmpty)
 }
@@ -359,7 +725,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         )
     )
     let html = document.htmlString(prettyPrinted: false)
-
+    
     #expect(html.hasPrefix("<!DOCTYPE html>"))
     #expect(html.contains("<html>"))
     #expect(html.contains("<head>"))
@@ -375,7 +741,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let document = WebDocument(
         renderedView: HTMLRenderer().renderView(Text("Untitled"))
     )
-
+    
     #expect(!document.htmlString(prettyPrinted: false).contains("<title>"))
 }
 
@@ -391,7 +757,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         ),
         stylesheetPath: nil
     )
-
+    
     #expect(!unstyledDocument.htmlString(prettyPrinted: false).contains("<link rel=\"stylesheet\""))
     #expect(!styledWithoutPath.htmlString(prettyPrinted: false).contains("<link rel=\"stylesheet\""))
 }
@@ -424,10 +790,31 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         stylesheetPath: nil,
         scriptPath: "app.js"
     )
-
+    
     #expect(document.htmlString(prettyPrinted: false).contains("<script src=\"app.js\"></script>"))
     #expect(!withoutScriptPath.htmlString(prettyPrinted: false).contains("<script"))
     #expect(!withoutScriptContent.htmlString(prettyPrinted: false).contains("<script"))
+}
+
+@Test func webDocumentIncludesClientStateScriptWhenPathIsProvided() {
+    struct BoundTabs: View {
+        @State var selection = PortfolioTab.info
+        
+        var body: some View {
+            TabBar(selection: $selection) {
+                Tab("Info", value: PortfolioTab.info)
+                Tab("Contact", value: PortfolioTab.contact)
+            }
+        }
+    }
+    
+    let document = WebDocument(
+        renderedView: HTMLRenderer().renderView(BoundTabs()),
+        stylesheetPath: nil,
+        scriptPath: "app.js"
+    )
+    
+    #expect(document.htmlString(prettyPrinted: false).contains("<script src=\"app.js\"></script>"))
 }
 
 @Test func webDocumentKeepsGeneratedCSSAvailableSeparately() {
@@ -436,7 +823,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
             .foregroundStyle(.primary)
     )
     let document = WebDocument(renderedView: rendered)
-
+    
     #expect(document.htmlString(prettyPrinted: false).contains("<link rel=\"stylesheet\" href=\"styles.css\">"))
     #expect(rendered.cssString().contains("color: var(--color-primary, #111827)"))
     #expect(!document.htmlString(prettyPrinted: false).contains("color: var(--color-primary, #111827)"))
@@ -448,15 +835,15 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .appending(path: "Sources/SwiftWebUI")
-
+    
     let sourceFiles = try FileManager.default
         .subpathsOfDirectory(atPath: sourceRoot.path())
         .filter { $0.hasSuffix(".swift") }
-
+    
     let combinedSource = try sourceFiles
         .map { try String(contentsOf: sourceRoot.appending(path: $0), encoding: .utf8) }
         .joined(separator: "\n")
-
+    
     #expect(!combinedSource.contains("struct HTMLNode"))
     #expect(!combinedSource.contains("escapedHTMLText"))
     #expect(!combinedSource.contains("escapedHTMLAttribute"))
@@ -469,39 +856,80 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .appending(path: "Sources/SwiftWebUI")
-
+    
     let sourceFiles = try FileManager.default
         .subpathsOfDirectory(atPath: sourceRoot.path())
         .filter { $0.hasSuffix(".swift") }
-
+    
     let combinedSource = try sourceFiles
         .map { try String(contentsOf: sourceRoot.appending(path: $0), encoding: .utf8) }
         .joined(separator: "\n")
-
+    
     #expect(!combinedSource.contains("public struct Border"))
     #expect(!combinedSource.contains("public struct Shadow"))
     #expect(!combinedSource.contains("var cssProperty: any CSSProperty {\n        SwiftCSS.Border"))
 }
 
 @Test func exportPortfolioSpikeToFiles() throws {
-    let rendered = HTMLRenderer().renderView(SwiftWebUIDummy())
+    let rendered = HTMLRenderer().renderView(PortfolioPreview())
     let document = WebDocument(
         title: "SwiftWebUI Preview",
         renderedView: rendered,
-        stylesheetPath: "styles.css"
+        stylesheetPath: "styles.css",
+        scriptPath: "app.js"
     )
     
     let folder = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent("SwiftWebUIPreview", isDirectory: true)
-
+    
     try PreviewExporter.export(document, to: folder)
-
+    
     let html = try String(contentsOf: folder.appendingPathComponent("index.html"), encoding: .utf8)
     let css = try String(contentsOf: folder.appendingPathComponent("styles.css"), encoding: .utf8)
-
+    let js = try String(contentsOf: folder.appendingPathComponent("app.js"), encoding: .utf8)
+    
     #expect(html.contains("<!DOCTYPE html>"))
     #expect(html.contains("<link rel=\"stylesheet\" href=\"styles.css\">"))
+    #expect(html.contains("<script src=\"app.js\"></script>"))
     #expect(css.contains(".swui-1"))
+    #expect(js.contains("document.addEventListener(\"click\""))
     
     print(folder.path)
+}
+
+@Test func previewExporterWritesAppJSWhenClientStateExists() throws {
+    struct BoundTabs: View {
+        @State var selection = PortfolioTab.info
+        
+        var body: some View {
+            VStack {
+                TabBar(selection: $selection) {
+                    Tab("Info", value: PortfolioTab.info)
+                    Tab("Contact", value: PortfolioTab.contact)
+                }
+                Button("Show Contact")
+                    .set($selection, to: .contact)
+            }
+        }
+    }
+    
+    let rendered = HTMLRenderer().renderView(BoundTabs())
+    let document = WebDocument(
+        renderedView: rendered,
+        stylesheetPath: "styles.css",
+        scriptPath: "app.js"
+    )
+    let folder = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent("SwiftWebUIPreviewWithState", isDirectory: true)
+    
+    try PreviewExporter.export(document, to: folder)
+    
+    let html = try String(contentsOf: folder.appendingPathComponent("index.html"), encoding: .utf8)
+    let js = try String(contentsOf: folder.appendingPathComponent("app.js"), encoding: .utf8)
+    
+    #expect(html.contains("<script src=\"app.js\"></script>"))
+    #expect(js.contains("document.addEventListener(\"click\""))
+    #expect(js.contains("set-state"))
+    #expect(js.contains("aria-selected"))
+    #expect(js.contains("swiftwebui-tab-selected"))
 }

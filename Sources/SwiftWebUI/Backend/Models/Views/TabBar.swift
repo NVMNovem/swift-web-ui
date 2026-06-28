@@ -9,6 +9,7 @@ public struct TabBar<Value: Hashable>: View {
     public typealias Body = AnyView
 
     var selection: Value
+    var clientState: ClientStateBinding?
     var tabs: [Tab<Value>]
 
     public init(
@@ -16,6 +17,7 @@ public struct TabBar<Value: Hashable>: View {
         @TabBuilder<Value> tabs: () -> [Tab<Value>]
     ) {
         self.selection = selection
+        self.clientState = nil
         self.tabs = tabs()
     }
 
@@ -24,6 +26,7 @@ public struct TabBar<Value: Hashable>: View {
         @TabBuilder<Value> tabs: () -> [Tab<Value>]
     ) {
         self.selection = selection.wrappedValue
+        self.clientState = selection.clientState
         self.tabs = tabs()
     }
 

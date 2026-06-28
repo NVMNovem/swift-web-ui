@@ -126,6 +126,20 @@ Must not:
 - Own email-specific rendering rules.
 - Become a general site generator.
 
+## Container Primitives
+
+`Group` is the default layout-neutral composition primitive. It groups multiple views in the SwiftWebUI DSL without expressing HTML semantics or layout intent. An unmodified `Group` renders transparently and does not create a wrapper. When a `Group` has modifiers or attributes, the renderer creates an implicit `div` wrapper because HTML cannot attach attributes, classes, IDs, generated CSS classes, or client-state data attributes to nothing.
+
+`Div` remains a public low-level HTML escape hatch. Use it when the desired output is specifically a `div`, or when a caller needs an explicit generic HTML container. It should stay small and should not become a custom HTML node system inside SwiftWebUI.
+
+`VStack` and `HStack` remain public layout primitives. They express vertical and horizontal layout intent and lower through SwiftCSS-backed flex declarations during rendering. They are not aliases for `Div`, even though the browser output currently uses `div` elements.
+
+`Section` remains a public semantic container for HTML sectioning intent.
+
+`Text.semanticRole(_:)` expresses inline or block text meaning while keeping concrete HTML nodes in `SwiftHTML`. Plain `Text` defaults to `span`; callers can opt into paragraph or heading semantics with roles such as `.p` and `.h1`. Styling remains separate: `.font(...)`, `.foregroundStyle(...)`, `.class(...)`, and related modifiers control presentation and must not imply heading or paragraph HTML.
+
+The current API audit found no container that is safe to remove without a breaking public API change. `GroupView` is currently public because the result builder uses it as an implementation carrier for multiple child expressions. Prefer `Group` for user-facing composition in new examples and code; `GroupView` should be treated as compatibility surface unless a future major release can make it internal.
+
 ### WebDocument
 
 `WebDocument` belongs in `SwiftWebUI` for now.
@@ -150,9 +164,9 @@ RenderedView
 
 `WebDocument` may reference external CSS and JavaScript resources, but it should not inline CSS by default and should not decide broader bundling or routing behavior. It should not write files; small preview/export helpers may do that as developer tooling.
 
-### Static Components
+### Client-State Components
 
-Components such as `TabBar` are static-first until a client-state runtime exists. `TabBar(selection:)` renders the selected value into accessible tab markup and SwiftCSS-backed resources. The `Binding` initializer currently snapshots the binding value for render compatibility only; dynamic switching requires a future runtime that can lower binding writes into client-state actions. Tab styling must continue to lower through SwiftCSS declarations rather than direct CSS rendering in SwiftWebUI.
+Components such as `TabBar` are generated-code-first. `TabBar(selection:)` still supports a static selection value, and `TabBar(selection: $binding)` uses binding metadata to render accessible tab markup plus client-state data attributes. The browser runtime is intentionally small: it listens for generated `set-state` actions and updates matching tab or panel attributes/classes. It does not run Swift in the browser, perform DOM diffing, evaluate arbitrary expressions, or translate general Swift closures to JavaScript. Tab styling must continue to lower through SwiftCSS declarations rather than direct CSS rendering in SwiftWebUI.
 
 ### SwiftJS
 
@@ -288,11 +302,39 @@ The ownership rule is:
 
 ## State And Binding Direction
 
-`@State` and `Binding` are architectural concepts in `SwiftWebUI`. Full SwiftUI runtime behavior is not implemented yet.
+`@State` and `Binding` are generated-code client-state declarations in `SwiftWebUI`. Full SwiftUI runtime behavior is not implemented.
 
-The current lower-level `.setState(...)` API is temporary client-state intent. It gives the renderer a place to carry state mutation information before a full runtime exists.
+`Binding` can carry optional `ClientStateBinding` metadata:
 
-Future JavaScript or runtime generation can lower button actions and state mutations into:
+- a generated client-state key,
+- the initial serialized value.
+
+The current property wrapper implementation cannot capture Swift property names without adding macros or heavier wrapper machinery. Until that exists, `@State` uses a deterministic key derived from the backing storage object. That key is stable for the storage during a render pass, but it is not a public persistence identifier.
+
+State values intended for generated client state should serialize through `ClientStateValue`, or through the explicit raw-value overloads provided by APIs such as `.set($binding, to:)`.
+
+The lower-level `.setState(...)` API remains available as client-state intent. The preferred binding-driven primitive is:
+
+```swift
+Button("Show Contact")
+    .set($selectedTab, to: PortfolioTab.contact)
+```
+
+That modifier lowers to generated attributes such as:
+
+- `data-swiftwebui-action="set-state"`
+- `data-swiftwebui-state-key="..."`
+- `data-swiftwebui-state-value="contact"`
+
+This syntax is intentionally not supported yet:
+
+```swift
+Button("Show Contact") {
+    selectedTab = .contact
+}
+```
+
+Closure-to-JavaScript translation is deferred. A future runtime or generation layer can lower button actions and state mutations into:
 
 - Data attributes.
 - Generated scripts.
@@ -337,9 +379,9 @@ Recent cleanup example:
 
 - `SwiftWebUI` currently renders to `SwiftHTML`.
 - CSS is collected as resources via `SwiftCSS`.
-- JavaScript resources are represented but not meaningfully implemented yet.
+- JavaScript resources include a minimal generated client-state runtime for binding-driven `set-state` actions.
 - `WebDocument` wraps `RenderedView` into a full browser HTML document for preview/testing.
-- `@State` and `Binding` exist as architectural direction, not a full runtime.
+- `@State` and `Binding` carry generated client-state metadata; they do not run Swift in the browser.
 - `SwiftWebUIDummy` is the current proof-of-concept.
 - `SwiftWeb`, `SwiftMailUI`, and `MailDocument` do not exist.
 

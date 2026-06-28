@@ -9,4 +9,5 @@ internal final class RenderResourceStorage {
     
     internal var styleRegistry = StyleRegistry()
     internal var scripts: [ScriptResource] = []
+    internal var scriptIDs: Set<String> = []
 }

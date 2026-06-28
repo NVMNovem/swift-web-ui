@@ -12,6 +12,10 @@ public struct RenderContext {
     var modifiers: [ViewModifierData]
     private var resources: RenderResourceStorage
 
+    var hasPendingModifiers: Bool {
+        !modifiers.isEmpty
+    }
+
     public init(modifiers: [ViewModifierData] = []) {
         self.modifiers = modifiers
         self.resources = RenderResourceStorage()
@@ -32,6 +36,21 @@ public struct RenderContext {
 
     mutating func className(for properties: [any CSSProperty], scope: ResourceScope = .global) -> String {
         resources.styleRegistry.className(for: properties, scope: scope)
+    }
+    
+    mutating func registerClientStateRuntime() {
+        guard !resources.scriptIDs.contains(ClientStateRuntime.scriptID) else {
+            return
+        }
+        
+        resources.scriptIDs.insert(ClientStateRuntime.scriptID)
+        resources.scripts.append(
+            ScriptResource(
+                id: ClientStateRuntime.scriptID,
+                scope: .global,
+                content: ClientStateRuntime.script
+            )
+        )
     }
 
     func renderedResources() -> RenderedResources {
@@ -79,6 +98,15 @@ extension RenderContext {
                 classNames.append(name)
             case .id(let value):
                 id = value
+            case .attribute(let attribute):
+                switch attribute.key {
+                case "class":
+                    classNames.append(attribute.value)
+                case "id":
+                    id = attribute.value
+                default:
+                    attributes.append(attribute)
+                }
             case .padding(let edges, let value):
                 cssProperties.append(contentsOf: paddingProperties(edges, value))
             case .frame(let width, let height, let maxWidth):
@@ -121,6 +149,7 @@ extension RenderContext {
             case .buttonStyle:
                 break
             case .setState(let mutation):
+                registerClientStateRuntime()
                 attributes.append(.init("data-swiftwebui-action", "set-state"))
                 attributes.append(.init("data-swiftwebui-state-key", mutation.key))
                 attributes.append(.init("data-swiftwebui-state-value", mutation.value))
