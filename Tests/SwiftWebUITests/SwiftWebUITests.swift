@@ -20,7 +20,7 @@ struct PortfolioPreview: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             Text("Maak websites met Swift.")
-                .font(.heroTitle)
+                .font(.largeTitle)
                 .foregroundStyle(.primary)
             
             TabBar(selection: $selectedTab) {
@@ -95,15 +95,108 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let rendered = HTMLRenderer().renderView(
         Text("Styled")
             .semanticRole(.p)
-            .font(.heroTitle)
+            .font(.largeTitle)
             .foregroundStyle(.primary)
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
 
     #expect(html == "<p class=\"swui-1\">Styled</p>")
-    #expect(css.contains("font-weight: 760"))
+    #expect(css.contains("font-size: 34px"))
+    #expect(css.contains("font-weight: 400"))
     #expect(css.contains("color: var(--color-primary, #111827)"))
+}
+
+@Test func systemFontSizeEmitsFontSizeCSS() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Sized")
+            .font(.system(size: 19))
+    )
+
+    #expect(rendered.cssString().contains("font-size: 19px"))
+}
+
+@Test func systemFontBlackWeightEmitsNumericCSSWeight() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Heavy")
+            .font(.system(size: 19, weight: .black))
+    )
+    let css = rendered.cssString()
+
+    #expect(css.contains("font-size: 19px"))
+    #expect(css.contains("font-weight: 900"))
+}
+
+@Test func systemFontCustomWeightEmitsNumericCSSWeight() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Heavy")
+            .font(.system(size: 19, weight: .weight(800)))
+    )
+
+    #expect(rendered.cssString().contains("font-weight: 800"))
+}
+
+@Test func systemFontDesignEmitsFontFamilyCSS() {
+    let css = HTMLRenderer().renderView(
+        Text("Code")
+            .font(.system(size: 19, design: .monospaced))
+    ).cssString()
+
+    #expect(css.contains("font-family: ui-monospace"))
+}
+
+@Test func headlineFontEmitsExpectedSizeAndWeight() {
+    let css = HTMLRenderer().renderView(
+        Text("Headline")
+            .font(.headline)
+    ).cssString()
+
+    #expect(css.contains("font-size: 17px"))
+    #expect(css.contains("font-weight: 600"))
+}
+
+@Test func caption2FontEmitsExpectedSize() {
+    let css = HTMLRenderer().renderView(
+        Text("Caption")
+            .font(.caption2)
+    ).cssString()
+
+    #expect(css.contains("font-size: 11px"))
+}
+
+@Test func fontWorksWithSemanticHeadingWithoutChangingSemanticOutput() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Title")
+            .semanticRole(.h1)
+            .font(.largeTitle)
+    )
+
+    #expect(rendered.htmlString() == "<h1 class=\"swui-1\">Title</h1>")
+    #expect(rendered.cssString().contains("font-size: 34px"))
+}
+
+@Test func semanticHeadingAloneDoesNotEmitFontCSS() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Title")
+            .semanticRole(.h1)
+    )
+
+    #expect(rendered.htmlString() == "<h1>Title</h1>")
+    #expect(!rendered.cssString().contains("font-size"))
+    #expect(!rendered.cssString().contains("font-weight"))
+}
+
+@Test func fontComposesWithClassIDAndAttributeModifiers() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Styled")
+            .font(.system(size: 19))
+            .class("custom")
+            .id("styled")
+            .attribute("data-kind", "sample")
+    )
+
+    #expect(rendered.htmlString() == "<span data-kind=\"sample\" class=\"custom swui-1\" id=\"styled\">Styled</span>")
+    #expect(rendered.cssString().contains("font-size: 19px"))
 }
 
 @Test func semanticTextRolesRenderInsideVStackGroupAndSection() {
@@ -157,7 +250,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
             .frame(width: 320, height: nil, maxWidth: .percent(100))
             .background(.white)
             .foregroundStyle(.primary)
-            .font(.heroTitle)
+            .font(.largeTitle)
             .cornerRadius(12)
             .border("1px solid currentColor")
             .shadow("0 12px 40px rgba(0, 0, 0, 0.12)")
@@ -174,11 +267,107 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains("max-width: 100%"))
     #expect(css.contains("background-color: #fff"))
     #expect(css.contains("color: var(--color-primary, #111827)"))
-    #expect(css.contains("font-weight: 760"))
+    #expect(css.contains("font-size: 34px"))
+    #expect(css.contains("font-weight: 400"))
     #expect(css.contains("border-radius: 12px"))
     #expect(css.contains("border: 1px solid currentColor"))
     #expect(css.contains("box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12)"))
     #expect(css.contains("gap: 10px"))
+}
+
+@Test func sizingModifiersRenderOnNormalViews() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Sized")
+            .width(.percent(100))
+            .minWidth(.px(120))
+            .maxWidth(.px(380))
+            .height(.px(240))
+            .minHeight(.px(80))
+            .maxHeight(.px(420))
+    )
+    let html = rendered.htmlString()
+    let css = rendered.cssString()
+
+    #expect(html == "<span class=\"swui-1\">Sized</span>")
+    #expect(!html.contains("style="))
+    #expect(css.contains("width: 100%"))
+    #expect(css.contains("min-width: 120px"))
+    #expect(css.contains("max-width: 380px"))
+    #expect(css.contains("height: 240px"))
+    #expect(css.contains("min-height: 80px"))
+    #expect(css.contains("max-height: 420px"))
+}
+
+@Test func sizingModifiersRenderOnImage() {
+    let rendered = HTMLRenderer().renderView(
+        Image("assets/profile1.jpeg", alt: "Damian Van de Kauter")
+            .width(.percent(100))
+            .maxWidth(.px(380))
+    )
+    let html = rendered.htmlString()
+    let css = rendered.cssString()
+
+    #expect(html == "<img src=\"assets/profile1.jpeg\" alt=\"Damian Van de Kauter\" class=\"swui-1\">")
+    #expect(css.contains("width: 100%"))
+    #expect(css.contains("max-width: 380px"))
+}
+
+@Test func gridRendersWrapperWithDisplayGrid() {
+    let rendered = HTMLRenderer().renderView(
+        Grid {
+            Text("A")
+            Text("B")
+        }
+    )
+    let html = rendered.htmlString()
+    let css = rendered.cssString()
+
+    #expect(html == "<div class=\"swui-1\"><span>A</span><span>B</span></div>")
+    #expect(css.contains("display: grid"))
+}
+
+@Test func gridSpacingRendersGap() {
+    let rendered = HTMLRenderer().renderView(
+        Grid(spacing: .px(24)) {
+            Text("A")
+            Text("B")
+        }
+    )
+    let css = rendered.cssString()
+
+    #expect(css.contains("display: grid"))
+    #expect(css.contains("gap: 24px"))
+}
+
+@Test func gridPreservesUserClassWithGeneratedClass() {
+    let rendered = HTMLRenderer().renderView(
+        Grid(spacing: .px(24)) {
+            Text("A")
+            Text("B")
+        }
+        .class("about-cards")
+    )
+
+    #expect(rendered.htmlString() == "<div class=\"about-cards swui-1\"><span>A</span><span>B</span></div>")
+    #expect(rendered.cssString().contains("display: grid"))
+}
+
+@Test func gridWorksInsideSectionAndGroup() {
+    let rendered = HTMLRenderer().renderView(
+        Section {
+            Group {
+                Grid {
+                    Text("A")
+                    Text("B")
+                }
+            }
+        }
+    )
+    let html = rendered.htmlString()
+    let css = rendered.cssString()
+
+    #expect(html == "<section><div class=\"swui-1\"><span>A</span><span>B</span></div></section>")
+    #expect(css.contains("display: grid"))
 }
 
 @Test func rendersClassAndIDModifiers() {
@@ -698,7 +887,8 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains("flex-direction: column"))
     #expect(css.contains("padding: 24px"))
     #expect(css.contains(".swui-2"))
-    #expect(css.contains("font-size: clamp(2.5rem, 6vw, 5.5rem)"))
+    #expect(css.contains("font-size: 34px"))
+    #expect(css.contains("font-weight: 400"))
     #expect(css.contains("color: var(--color-primary, #111827)"))
     #expect(css.contains(".swui-3"))
     #expect(css.contains("flex-direction: row"))

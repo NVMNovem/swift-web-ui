@@ -107,7 +107,7 @@ Responsibilities:
 
 - `View`.
 - `ViewBuilder`.
-- Primitive browser web views such as `Text`, `VStack`, `HStack`, `Button`, `Link`, `Image`, `Section`, and `Div`.
+- Primitive browser web views such as `Text`, `VStack`, `HStack`, `Grid`, `Button`, `Link`, `Image`, `Section`, and `Div`.
 - Modifiers stored as data and intent.
 - `ButtonStyle` and semantic UI styling.
 - `@State` and `Binding` architecture placeholders.
@@ -132,7 +132,7 @@ Must not:
 
 `Div` remains a public low-level HTML escape hatch. Use it when the desired output is specifically a `div`, or when a caller needs an explicit generic HTML container. It should stay small and should not become a custom HTML node system inside SwiftWebUI.
 
-`VStack` and `HStack` remain public layout primitives. They express vertical and horizontal layout intent and lower through SwiftCSS-backed flex declarations during rendering. They are not aliases for `Div`, even though the browser output currently uses `div` elements.
+`VStack`, `HStack`, and `Grid` remain public layout primitives. They express vertical, horizontal, and grid layout intent and lower through SwiftCSS-backed layout declarations during rendering. They are not aliases for `Div`, even though the browser output currently uses `div` elements.
 
 `Section` remains a public semantic container for HTML sectioning intent.
 
@@ -245,7 +245,8 @@ For example:
 
 ```swift
 Text("Hello")
-    .font(.heroTitle)
+    .semanticRole(.h1)
+    .font(.largeTitle)
     .foregroundStyle(.primary)
     .padding(24)
 ```

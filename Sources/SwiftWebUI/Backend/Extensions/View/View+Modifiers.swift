@@ -35,6 +35,30 @@ public extension View {
         modified(.frame(width: width, height: height, maxWidth: maxWidth))
     }
     
+    func width(_ value: Length) -> ModifiedView<Self> {
+        modified(.width(value))
+    }
+    
+    func minWidth(_ value: Length) -> ModifiedView<Self> {
+        modified(.minWidth(value))
+    }
+    
+    func maxWidth(_ value: Length) -> ModifiedView<Self> {
+        modified(.maxWidth(value))
+    }
+    
+    func height(_ value: Length) -> ModifiedView<Self> {
+        modified(.height(value))
+    }
+    
+    func minHeight(_ value: Length) -> ModifiedView<Self> {
+        modified(.minHeight(value))
+    }
+    
+    func maxHeight(_ value: Length) -> ModifiedView<Self> {
+        modified(.maxHeight(value))
+    }
+    
     func background(_ background: Background) -> ModifiedView<Self> {
         modified(.background(background))
     }
@@ -51,8 +75,8 @@ public extension View {
         modified(.fontWeight(.bold))
     }
     
-    func font(_ token: FontToken) -> ModifiedView<Self> {
-        modified(.font(token))
+    func font(_ font: Font) -> ModifiedView<Self> {
+        modified(.font(font))
     }
     
     func cornerRadius(_ value: Length) -> ModifiedView<Self> {
@@ -147,6 +171,30 @@ public extension ModifiedView {
         appending(.frame(width: width, height: height, maxWidth: maxWidth))
     }
     
+    func width(_ value: Length) -> ModifiedView<Content> {
+        appending(.width(value))
+    }
+    
+    func minWidth(_ value: Length) -> ModifiedView<Content> {
+        appending(.minWidth(value))
+    }
+    
+    func maxWidth(_ value: Length) -> ModifiedView<Content> {
+        appending(.maxWidth(value))
+    }
+    
+    func height(_ value: Length) -> ModifiedView<Content> {
+        appending(.height(value))
+    }
+    
+    func minHeight(_ value: Length) -> ModifiedView<Content> {
+        appending(.minHeight(value))
+    }
+    
+    func maxHeight(_ value: Length) -> ModifiedView<Content> {
+        appending(.maxHeight(value))
+    }
+    
     func background(_ background: Background) -> ModifiedView<Content> {
         appending(.background(background))
     }
@@ -163,8 +211,8 @@ public extension ModifiedView {
         appending(.fontWeight(.bold))
     }
     
-    func font(_ token: FontToken) -> ModifiedView<Content> {
-        appending(.font(token))
+    func font(_ font: Font) -> ModifiedView<Content> {
+        appending(.font(font))
     }
     
     func cornerRadius(_ value: Length) -> ModifiedView<Content> {

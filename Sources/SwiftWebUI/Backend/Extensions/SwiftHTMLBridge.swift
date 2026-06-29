@@ -131,6 +131,25 @@ extension HStack: SwiftHTMLRenderable {
     }
 }
 
+extension Grid: SwiftHTMLRenderable {
+    func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        var css: [any CSSProperty] = [
+            Display(.grid)
+        ]
+        if let spacing {
+            css.append(Gap(spacing.cssLength))
+        }
+
+        let attributes = context.elementAttributes(css: css)
+        var childContext = context.clearingModifiers()
+        return [
+            SwiftHTML.Div(attributes.attributes) {
+                content.renderSwiftHTML(context: &childContext)
+            }
+        ]
+    }
+}
+
 extension Link: SwiftHTMLRenderable {
     func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
         let attributes = context.elementAttributes([.href(destination)])

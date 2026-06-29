@@ -119,6 +119,18 @@ extension RenderContext {
                 if let maxWidth {
                     cssProperties.append(MaxWidth(maxWidth.cssLength))
                 }
+            case .width(let value):
+                cssProperties.append(Width(value.cssLength))
+            case .minWidth(let value):
+                cssProperties.append(MinWidth(value.cssLength))
+            case .maxWidth(let value):
+                cssProperties.append(MaxWidth(value.cssLength))
+            case .height(let value):
+                cssProperties.append(Height(value.cssLength))
+            case .minHeight(let value):
+                cssProperties.append(MinHeight(value.cssLength))
+            case .maxHeight(let value):
+                cssProperties.append(MaxHeight(value.cssLength))
             case .background(let background):
                 if let color = background.cssColor {
                     cssProperties.append(BackgroundColor(color))

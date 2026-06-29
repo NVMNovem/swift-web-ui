@@ -21,13 +21,23 @@ struct PortfolioPreview: View {
             Group {
                 Text("Maak websites met Swift.")
                     .semanticRole(.h1)
-                    .font(.heroTitle)
+                    .font(.largeTitle)
                     .foregroundStyle(.primary)
 
                 Text("Static HTML and extracted CSS from a Swift view tree.")
                     .semanticRole(.p)
                     .foregroundStyle(.secondary)
             }
+
+            Grid(spacing: 16) {
+                Image("assets/profile1.jpeg", alt: "Profile")
+                    .width(.percent(100))
+                    .maxWidth(.px(380))
+
+                Text("Reusable layout, semantic HTML, and SwiftCSS-backed styling.")
+                    .semanticRole(.p)
+            }
+            .class("profile-summary")
 
             TabBar(selection: $selectedTab) {
                 Tab("Info", value: PortfolioTab.info)
@@ -60,8 +70,10 @@ let js = rendered.jsString(prettyPrinted: false)
 
 Use `Group` for layout-neutral composition. An unmodified `Group` renders transparently with no wrapper; a modified `Group`, such as `Group { ... }.class("hero")`, renders an implicit `div` wrapper so the attributes and generated CSS class have an HTML element to attach to.
 
-Use `VStack` and `HStack` for layout intent. Use `Div` only when you specifically want a low-level `div` escape hatch.
+Use `VStack`, `HStack`, and `Grid` for layout intent. Use `Div` only when you specifically want a low-level `div` escape hatch.
 
-Use `Text.semanticRole(_:)` for HTML meaning, such as `.h1` for the page heading or `.p` for paragraph copy. Use `.font(...)`, `.foregroundStyle(...)`, `.class(...)`, and other styling modifiers for visual presentation; font choices do not imply heading or paragraph elements.
+Sizing modifiers such as `.width(...)`, `.minWidth(...)`, `.maxWidth(...)`, `.height(...)`, `.minHeight(...)`, and `.maxHeight(...)` are generic view modifiers. They apply to all rendered views, including `Image`, and lower through SwiftCSS-backed generated classes.
+
+Use `Text.semanticRole(_:)` for HTML meaning, such as `.h1` for the page heading or `.p` for paragraph copy. Use `.font(.largeTitle)`, `.font(.system(size:weight:design:))`, `.foregroundStyle(...)`, `.class(...)`, and other styling modifiers for visual presentation; font choices do not imply heading or paragraph elements, and semantic roles do not imply visual font styling.
 
 Use `.attribute(_:_:)` as an escape hatch for valid HTML attributes that do not have typed SwiftWebUI modifiers yet. Prefer typed modifiers when available; `.attribute(_:_:)` is useful for `data-*`, ARIA, and other generic attributes.
