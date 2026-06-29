@@ -13,6 +13,8 @@ public enum ViewModifierData {
     case cssClass(String)
     case id(String)
     case attribute(SwiftHTML.Attribute)
+    case display(DisplayValue)
+    case margin(Edge.Set, Length)
     case padding(Edge.Set, Length)
     case frame(width: Length?, height: Length?, maxWidth: Length?)
     case width(Length)

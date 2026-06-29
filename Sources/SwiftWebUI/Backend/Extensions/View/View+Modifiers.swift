@@ -23,6 +23,18 @@ public extension View {
         modified(.attribute(SwiftHTML.Attribute(name, value)))
     }
     
+    func display(_ value: DisplayValue) -> ModifiedView<Self> {
+        modified(.display(value))
+    }
+    
+    func margin(_ value: Length) -> ModifiedView<Self> {
+        modified(.margin(.all, value))
+    }
+    
+    func margin(_ edges: Edge.Set, _ value: Length) -> ModifiedView<Self> {
+        modified(.margin(edges, value))
+    }
+    
     func padding(_ value: Length) -> ModifiedView<Self> {
         modified(.padding(.all, value))
     }
@@ -157,6 +169,18 @@ public extension ModifiedView {
     
     func attribute(_ name: String, _ value: String) -> ModifiedView<Content> {
         appending(.attribute(SwiftHTML.Attribute(name, value)))
+    }
+    
+    func display(_ value: DisplayValue) -> ModifiedView<Content> {
+        appending(.display(value))
+    }
+    
+    func margin(_ value: Length) -> ModifiedView<Content> {
+        appending(.margin(.all, value))
+    }
+    
+    func margin(_ edges: Edge.Set, _ value: Length) -> ModifiedView<Content> {
+        appending(.margin(edges, value))
     }
     
     func padding(_ value: Length) -> ModifiedView<Content> {

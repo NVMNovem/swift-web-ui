@@ -107,6 +107,10 @@ extension RenderContext {
                 default:
                     attributes.append(attribute)
                 }
+            case .display(let value):
+                cssProperties.append(Display(value))
+            case .margin(let edges, let value):
+                cssProperties.append(contentsOf: marginProperties(edges, value))
             case .padding(let edges, let value):
                 cssProperties.append(contentsOf: paddingProperties(edges, value))
             case .frame(let width, let height, let maxWidth):
@@ -199,6 +203,27 @@ extension RenderContext {
         }
         if edges.contains(.trailing) {
             properties.append(RawProperty("padding-right", value.cssValue))
+        }
+        return properties
+    }
+
+    private func marginProperties(_ edges: Edge.Set, _ value: Length) -> [any CSSProperty] {
+        if edges == .all {
+            return [Margin(value.cssLength)]
+        }
+
+        var properties: [any CSSProperty] = []
+        if edges.contains(.top) {
+            properties.append(MarginTop(value.cssLength))
+        }
+        if edges.contains(.leading) {
+            properties.append(MarginLeft(value.cssLength))
+        }
+        if edges.contains(.bottom) {
+            properties.append(MarginBottom(value.cssLength))
+        }
+        if edges.contains(.trailing) {
+            properties.append(MarginRight(value.cssLength))
         }
         return properties
     }

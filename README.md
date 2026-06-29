@@ -21,6 +21,8 @@ struct PortfolioPreview: View {
             Group {
                 Text("Maak websites met Swift.")
                     .semanticRole(.h1)
+                    .display(.block)
+                    .margin(.bottom, .px(5))
                     .font(.largeTitle)
                     .foregroundStyle(.primary)
 
@@ -31,6 +33,7 @@ struct PortfolioPreview: View {
 
             Grid(spacing: 16) {
                 Image("assets/profile1.jpeg", alt: "Profile")
+                    .margin(.top, .px(24))
                     .width(.percent(100))
                     .maxWidth(.px(380))
 
@@ -73,6 +76,8 @@ Use `Group` for layout-neutral composition. An unmodified `Group` renders transp
 Use `VStack`, `HStack`, and `Grid` for layout intent. Use `Div` only when you specifically want a low-level `div` escape hatch.
 
 Sizing modifiers such as `.width(...)`, `.minWidth(...)`, `.maxWidth(...)`, `.height(...)`, `.minHeight(...)`, and `.maxHeight(...)` are generic view modifiers. They apply to all rendered views, including `Image`, and lower through SwiftCSS-backed generated classes.
+
+Display and margin modifiers are generic view modifiers. Use `.display(...)` for CSS display values such as `.block`, `.flex`, and `.grid`; use `.margin(...)` for CSS margins such as `.margin(.bottom, .px(5))`, `.margin(.horizontal, .px(16))`, and `.margin(.all, .px(20))`. `.padding(...)` follows SwiftWebUI edge semantics, while `.margin(...)` maps directly to CSS margins.
 
 Use `Text.semanticRole(_:)` for HTML meaning, such as `.h1` for the page heading or `.p` for paragraph copy. Use `.font(.largeTitle)`, `.font(.system(size:weight:design:))`, `.foregroundStyle(...)`, `.class(...)`, and other styling modifiers for visual presentation; font choices do not imply heading or paragraph elements, and semantic roles do not imply visual font styling.
 

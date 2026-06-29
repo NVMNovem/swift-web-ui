@@ -287,6 +287,8 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func rendersStoredModifiers() {
     let rendered = HTMLRenderer().renderView(
         Text("Styled")
+            .display(.block)
+            .margin(.bottom, .px(5))
             .padding(.horizontal, 16)
             .frame(width: 320, height: nil, maxWidth: .percent(100))
             .background(.white)
@@ -303,6 +305,8 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     
     #expect(html == "<span class=\"\(className)\">Styled</span>")
     #expect(!html.contains("style="))
+    #expect(css.contains("display: block"))
+    #expect(css.contains("margin-bottom: 5px"))
     #expect(css.contains("padding-left: 16px"))
     #expect(css.contains("padding-right: 16px"))
     #expect(css.contains("width: 320px"))
@@ -315,6 +319,108 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains("border: 1px solid currentColor"))
     #expect(css.contains("box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12)"))
     #expect(css.contains("gap: 10px"))
+}
+
+@Test func displayModifierRendersSwiftCSSDisplayProperty() {
+    let block = HTMLRenderer().renderView(
+        Text("Hello")
+            .display(.block)
+    )
+    let grid = HTMLRenderer().renderView(
+        Text("Hello")
+            .display(.grid)
+    )
+    
+    #expect(block.cssString().contains("display: block"))
+    #expect(grid.cssString().contains("display: grid"))
+}
+
+@Test func marginModifierRendersSwiftCSSMarginProperties() {
+    let bottom = HTMLRenderer().renderView(
+        Text("Hello")
+            .margin(.bottom, .px(5))
+    )
+    let horizontal = HTMLRenderer().renderView(
+        Text("Hello")
+            .margin(.horizontal, .px(12))
+    )
+    let vertical = HTMLRenderer().renderView(
+        Text("Hello")
+            .margin(.vertical, .px(8))
+    )
+    let leading = HTMLRenderer().renderView(
+        Text("Hello")
+            .margin(.leading, .px(6))
+    )
+    let trailing = HTMLRenderer().renderView(
+        Text("Hello")
+            .margin(.trailing, .px(7))
+    )
+    let all = HTMLRenderer().renderView(
+        Text("Hello")
+            .margin(.all, .px(20))
+    )
+    
+    #expect(bottom.cssString().contains("margin-bottom: 5px"))
+    #expect(horizontal.cssString().contains("margin-left: 12px"))
+    #expect(horizontal.cssString().contains("margin-right: 12px"))
+    #expect(vertical.cssString().contains("margin-top: 8px"))
+    #expect(vertical.cssString().contains("margin-bottom: 8px"))
+    #expect(leading.cssString().contains("margin-left: 6px"))
+    #expect(trailing.cssString().contains("margin-right: 7px"))
+    #expect(all.cssString().contains("margin: 20px"))
+}
+
+@Test func displayAndMarginComposeWithFontAndClass() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Hello")
+            .class("title")
+            .display(.block)
+            .margin(.bottom, .px(5))
+            .font(.system(size: 19, weight: .heavy))
+    )
+    let html = rendered.htmlString()
+    let css = rendered.cssString()
+    let className = singleGeneratedClass(in: rendered)
+    
+    #expect(html == "<span class=\"title \(className)\">Hello</span>")
+    #expect(css.contains("display: block"))
+    #expect(css.contains("margin-bottom: 5px"))
+    #expect(css.contains("font-size: 19px"))
+    #expect(css.contains("font-weight: 800"))
+}
+
+@Test func displayAndMarginModifiersRenderOnImage() {
+    let rendered = HTMLRenderer().renderView(
+        Image("assets/profile1.jpeg", alt: "Profile")
+            .display(.block)
+            .margin(.top, .px(24))
+    )
+    let html = rendered.htmlString()
+    let css = rendered.cssString()
+    let className = singleGeneratedClass(in: rendered)
+    
+    #expect(html == "<img src=\"assets/profile1.jpeg\" alt=\"Profile\" class=\"\(className)\">")
+    #expect(css.contains("display: block"))
+    #expect(css.contains("margin-top: 24px"))
+}
+
+@Test func displayAndMarginModifiersRenderOnGrid() {
+    let rendered = HTMLRenderer().renderView(
+        Grid(spacing: .px(16)) {
+            Text("A")
+            Text("B")
+        }
+        .display(.inlineGrid)
+        .margin(.horizontal, .px(12))
+    )
+    let css = rendered.cssString()
+    
+    #expect(css.contains("display: grid"))
+    #expect(css.contains("display: inline-grid"))
+    #expect(css.contains("margin-left: 12px"))
+    #expect(css.contains("margin-right: 12px"))
+    #expect(css.contains("gap: 16px"))
 }
 
 @Test func sizingModifiersRenderOnNormalViews() {
