@@ -37,6 +37,41 @@ struct PortfolioPreview: View {
     }
 }
 
+private func generatedClassNames(in string: String) -> [String] {
+    let pattern = #"swui-[0-9a-f]{16}"#
+    let regex = try! NSRegularExpression(pattern: pattern)
+    let range = NSRange(string.startIndex..<string.endIndex, in: string)
+
+    return regex.matches(in: string, range: range).compactMap { match in
+        guard let range = Range(match.range, in: string) else {
+            return nil
+        }
+
+        return String(string[range])
+    }
+}
+
+private func uniqueGeneratedClassNames(in string: String) -> [String] {
+    var seen: Set<String> = []
+    var names: [String] = []
+
+    for name in generatedClassNames(in: string) where seen.insert(name).inserted {
+        names.append(name)
+    }
+
+    return names
+}
+
+private func singleGeneratedClass(in rendered: RenderedView) -> String {
+    let names = uniqueGeneratedClassNames(in: rendered.htmlString())
+    #expect(names.count == 1)
+    return names.first ?? ""
+}
+
+private func cssRuleCount(in css: String, for className: String) -> Int {
+    css.components(separatedBy: ".\(className) {").count - 1
+}
+
 struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -100,8 +135,10 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let className = singleGeneratedClass(in: rendered)
 
-    #expect(html == "<p class=\"swui-1\">Styled</p>")
+    #expect(html == "<p class=\"\(className)\">Styled</p>")
+    #expect(css.contains(".\(className)"))
     #expect(css.contains("font-size: 34px"))
     #expect(css.contains("font-weight: 400"))
     #expect(css.contains("color: var(--color-primary, #111827)"))
@@ -170,8 +207,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
             .semanticRole(.h1)
             .font(.largeTitle)
     )
+    let className = singleGeneratedClass(in: rendered)
 
-    #expect(rendered.htmlString() == "<h1 class=\"swui-1\">Title</h1>")
+    #expect(rendered.htmlString() == "<h1 class=\"\(className)\">Title</h1>")
     #expect(rendered.cssString().contains("font-size: 34px"))
 }
 
@@ -194,8 +232,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
             .id("styled")
             .attribute("data-kind", "sample")
     )
+    let className = singleGeneratedClass(in: rendered)
 
-    #expect(rendered.htmlString() == "<span data-kind=\"sample\" class=\"custom swui-1\" id=\"styled\">Styled</span>")
+    #expect(rendered.htmlString() == "<span data-kind=\"sample\" class=\"custom \(className)\" id=\"styled\">Styled</span>")
     #expect(rendered.cssString().contains("font-size: 19px"))
 }
 
@@ -229,16 +268,18 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let classes = uniqueGeneratedClassNames(in: html)
     
-    #expect(html.contains("<div class=\"swui-1\">"))
+    #expect(classes.count == 2)
+    #expect(html.contains("<div class=\"\(classes.first ?? "")\">"))
     #expect(html.contains("<span>Top</span>"))
-    #expect(html.contains("<div class=\"swui-2\">"))
+    #expect(html.contains("<div class=\"\(classes.dropFirst().first ?? "")\">"))
     #expect(html.contains("<span>Left</span><span>Right</span>"))
     #expect(!html.contains("style="))
-    #expect(css.contains(".swui-1"))
+    #expect(css.contains(".\(classes.first ?? "")"))
     #expect(css.contains("flex-direction: column"))
     #expect(css.contains("gap: 20px"))
-    #expect(css.contains(".swui-2"))
+    #expect(css.contains(".\(classes.dropFirst().first ?? "")"))
     #expect(css.contains("flex-direction: row"))
     #expect(css.contains("gap: 8px"))
 }
@@ -258,8 +299,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let className = singleGeneratedClass(in: rendered)
     
-    #expect(html == "<span class=\"swui-1\">Styled</span>")
+    #expect(html == "<span class=\"\(className)\">Styled</span>")
     #expect(!html.contains("style="))
     #expect(css.contains("padding-left: 16px"))
     #expect(css.contains("padding-right: 16px"))
@@ -287,8 +329,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let className = singleGeneratedClass(in: rendered)
 
-    #expect(html == "<span class=\"swui-1\">Sized</span>")
+    #expect(html == "<span class=\"\(className)\">Sized</span>")
     #expect(!html.contains("style="))
     #expect(css.contains("width: 100%"))
     #expect(css.contains("min-width: 120px"))
@@ -306,8 +349,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let className = singleGeneratedClass(in: rendered)
 
-    #expect(html == "<img src=\"assets/profile1.jpeg\" alt=\"Damian Van de Kauter\" class=\"swui-1\">")
+    #expect(html == "<img src=\"assets/profile1.jpeg\" alt=\"Damian Van de Kauter\" class=\"\(className)\">")
     #expect(css.contains("width: 100%"))
     #expect(css.contains("max-width: 380px"))
 }
@@ -321,8 +365,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let className = singleGeneratedClass(in: rendered)
 
-    #expect(html == "<div class=\"swui-1\"><span>A</span><span>B</span></div>")
+    #expect(html == "<div class=\"\(className)\"><span>A</span><span>B</span></div>")
     #expect(css.contains("display: grid"))
 }
 
@@ -347,8 +392,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         }
         .class("about-cards")
     )
+    let className = singleGeneratedClass(in: rendered)
 
-    #expect(rendered.htmlString() == "<div class=\"about-cards swui-1\"><span>A</span><span>B</span></div>")
+    #expect(rendered.htmlString() == "<div class=\"about-cards \(className)\"><span>A</span><span>B</span></div>")
     #expect(rendered.cssString().contains("display: grid"))
 }
 
@@ -365,8 +411,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let className = singleGeneratedClass(in: rendered)
 
-    #expect(html == "<section><div class=\"swui-1\"><span>A</span><span>B</span></div></section>")
+    #expect(html == "<section><div class=\"\(className)\"><span>A</span><span>B</span></div></section>")
     #expect(css.contains("display: grid"))
 }
 
@@ -490,11 +537,14 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
             }
         }
     )
+    let vstackClass = singleGeneratedClass(in: vstack)
+    let hstackClass = singleGeneratedClass(in: hstack)
 
-    #expect(vstack.htmlString() == "<div class=\"swui-1\"><span>A</span><span>B</span></div>")
+    #expect(vstack.htmlString() == "<div class=\"\(vstackClass)\"><span>A</span><span>B</span></div>")
     #expect(vstack.cssString().contains("flex-direction: column"))
-    #expect(hstack.htmlString() == "<div class=\"swui-1\"><span>A</span><span>B</span></div>")
+    #expect(hstack.htmlString() == "<div class=\"\(hstackClass)\"><span>A</span><span>B</span></div>")
     #expect(hstack.cssString().contains("flex-direction: row"))
+    #expect(vstackClass != hstackClass)
 }
 
 @Test func stacksInsideGroupRenderNormally() {
@@ -510,8 +560,10 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let classes = uniqueGeneratedClassNames(in: html)
 
-    #expect(html == "<div class=\"swui-1\"><span>A</span></div><div class=\"swui-2\"><span>B</span></div>")
+    #expect(classes.count == 2)
+    #expect(html == "<div class=\"\(classes.first ?? "")\"><span>A</span></div><div class=\"\(classes.dropFirst().first ?? "")\"><span>B</span></div>")
     #expect(css.contains("flex-direction: column"))
     #expect(css.contains("flex-direction: row"))
 }
@@ -541,10 +593,11 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let className = singleGeneratedClass(in: rendered)
     
     #expect(html.contains("<section aria-label=\"Group\">"))
     #expect(html.contains("<div data-kind=\"content\">"))
-    #expect(html.contains("<div class=\"row swui-1\">"))
+    #expect(html.contains("<div class=\"row \(className)\">"))
     #expect(html.contains("<span>One</span><span>Two</span>"))
     #expect(html.contains("</div></div></section>"))
     #expect(css.contains("flex-direction: row"))
@@ -555,9 +608,10 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         Text("Hello")
             .foregroundStyle(.primary)
     )
+    let className = singleGeneratedClass(in: rendered)
     
-    #expect(rendered.htmlString() == "<span class=\"swui-1\">Hello</span>")
-    #expect(rendered.cssString().contains(".swui-1"))
+    #expect(rendered.htmlString() == "<span class=\"\(className)\">Hello</span>")
+    #expect(rendered.cssString().contains(".\(className)"))
     #expect(rendered.cssString().contains("color: var(--color-primary, #111827)"))
     #expect(rendered.jsString().isEmpty)
     #expect(rendered.resources.styles.count == 1)
@@ -569,8 +623,13 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         Text("Hello")
             .foregroundStyle(.primary)
     )
+    let rendered = HTMLRenderer().renderView(
+        Text("Hello")
+            .foregroundStyle(.primary)
+    )
+    let className = singleGeneratedClass(in: rendered)
     
-    #expect(html == "<span class=\"swui-1\">Hello</span>")
+    #expect(html == "<span class=\"\(className)\">Hello</span>")
     #expect(!html.contains("color: var(--color-primary, #111827)"))
 }
 
@@ -580,9 +639,93 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
             .class("button primary")
             .padding(12)
     )
+    let className = singleGeneratedClass(in: rendered)
     
-    #expect(rendered.htmlString() == "<a href=\"#work\" class=\"button primary swui-1\">Work</a>")
+    #expect(rendered.htmlString() == "<a href=\"#work\" class=\"button primary \(className)\">Work</a>")
     #expect(rendered.cssString().contains("padding: 12px"))
+}
+
+@Test func identicalModifierChainsUseSameGeneratedClassInOneRender() {
+    let rendered = HTMLRenderer().renderView(
+        Group {
+            Text("Title")
+                .font(.system(size: 19, weight: .heavy))
+                .padding(.bottom, .px(5))
+            Text("Subtitle")
+                .font(.system(size: 19, weight: .heavy))
+                .padding(.bottom, .px(5))
+        }
+    )
+    let htmlClassNames = generatedClassNames(in: rendered.htmlString())
+    let uniqueClassNames = uniqueGeneratedClassNames(in: rendered.htmlString())
+    let className = uniqueClassNames.first ?? ""
+    
+    #expect(htmlClassNames.count == 2)
+    #expect(uniqueClassNames.count == 1)
+    #expect(rendered.htmlString().contains("<span class=\"\(className)\">Title</span><span class=\"\(className)\">Subtitle</span>"))
+    #expect(cssRuleCount(in: rendered.cssString(), for: className) == 1)
+    #expect(rendered.cssString().contains("font-size: 19px"))
+    #expect(rendered.cssString().contains("font-weight: 800"))
+    #expect(rendered.cssString().contains("padding-bottom: 5px"))
+}
+
+@Test func differentModifierChainsUseDifferentGeneratedClassesInOneRender() {
+    let rendered = HTMLRenderer().renderView(
+        Group {
+            Text("Title")
+                .font(.system(size: 19, weight: .heavy))
+            Text("Subtitle")
+                .font(.system(size: 20, weight: .heavy))
+        }
+    )
+    let classNames = uniqueGeneratedClassNames(in: rendered.htmlString())
+    
+    #expect(classNames.count == 2)
+    #expect(classNames.first != classNames.dropFirst().first)
+    #expect(rendered.cssString().contains("font-size: 19px"))
+    #expect(rendered.cssString().contains("font-size: 20px"))
+}
+
+@Test func separateRendersWithIdenticalDeclarationsUseSameGeneratedClass() {
+    let first = HTMLRenderer().renderView(
+        Text("Title")
+            .font(.system(size: 19, weight: .heavy))
+            .padding(.bottom, .px(5))
+    )
+    let second = HTMLRenderer().renderView(
+        Text("Other")
+            .font(.system(size: 19, weight: .heavy))
+            .padding(.bottom, .px(5))
+    )
+    
+    #expect(singleGeneratedClass(in: first) == singleGeneratedClass(in: second))
+    #expect(first.cssString() == second.cssString())
+}
+
+@Test func separateRendersWithDifferentDeclarationsDoNotCollide() {
+    let first = HTMLRenderer().renderView(
+        Text("Title")
+            .font(.system(size: 19, weight: .heavy))
+    )
+    let second = HTMLRenderer().renderView(
+        Text("Title")
+            .font(.system(size: 20, weight: .heavy))
+    )
+    
+    #expect(singleGeneratedClass(in: first) != singleGeneratedClass(in: second))
+}
+
+@Test func userClassesArePreservedAlongsideContentBasedGeneratedClasses() {
+    let rendered = HTMLRenderer().renderView(
+        Text("42")
+            .class("metric-card")
+            .font(.system(size: 19, weight: .heavy))
+            .padding(.bottom, .px(5))
+    )
+    let className = singleGeneratedClass(in: rendered)
+    
+    #expect(rendered.htmlString() == "<span class=\"metric-card \(className)\">42</span>")
+    #expect(rendered.cssString().contains(".\(className)"))
 }
 
 @Test func protocolButtonStyleCompilesAndRendersOnButton() {
@@ -592,8 +735,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let className = singleGeneratedClass(in: rendered)
     
-    #expect(html == "<button class=\"swui-1\">Funico</button>")
+    #expect(html == "<button class=\"\(className)\">Funico</button>")
     #expect(!html.contains("<span"))
     #expect(!html.contains("<a"))
     #expect(css.contains("padding-left: 15px"))
@@ -613,8 +757,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let className = singleGeneratedClass(in: rendered)
     
-    #expect(html == "<a href=\"#work\" class=\"swui-1\">Bekijk mijn werk</a>")
+    #expect(html == "<a href=\"#work\" class=\"\(className)\">Bekijk mijn werk</a>")
     #expect(!html.contains("<button"))
     #expect(!html.contains("<span"))
     #expect(css.contains("padding-left: 15px"))
@@ -638,9 +783,11 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let classes = uniqueGeneratedClassNames(in: html)
     
-    #expect(html.contains("<a href=\"#primary\" class=\"button primary swui-2\">Primary</a>"))
-    #expect(html.contains("<button class=\"button secondary swui-3\">Secondary</button>"))
+    #expect(classes.count == 3)
+    #expect(html.contains("<a href=\"#primary\" class=\"button primary \(classes.dropFirst().first ?? "")\">Primary</a>"))
+    #expect(html.contains("<button class=\"button secondary \(classes.dropFirst(2).first ?? "")\">Secondary</button>"))
     #expect(css.contains("background-color: var(--color-accent, #2563eb)"))
     #expect(css.contains("border: 1px solid var(--color-border, #d1d5db)"))
 }
@@ -698,19 +845,21 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let classes = uniqueGeneratedClassNames(in: html)
     
-    #expect(html.contains("<div role=\"tablist\" class=\"swiftwebui-tab-bar swui-1\">"))
-    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"true\" class=\"swiftwebui-tab swiftwebui-tab-selected swui-2\"><span>Info</span></button>"))
-    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"swiftwebui-tab swui-3\"><span>Persoonlijk</span></button>"))
-    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"swiftwebui-tab swui-3\"><span>Contact</span></button>"))
+    #expect(classes.count == 3)
+    #expect(html.contains("<div role=\"tablist\" class=\"swiftwebui-tab-bar \(classes.first ?? "")\">"))
+    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"true\" class=\"swiftwebui-tab swiftwebui-tab-selected \(classes.dropFirst().first ?? "")\"><span>Info</span></button>"))
+    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"swiftwebui-tab \(classes.dropFirst(2).first ?? "")\"><span>Persoonlijk</span></button>"))
+    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"swiftwebui-tab \(classes.dropFirst(2).first ?? "")\"><span>Contact</span></button>"))
     #expect(!html.contains("style="))
-    #expect(css.contains(".swui-1"))
+    #expect(css.contains(".\(classes.first ?? "")"))
     #expect(css.contains("display: flex"))
     #expect(css.contains("gap: 8px"))
-    #expect(css.contains(".swui-2"))
+    #expect(css.contains(".\(classes.dropFirst().first ?? "")"))
     #expect(css.contains("background-color: var(--color-accent, #2563eb)"))
     #expect(css.contains("color: #fff"))
-    #expect(css.contains(".swui-3"))
+    #expect(css.contains(".\(classes.dropFirst(2).first ?? "")"))
     #expect(css.contains("background-color: var(--color-surface, #ffffff)"))
     #expect(css.contains("color: var(--color-secondary, #4b5563)"))
 }
@@ -872,9 +1021,11 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let rendered = HTMLRenderer().renderView(PortfolioPreview())
     let html = rendered.htmlString()
     let css = rendered.cssString()
+    let classes = uniqueGeneratedClassNames(in: html)
     
-    #expect(html.contains("<div class=\"swui-1\">"))
-    #expect(html.contains("<span class=\"swui-2\">Maak websites met Swift.</span>"))
+    #expect(classes.count >= 5)
+    #expect(html.contains("<div class=\"\(classes.first ?? "")\">"))
+    #expect(html.contains("<span class=\"\(classes.dropFirst().first ?? "")\">Maak websites met Swift.</span>"))
     #expect(html.contains("role=\"tablist\""))
     #expect(html.contains("data-swiftwebui-state-key=\"state-"))
     #expect(html.contains("data-swiftwebui-state-initial-value=\"info\""))
@@ -883,18 +1034,18 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(html.contains("<button data-swiftwebui-action=\"set-state\""))
     #expect(html.contains("Toon contact</button>"))
     #expect(!html.contains("style="))
-    #expect(css.contains(".swui-1"))
+    #expect(css.contains(".\(classes.first ?? "")"))
     #expect(css.contains("flex-direction: column"))
     #expect(css.contains("padding: 24px"))
-    #expect(css.contains(".swui-2"))
+    #expect(css.contains(".\(classes.dropFirst().first ?? "")"))
     #expect(css.contains("font-size: 34px"))
     #expect(css.contains("font-weight: 400"))
     #expect(css.contains("color: var(--color-primary, #111827)"))
-    #expect(css.contains(".swui-3"))
+    #expect(css.contains(".\(classes.dropFirst(2).first ?? "")"))
     #expect(css.contains("flex-direction: row"))
-    #expect(css.contains(".swui-4"))
+    #expect(css.contains(".\(classes.dropFirst(3).first ?? "")"))
     #expect(css.contains("background-color: var(--color-accent, #2563eb)"))
-    #expect(css.contains(".swui-5"))
+    #expect(css.contains(".\(classes.dropFirst(4).first ?? "")"))
     #expect(css.contains("border: 1px solid var(--color-border, #d1d5db)"))
     #expect(!rendered.jsString().isEmpty)
 }
@@ -915,6 +1066,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         )
     )
     let html = document.htmlString(prettyPrinted: false)
+    let className = singleGeneratedClass(in: document.renderedView)
     
     #expect(html.hasPrefix("<!DOCTYPE html>"))
     #expect(html.contains("<html>"))
@@ -924,7 +1076,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(html.contains("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"))
     #expect(html.contains("<title>SwiftWebUI Preview</title>"))
     #expect(html.contains("<link rel=\"stylesheet\" href=\"styles.css\">"))
-    #expect(html.contains("<span class=\"swui-1\">Hello Document</span>"))
+    #expect(html.contains("<span class=\"\(className)\">Hello Document</span>"))
 }
 
 @Test func webDocumentOmitsTitleWhenMissing() {
@@ -1081,7 +1233,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(html.contains("<!DOCTYPE html>"))
     #expect(html.contains("<link rel=\"stylesheet\" href=\"styles.css\">"))
     #expect(html.contains("<script src=\"app.js\"></script>"))
-    #expect(css.contains(".swui-1"))
+    #expect(!uniqueGeneratedClassNames(in: css).isEmpty)
     #expect(js.contains("document.addEventListener(\"click\""))
     
     print(folder.path)
