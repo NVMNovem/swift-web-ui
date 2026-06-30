@@ -21,7 +21,7 @@ struct PortfolioPreview: View {
         VStack(alignment: .leading, spacing: 24) {
             Text("Maak websites met Swift.")
                 .font(.largeTitle)
-                .foregroundStyle(.primary)
+                .foregroundStyle(.css("var(--primary)"))
             
             TabBar(selection: $selectedTab) {
                 Tab("Info", value: PortfolioTab.info)
@@ -79,7 +79,7 @@ struct PrimaryButtonStyle: ButtonStyle {
             .padding(.vertical, 5)
             .bold()
             .foregroundStyle(.white)
-            .background(.accent)
+            .background(.css("var(--accent)"))
             .clipShape(.capsule)
     }
 }
@@ -131,7 +131,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         Text("Styled")
             .semanticRole(.p)
             .font(.largeTitle)
-            .foregroundStyle(.primary)
+            .foregroundStyle(.css("var(--primary)"))
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
@@ -238,6 +238,86 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(rendered.cssString().contains("font-size: 19px"))
 }
 
+@Test func letterSpacingModifierRendersSwiftCSSLetterSpacingProperty() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Hello")
+            .letterSpacing(.px(2))
+    )
+
+    #expect(rendered.cssString().contains("letter-spacing: 2px"))
+}
+
+@Test func textTransformModifierRendersSwiftCSSTextTransformProperty() {
+    let uppercase = HTMLRenderer().renderView(Text("Hello").textTransform(.uppercase))
+    let lowercase = HTMLRenderer().renderView(Text("Hello").textTransform(.lowercase))
+    let capitalize = HTMLRenderer().renderView(Text("Hello").textTransform(.capitalize))
+
+    #expect(uppercase.cssString().contains("text-transform: uppercase"))
+    #expect(lowercase.cssString().contains("text-transform: lowercase"))
+    #expect(capitalize.cssString().contains("text-transform: capitalize"))
+}
+
+@Test func lineHeightModifierRendersSwiftCSSLineHeightProperty() {
+    let em = HTMLRenderer().renderView(
+        Text("Paragraph")
+            .lineHeight(.em(1.5))
+    )
+    let px = HTMLRenderer().renderView(
+        Text("Paragraph")
+            .lineHeight(.px(28))
+    )
+
+    #expect(em.cssString().contains("line-height: 1.5em"))
+    #expect(px.cssString().contains("line-height: 28px"))
+}
+
+@Test func textAlignModifierRendersSwiftCSSTextAlignProperty() {
+    let center = HTMLRenderer().renderView(Text("Hello").textAlign(.center))
+    let trailing = HTMLRenderer().renderView(Text("Hello").textAlign(.trailing))
+    let justified = HTMLRenderer().renderView(Text("Hello").textAlign(.justified))
+
+    #expect(center.cssString().contains("text-align: center"))
+    #expect(trailing.cssString().contains("text-align: right"))
+    #expect(justified.cssString().contains("text-align: justify"))
+}
+
+@Test func textDecorationModifierRendersSwiftCSSTextDecorationProperty() {
+    let underline = HTMLRenderer().renderView(Text("Hello").textDecoration(.underline))
+    let lineThrough = HTMLRenderer().renderView(Text("Hello").textDecoration(.lineThrough))
+    let overline = HTMLRenderer().renderView(Text("Hello").textDecoration(.overline))
+
+    #expect(underline.cssString().contains("text-decoration: underline"))
+    #expect(lineThrough.cssString().contains("text-decoration: line-through"))
+    #expect(overline.cssString().contains("text-decoration: overline"))
+}
+
+@Test func typographyModifiersAreGenericAndComposeWithModifiedViews() {
+    let text = HTMLRenderer().renderView(
+        Text("Hello")
+            .font(.headline)
+            .letterSpacing(.em(0.1))
+            .textTransform(.uppercase)
+    )
+    let link = HTMLRenderer().renderView(
+        Link("Website", destination: "https://example.com")
+            .textDecoration(.underline)
+    )
+    let group = HTMLRenderer().renderView(
+        Group {
+            Text("Paragraph")
+        }
+        .lineHeight(.em(1.5))
+        .textAlign(.center)
+    )
+
+    #expect(text.cssString().contains("font-size: 17px"))
+    #expect(text.cssString().contains("letter-spacing: 0.1em"))
+    #expect(text.cssString().contains("text-transform: uppercase"))
+    #expect(link.cssString().contains("text-decoration: underline"))
+    #expect(group.cssString().contains("line-height: 1.5em"))
+    #expect(group.cssString().contains("text-align: center"))
+}
+
 @Test func semanticTextRolesRenderInsideVStackGroupAndSection() {
     let rendered = HTMLRenderer().renderView(
         VStack(spacing: 12) {
@@ -292,7 +372,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
             .padding(.horizontal, 16)
             .frame(width: 320, height: nil, maxWidth: .percent(100))
             .background(.white)
-            .foregroundStyle(.primary)
+            .foregroundStyle(.css("var(--primary)"))
             .font(.largeTitle)
             .cornerRadius(12)
             .border("1px solid currentColor")
@@ -328,15 +408,15 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     let tokenBackground = HTMLRenderer().renderView(
         Text("Panel")
-            .background(.panel)
+            .background(.css("var(--panel)"))
     )
     let defaultBorder = HTMLRenderer().renderView(
         Text("Panel")
-            .border(width: .px(1), color: .border)
+            .border(width: .px(1), color: .css("var(--border)"))
     )
     let dashedBorder = HTMLRenderer().renderView(
         Text("Panel")
-            .border(width: .px(1), style: .dashed, color: .accent)
+            .border(width: .px(1), style: .dashed, color: .css("var(--accent)"))
     )
 
     #expect(cssBackground.cssString().contains("background-color: var(--panel)"))
@@ -349,8 +429,8 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let typed = HTMLRenderer().renderView(
         Text("Panel")
             .class("metric-card")
-            .background(.panel)
-            .border(width: .px(1), color: .border)
+            .background(.css("var(--panel)"))
+            .border(width: .px(1), color: .css("var(--border)"))
     )
     let raw = HTMLRenderer().renderView(
         Text("Panel")
@@ -372,7 +452,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func typedForegroundStyleTokenRendersCSS() {
     let rendered = HTMLRenderer().renderView(
         Text("Muted")
-            .foregroundStyle(.muted)
+            .foregroundStyle(.css("var(--muted)"))
     )
 
     #expect(rendered.cssString().contains("color: var(--muted)"))
@@ -815,7 +895,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func renderViewReturnsContentAndResourcesSeparately() {
     let rendered = HTMLRenderer().renderView(
         Text("Hello")
-            .foregroundStyle(.primary)
+            .foregroundStyle(.css("var(--primary)"))
     )
     let className = singleGeneratedClass(in: rendered)
     
@@ -830,11 +910,11 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func renderReturnsHTMLOnlyString() {
     let html = HTMLRenderer().render(
         Text("Hello")
-            .foregroundStyle(.primary)
+            .foregroundStyle(.css("var(--primary)"))
     )
     let rendered = HTMLRenderer().renderView(
         Text("Hello")
-            .foregroundStyle(.primary)
+            .foregroundStyle(.css("var(--primary)"))
     )
     let className = singleGeneratedClass(in: rendered)
     
@@ -997,8 +1077,8 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(classes.count == 3)
     #expect(html.contains("<a href=\"#primary\" class=\"button primary \(classes.dropFirst().first ?? "")\">Primary</a>"))
     #expect(html.contains("<button class=\"button secondary \(classes.dropFirst(2).first ?? "")\">Secondary</button>"))
-    #expect(css.contains("background-color: var(--accent)"))
-    #expect(css.contains("border: 1px solid var(--border)"))
+    #expect(css.contains("background-color: #000"))
+    #expect(css.contains("border: 1px solid #000"))
 }
 
 @Test func stateAndBindingCompileAndCarryValues() {
@@ -1066,11 +1146,11 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains("display: flex"))
     #expect(css.contains("gap: 8px"))
     #expect(css.contains(".\(classes.dropFirst().first ?? "")"))
-    #expect(css.contains("background-color: var(--accent)"))
+    #expect(css.contains("background-color: #000"))
     #expect(css.contains("color: #fff"))
     #expect(css.contains(".\(classes.dropFirst(2).first ?? "")"))
-    #expect(css.contains("background-color: var(--panel)"))
-    #expect(css.contains("color: var(--muted)"))
+    #expect(css.contains("background-color: #fff"))
+    #expect(css.contains("color: #000"))
 }
 
 @Test func tabBarSupportsViewLabelsAndConditionalTabs() {
@@ -1253,9 +1333,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains(".\(classes.dropFirst(2).first ?? "")"))
     #expect(css.contains("flex-direction: row"))
     #expect(css.contains(".\(classes.dropFirst(3).first ?? "")"))
-    #expect(css.contains("background-color: var(--accent)"))
+    #expect(css.contains("background-color: #000"))
     #expect(css.contains(".\(classes.dropFirst(4).first ?? "")"))
-    #expect(css.contains("border: 1px solid var(--border)"))
+    #expect(css.contains("border: 1px solid #000"))
     #expect(!rendered.jsString().isEmpty)
 }
 
@@ -1271,7 +1351,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         title: "SwiftWebUI Preview",
         renderedView: HTMLRenderer().renderView(
             Text("Hello Document")
-                .foregroundStyle(.primary)
+                .foregroundStyle(.css("var(--primary)"))
         )
     )
     let html = document.htmlString(prettyPrinted: false)
@@ -1304,7 +1384,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let styledWithoutPath = WebDocument(
         renderedView: HTMLRenderer().renderView(
             Text("Styled")
-                .foregroundStyle(.primary)
+                .foregroundStyle(.css("var(--primary)"))
         ),
         stylesheetPath: nil
     )
@@ -1371,7 +1451,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func webDocumentKeepsGeneratedCSSAvailableSeparately() {
     let rendered = HTMLRenderer().renderView(
         Text("Styled")
-            .foregroundStyle(.primary)
+            .foregroundStyle(.css("var(--primary)"))
     )
     let document = WebDocument(renderedView: rendered)
     

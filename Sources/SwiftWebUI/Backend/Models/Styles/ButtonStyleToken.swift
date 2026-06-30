@@ -34,12 +34,12 @@ public extension ButtonStyleToken {
             JustifyContent(.center),
             Gap(.px(8)),
             Padding("10px 16px"),
-            BackgroundColor(Color.accent.cssColor),
+            BackgroundColor(Color.black.cssColor),
             SwiftCSS.Color(Color.white.cssColor),
             BorderRadius(.px(999)),
             Border("1px solid transparent"),
-            BoxShadow("0 12px 30px rgba(37, 99, 235, 0.22)"),
-            RawProperty("text-decoration", "none"),
+            BoxShadow("0 12px 30px rgba(0, 0, 0, 0.18)"),
+            SwiftCSS.TextDecoration(TextDecorationValue.none),
             RawProperty("font-weight", "700")
         ]
     )
@@ -52,11 +52,11 @@ public extension ButtonStyleToken {
             JustifyContent(.center),
             Gap(.px(8)),
             Padding("10px 16px"),
-            BackgroundColor(Color.surface.cssColor),
-            SwiftCSS.Color(Color.primary.cssColor),
+            BackgroundColor(Color.white.cssColor),
+            SwiftCSS.Color(Color.black.cssColor),
             BorderRadius(.px(999)),
-            Border("1px solid \(Color.border.cssValue)"),
-            RawProperty("text-decoration", "none"),
+            Border("1px solid \(Color.black.cssValue)"),
+            SwiftCSS.TextDecoration(TextDecorationValue.none),
             RawProperty("font-weight", "700")
         ]
     )

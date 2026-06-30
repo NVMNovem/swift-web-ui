@@ -247,11 +247,27 @@ For example:
 Text("Hello")
     .semanticRole(.h1)
     .font(.largeTitle)
-    .foregroundStyle(.primary)
+    .foregroundStyle(.css("var(--primary)"))
     .padding(24)
 ```
 
 This should be represented as `ViewModifierData` or equivalent modifier storage. It should not immediately commit to a particular HTML or CSS output shape.
+
+Typography follows the same rule. `Text.semanticRole(_:)` controls HTML semantics, while generic visual typography modifiers such as `.letterSpacing(...)`, `.textTransform(...)`, `.lineHeight(...)`, `.textAlign(...)`, and `.textDecoration(...)` apply to any `View` and lower through SwiftCSS properties:
+
+```swift
+Text("Eyebrow")
+    .font(.caption)
+    .letterSpacing(.em(0.1))
+    .textTransform(.uppercase)
+
+Text("Paragraph")
+    .lineHeight(.em(1.5))
+    .textAlign(.center)
+
+Link("Website", destination: "https://example.com")
+    .textDecoration(.underline)
+```
 
 Keeping modifiers as data lets renderers choose among several output strategies:
 

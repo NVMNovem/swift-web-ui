@@ -147,6 +147,16 @@ extension RenderContext {
                 cssProperties.append(FontWeight(value))
             case .font(let token):
                 cssProperties.append(contentsOf: token.cssProperties)
+            case .letterSpacing(let value):
+                cssProperties.append(LetterSpacing(value.cssLength))
+            case .textTransform(let value):
+                cssProperties.append(SwiftCSS.TextTransform(value.cssValue))
+            case .lineHeight(let value):
+                cssProperties.append(LineHeight(value.cssLength))
+            case .textAlign(let value):
+                cssProperties.append(TextAlign(value.cssValue))
+            case .textDecoration(let value):
+                cssProperties.append(SwiftCSS.TextDecoration(value.cssValue))
             case .cornerRadius(let value):
                 cssProperties.append(BorderRadius(value.cssLength))
             case .clipShape(let shape):

@@ -13,6 +13,13 @@ enum PortfolioTab: String, CaseIterable {
     case contact
 }
 
+extension Color {
+    static let panel = Color.css("var(--panel)")
+    static let border = Color.css("var(--border)")
+    static let muted = Color.css("var(--muted)")
+    static let primary = Color.css("var(--primary)")
+}
+
 struct PortfolioPreview: View {
     @State private var selectedTab = PortfolioTab.info
 
@@ -28,7 +35,7 @@ struct PortfolioPreview: View {
 
                 Text("Static HTML and extracted CSS from a Swift view tree.")
                     .semanticRole(.p)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.muted)
             }
 
             Grid(spacing: 16) {
@@ -84,6 +91,31 @@ Display and margin modifiers are generic view modifiers. Use `.display(...)` for
 
 Use `Text.semanticRole(_:)` for HTML meaning, such as `.h1` for the page heading or `.p` for paragraph copy. Use `.font(.largeTitle)`, `.font(.system(size:weight:design:))`, `.foregroundStyle(...)`, `.class(...)`, and other styling modifiers for visual presentation; font choices do not imply heading or paragraph elements, and semantic roles do not imply visual font styling.
 
-Prefer typed visual modifiers for common styling: `.background(.panel)`, `.foregroundStyle(.muted)`, and `.border(width: .px(1), color: .border)` lower to SwiftCSS-backed declarations. Built-in color tokens render as CSS custom properties such as `var(--panel)` and `var(--border)`, so external stylesheets can provide the theme values. Raw string overloads such as `.background("linear-gradient(...)")` and `.border("1px solid currentColor")` remain available as low-level CSS escape hatches.
+Typography modifiers are generic view modifiers. `semanticRole` controls HTML semantics; `.letterSpacing(...)`, `.textTransform(...)`, `.lineHeight(...)`, `.textAlign(...)`, and `.textDecoration(...)` control visual presentation and lower through SwiftCSS-backed declarations.
+
+```swift
+Text("Eyebrow")
+    .font(.caption)
+    .letterSpacing(.em(0.1))
+    .textTransform(.uppercase)
+
+Text("Paragraph")
+    .lineHeight(.em(1.5))
+    .textAlign(.center)
+
+Link("Website", destination: "https://example.com")
+    .textDecoration(.underline)
+```
+
+Prefer typed visual modifiers for common styling: `.background(.css("var(--panel)"))`, `.foregroundStyle(.css("var(--muted)"))`, and `.border(width: .px(1), color: .css("var(--border)"))` lower to SwiftCSS-backed declarations. SwiftWebUI provides generic `Color.css(...)`, `.clear`, `.black`, and `.white`; apps and sites should define their own design tokens in their own module, for example:
+
+```swift
+extension Color {
+    static let panel = Color.css("var(--panel)")
+    static let border = Color.css("var(--border)")
+}
+```
+
+Raw string overloads such as `.background("linear-gradient(...)")` and `.border("1px solid currentColor")` remain available as low-level CSS escape hatches.
 
 Use `.attribute(_:_:)` as an escape hatch for valid HTML attributes that do not have typed SwiftWebUI modifiers yet. Prefer typed modifiers when available; `.attribute(_:_:)` is useful for `data-*`, ARIA, and other generic attributes.

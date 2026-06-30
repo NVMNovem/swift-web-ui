@@ -96,6 +96,26 @@ public extension View {
     func font(_ font: Font) -> ModifiedView<Self> {
         modified(.font(font))
     }
+
+    func letterSpacing(_ value: Length) -> ModifiedView<Self> {
+        modified(.letterSpacing(value))
+    }
+
+    func textTransform(_ value: TextTransform) -> ModifiedView<Self> {
+        modified(.textTransform(value))
+    }
+
+    func lineHeight(_ value: Length) -> ModifiedView<Self> {
+        modified(.lineHeight(value))
+    }
+
+    func textAlign(_ value: TextAlignment) -> ModifiedView<Self> {
+        modified(.textAlign(value))
+    }
+
+    func textDecoration(_ value: TextDecoration) -> ModifiedView<Self> {
+        modified(.textDecoration(value))
+    }
     
     func cornerRadius(_ value: Length) -> ModifiedView<Self> {
         modified(.cornerRadius(value))
@@ -257,6 +277,26 @@ public extension ModifiedView {
     
     func font(_ font: Font) -> ModifiedView<Content> {
         appending(.font(font))
+    }
+
+    func letterSpacing(_ value: Length) -> ModifiedView<Content> {
+        appending(.letterSpacing(value))
+    }
+
+    func textTransform(_ value: TextTransform) -> ModifiedView<Content> {
+        appending(.textTransform(value))
+    }
+
+    func lineHeight(_ value: Length) -> ModifiedView<Content> {
+        appending(.lineHeight(value))
+    }
+
+    func textAlign(_ value: TextAlignment) -> ModifiedView<Content> {
+        appending(.textAlign(value))
+    }
+
+    func textDecoration(_ value: TextDecoration) -> ModifiedView<Content> {
+        appending(.textDecoration(value))
     }
     
     func cornerRadius(_ value: Length) -> ModifiedView<Content> {

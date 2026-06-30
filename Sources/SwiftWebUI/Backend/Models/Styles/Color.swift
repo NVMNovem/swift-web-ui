@@ -27,17 +27,9 @@ public struct Color: Hashable, Sendable, ExpressibleByStringLiteral {
         Color(value)
     }
 
-    public static let accent = Color.css("var(--accent)")
-    public static let panel = Color.css("var(--panel)")
-    public static let border = Color.css("var(--border)")
-    public static let muted = Color.css("var(--muted)")
-    public static let primary = Color.css("var(--primary)")
-    public static let white = Color.css("#fff")
-
-    public static let secondary = Color.muted
-    public static let surface = Color.panel
     public static let clear = Color.css("transparent")
     public static let black = Color.css("#000")
+    public static let white = Color.css("#fff")
     
     public static func == (lhs: Color, rhs: Color) -> Bool {
         lhs.cssValue == rhs.cssValue

@@ -28,6 +28,7 @@ public struct Length: Equatable, Sendable, ExpressibleByIntegerLiteral, Expressi
     }
 
     public static func px(_ value: Int) -> Length { Length("\(value)px") }
+    public static func em(_ value: Double) -> Length { Length("\(formatLengthNumber(value))em") }
     public static func rem(_ value: Double) -> Length { Length("\(value)rem") }
     public static func percent(_ value: Double) -> Length { Length("\(formatLengthNumber(value))%") }
     public static let auto = Length("auto")
