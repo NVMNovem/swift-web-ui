@@ -79,6 +79,12 @@ public extension View {
         background(Background(color))
     }
     
+    /// Low-level escape hatch for raw CSS background values. Prefer `background(_:)`
+    /// with `Color` for color tokens.
+    func background(_ cssValue: String) -> ModifiedView<Self> {
+        background(Background(cssValue))
+    }
+    
     func foregroundStyle(_ color: Color) -> ModifiedView<Self> {
         modified(.foregroundStyle(color))
     }
@@ -103,6 +109,12 @@ public extension View {
         modified(.border(border))
     }
     
+    func border(width: Length, style: BorderLineStyle = .solid, color: Color) -> ModifiedView<Self> {
+        border(SwiftCSS.Border("\(width.cssValue) \(style.rawValue) \(color.cssValue)"))
+    }
+    
+    /// Low-level escape hatch for raw CSS border values. Prefer
+    /// `border(width:style:color:)` when the border can be expressed with typed parts.
     func border(_ cssValue: String) -> ModifiedView<Self> {
         border(SwiftCSS.Border(cssValue))
     }
@@ -111,6 +123,8 @@ public extension View {
         modified(.shadow(shadow))
     }
     
+    /// Low-level escape hatch for raw CSS box-shadow values. Prefer `BoxShadow`
+    /// directly until a UI-level shadow token model is needed.
     func shadow(_ cssValue: String) -> ModifiedView<Self> {
         shadow(BoxShadow(cssValue))
     }
@@ -227,6 +241,12 @@ public extension ModifiedView {
         background(Background(color))
     }
     
+    /// Low-level escape hatch for raw CSS background values. Prefer `background(_:)`
+    /// with `Color` for color tokens.
+    func background(_ cssValue: String) -> ModifiedView<Content> {
+        background(Background(cssValue))
+    }
+    
     func foregroundStyle(_ color: Color) -> ModifiedView<Content> {
         appending(.foregroundStyle(color))
     }
@@ -251,6 +271,12 @@ public extension ModifiedView {
         appending(.border(border))
     }
     
+    func border(width: Length, style: BorderLineStyle = .solid, color: Color) -> ModifiedView<Content> {
+        border(SwiftCSS.Border("\(width.cssValue) \(style.rawValue) \(color.cssValue)"))
+    }
+    
+    /// Low-level escape hatch for raw CSS border values. Prefer
+    /// `border(width:style:color:)` when the border can be expressed with typed parts.
     func border(_ cssValue: String) -> ModifiedView<Content> {
         border(SwiftCSS.Border(cssValue))
     }
@@ -259,6 +285,8 @@ public extension ModifiedView {
         appending(.shadow(shadow))
     }
     
+    /// Low-level escape hatch for raw CSS box-shadow values. Prefer `BoxShadow`
+    /// directly until a UI-level shadow token model is needed.
     func shadow(_ cssValue: String) -> ModifiedView<Content> {
         shadow(BoxShadow(cssValue))
     }

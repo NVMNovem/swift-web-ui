@@ -287,7 +287,7 @@ private func tabStyleCSS(selected: Bool) -> [any CSSProperty] {
         Gap(.px(6)),
         Padding(.init("0.5rem 0.875rem")),
         BorderRadius(.px(999)),
-        Border(selected ? "1px solid var(--color-accent, #2563eb)" : "1px solid var(--color-border, #d1d5db)"),
+        Border(selected ? "1px solid \(Color.accent.cssValue)" : "1px solid \(Color.border.cssValue)"),
         BackgroundColor(selected ? Color.accent.cssColor : Color.surface.cssColor),
         SwiftCSS.Color(selected ? Color.white.cssColor : Color.secondary.cssColor),
         FontWeight(selected ? "700" : "600")

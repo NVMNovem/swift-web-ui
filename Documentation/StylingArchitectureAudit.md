@@ -20,15 +20,15 @@ SwiftWebUI may depend on SwiftCSS. SwiftCSS must not depend on SwiftWebUI.
 
 | Name | SwiftCSS responsibility | SwiftWebUI responsibility | Decision |
 | --- | --- | --- | --- |
-| `Border` | CSS `border` property. | Previously a string wrapper that immediately created `SwiftCSS.Border`. | Removed from SwiftWebUI. Border modifiers now store `SwiftCSS.Border` directly and expose string convenience overloads. |
-| `Color` | CSS `color` property. | Semantic UI color token that lowers to `CSSColor` and then `SwiftCSS.Color` or `BackgroundColor`. | Keep in SwiftWebUI. The responsibilities differ, but unqualified use in rendering code should stay explicit as `SwiftCSS.Color` for CSS properties. |
+| `Border` | CSS `border` property. | Previously a string wrapper that immediately created `SwiftCSS.Border`. | Removed from SwiftWebUI. Border modifiers store `SwiftCSS.Border` directly. The typed `.border(width:style:color:)` overload composes a `SwiftCSS.Border` from SwiftWebUI UI tokens and lengths without introducing a SwiftWebUI border model. |
+| `Color` | CSS `color` property. | Semantic UI color token that lowers to `CSSColor` and then `SwiftCSS.Color` or `BackgroundColor`. | Keep in SwiftWebUI. The responsibilities differ, but unqualified use in rendering code should stay explicit as `SwiftCSS.Color` for CSS properties. Built-in tokens render as CSS custom properties such as `var(--primary)`, `var(--panel)`, and `var(--border)`. |
 
 ## Duplicate Concepts
 
 | Concept | SwiftCSS owner | SwiftWebUI owner | Decision |
 | --- | --- | --- | --- |
-| Background | `BackgroundColor` and raw `background` properties. | `Background`, a UI modifier value that can carry a semantic `Color` or raw background value. | Keep in SwiftWebUI as a modifier value. Rendering lowers it to `BackgroundColor` or `RawProperty("background", ...)`. |
-| Shadow | `BoxShadow` CSS property. | No separate owner after this audit. | Removed the raw `Shadow` wrapper. The `.shadow(...)` modifier stores `BoxShadow` directly and keeps a string convenience overload. Add a future `ShadowStyle` only if it models semantic elevations, states, or typed shadow components. |
+| Background | `BackgroundColor` and raw `background` properties. | `Background`, a UI modifier value that can carry a semantic `Color` or raw background value. | Keep in SwiftWebUI as a modifier value. Rendering lowers typed colors to `BackgroundColor` and raw background values to `RawProperty("background", ...)`. Prefer `.background(.panel)` or `.background(.css("var(--panel)"))`; keep `.background("...")` as a low-level escape hatch. |
+| Shadow | `BoxShadow` CSS property. | No separate owner after this audit. | Removed the raw `Shadow` wrapper. The `.shadow(...)` modifier stores `BoxShadow` directly and keeps a string convenience overload as an escape hatch. Add a future `ShadowStyle` only if it models semantic elevations, states, or typed shadow components. |
 | Font | `FontSize`, `FontWeight`, `FontFamily`, and related CSS properties. | `Font`, a SwiftUI-like semantic visual styling API lowered into SwiftCSS declarations. | Keep `Font` in SwiftWebUI. It provides UI-level font roles and system font intent rather than duplicating CSS property rendering. |
 | Padding | `Padding` CSS property and edge-specific raw properties. | `.padding(...)` modifier accepting SwiftWebUI `Length` and `Edge.Set`. | Keep modifier in SwiftWebUI; CSS property remains SwiftCSS. Edge expansion happens at render lowering. |
 | Gap | `Gap` CSS property. | `.gap(...)` modifier and stack spacing values. | Keep modifier in SwiftWebUI; rendered property remains SwiftCSS `Gap`. |

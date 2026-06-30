@@ -141,7 +141,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains(".\(className)"))
     #expect(css.contains("font-size: 34px"))
     #expect(css.contains("font-weight: 400"))
-    #expect(css.contains("color: var(--color-primary, #111827)"))
+    #expect(css.contains("color: var(--primary)"))
 }
 
 @Test func systemFontSizeEmitsFontSizeCSS() {
@@ -312,13 +312,70 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains("width: 320px"))
     #expect(css.contains("max-width: 100%"))
     #expect(css.contains("background-color: #fff"))
-    #expect(css.contains("color: var(--color-primary, #111827)"))
+    #expect(css.contains("color: var(--primary)"))
     #expect(css.contains("font-size: 34px"))
     #expect(css.contains("font-weight: 400"))
     #expect(css.contains("border-radius: 12px"))
     #expect(css.contains("border: 1px solid currentColor"))
     #expect(css.contains("box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12)"))
     #expect(css.contains("gap: 10px"))
+}
+
+@Test func typedBackgroundAndBorderModifiersRenderCSS() {
+    let cssBackground = HTMLRenderer().renderView(
+        Text("Panel")
+            .background(.css("var(--panel)"))
+    )
+    let tokenBackground = HTMLRenderer().renderView(
+        Text("Panel")
+            .background(.panel)
+    )
+    let defaultBorder = HTMLRenderer().renderView(
+        Text("Panel")
+            .border(width: .px(1), color: .border)
+    )
+    let dashedBorder = HTMLRenderer().renderView(
+        Text("Panel")
+            .border(width: .px(1), style: .dashed, color: .accent)
+    )
+
+    #expect(cssBackground.cssString().contains("background-color: var(--panel)"))
+    #expect(tokenBackground.cssString().contains("background-color: var(--panel)"))
+    #expect(defaultBorder.cssString().contains("border: 1px solid var(--border)"))
+    #expect(dashedBorder.cssString().contains("border: 1px dashed var(--accent)"))
+}
+
+@Test func typedAndRawVisualModifiersComposeWithClass() {
+    let typed = HTMLRenderer().renderView(
+        Text("Panel")
+            .class("metric-card")
+            .background(.panel)
+            .border(width: .px(1), color: .border)
+    )
+    let raw = HTMLRenderer().renderView(
+        Text("Panel")
+            .class("metric-card")
+            .background("linear-gradient(red, blue)")
+            .border("1px solid currentColor")
+    )
+    let typedClassName = singleGeneratedClass(in: typed)
+    let rawClassName = singleGeneratedClass(in: raw)
+
+    #expect(typed.htmlString() == "<span class=\"metric-card \(typedClassName)\">Panel</span>")
+    #expect(typed.cssString().contains("background-color: var(--panel)"))
+    #expect(typed.cssString().contains("border: 1px solid var(--border)"))
+    #expect(raw.htmlString() == "<span class=\"metric-card \(rawClassName)\">Panel</span>")
+    #expect(raw.cssString().contains("background: linear-gradient(red, blue)"))
+    #expect(raw.cssString().contains("border: 1px solid currentColor"))
+}
+
+@Test func typedForegroundStyleTokenRendersCSS() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Muted")
+            .foregroundStyle(.muted)
+    )
+
+    #expect(rendered.cssString().contains("color: var(--muted)"))
 }
 
 @Test func edgeBasedPaddingAndMarginShorthandCompilesAndRendersCSS() {
@@ -764,7 +821,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     
     #expect(rendered.htmlString() == "<span class=\"\(className)\">Hello</span>")
     #expect(rendered.cssString().contains(".\(className)"))
-    #expect(rendered.cssString().contains("color: var(--color-primary, #111827)"))
+    #expect(rendered.cssString().contains("color: var(--primary)"))
     #expect(rendered.jsString().isEmpty)
     #expect(rendered.resources.styles.count == 1)
     #expect(rendered.resources.scripts.isEmpty)
@@ -782,7 +839,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let className = singleGeneratedClass(in: rendered)
     
     #expect(html == "<span class=\"\(className)\">Hello</span>")
-    #expect(!html.contains("color: var(--color-primary, #111827)"))
+    #expect(!html.contains("color: var(--primary)"))
 }
 
 @Test func preservesUserClassesWhenAddingGeneratedClass() {
@@ -898,7 +955,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains("padding-bottom: 5px"))
     #expect(css.contains("font-weight: bold"))
     #expect(css.contains("color: #fff"))
-    #expect(css.contains("background-color: var(--color-accent, #2563eb)"))
+    #expect(css.contains("background-color: var(--accent)"))
     #expect(css.contains("border-radius: 999px"))
 }
 
@@ -920,7 +977,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains("padding-bottom: 5px"))
     #expect(css.contains("font-weight: bold"))
     #expect(css.contains("color: #fff"))
-    #expect(css.contains("background-color: var(--color-accent, #2563eb)"))
+    #expect(css.contains("background-color: var(--accent)"))
     #expect(css.contains("border-radius: 999px"))
 }
 
@@ -940,8 +997,8 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(classes.count == 3)
     #expect(html.contains("<a href=\"#primary\" class=\"button primary \(classes.dropFirst().first ?? "")\">Primary</a>"))
     #expect(html.contains("<button class=\"button secondary \(classes.dropFirst(2).first ?? "")\">Secondary</button>"))
-    #expect(css.contains("background-color: var(--color-accent, #2563eb)"))
-    #expect(css.contains("border: 1px solid var(--color-border, #d1d5db)"))
+    #expect(css.contains("background-color: var(--accent)"))
+    #expect(css.contains("border: 1px solid var(--border)"))
 }
 
 @Test func stateAndBindingCompileAndCarryValues() {
@@ -1009,11 +1066,11 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains("display: flex"))
     #expect(css.contains("gap: 8px"))
     #expect(css.contains(".\(classes.dropFirst().first ?? "")"))
-    #expect(css.contains("background-color: var(--color-accent, #2563eb)"))
+    #expect(css.contains("background-color: var(--accent)"))
     #expect(css.contains("color: #fff"))
     #expect(css.contains(".\(classes.dropFirst(2).first ?? "")"))
-    #expect(css.contains("background-color: var(--color-surface, #ffffff)"))
-    #expect(css.contains("color: var(--color-secondary, #4b5563)"))
+    #expect(css.contains("background-color: var(--panel)"))
+    #expect(css.contains("color: var(--muted)"))
 }
 
 @Test func tabBarSupportsViewLabelsAndConditionalTabs() {
@@ -1192,13 +1249,13 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains(".\(classes.dropFirst().first ?? "")"))
     #expect(css.contains("font-size: 34px"))
     #expect(css.contains("font-weight: 400"))
-    #expect(css.contains("color: var(--color-primary, #111827)"))
+    #expect(css.contains("color: var(--primary)"))
     #expect(css.contains(".\(classes.dropFirst(2).first ?? "")"))
     #expect(css.contains("flex-direction: row"))
     #expect(css.contains(".\(classes.dropFirst(3).first ?? "")"))
-    #expect(css.contains("background-color: var(--color-accent, #2563eb)"))
+    #expect(css.contains("background-color: var(--accent)"))
     #expect(css.contains(".\(classes.dropFirst(4).first ?? "")"))
-    #expect(css.contains("border: 1px solid var(--color-border, #d1d5db)"))
+    #expect(css.contains("border: 1px solid var(--border)"))
     #expect(!rendered.jsString().isEmpty)
 }
 
@@ -1319,8 +1376,8 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let document = WebDocument(renderedView: rendered)
     
     #expect(document.htmlString(prettyPrinted: false).contains("<link rel=\"stylesheet\" href=\"styles.css\">"))
-    #expect(rendered.cssString().contains("color: var(--color-primary, #111827)"))
-    #expect(!document.htmlString(prettyPrinted: false).contains("color: var(--color-primary, #111827)"))
+    #expect(rendered.cssString().contains("color: var(--primary)"))
+    #expect(!document.htmlString(prettyPrinted: false).contains("color: var(--primary)"))
 }
 
 @Test func customHTMLNodeImplementationDoesNotRemain() throws {

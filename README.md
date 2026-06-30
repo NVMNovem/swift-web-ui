@@ -39,6 +39,9 @@ struct PortfolioPreview: View {
 
                 Text("Reusable layout, semantic HTML, and SwiftCSS-backed styling.")
                     .semanticRole(.p)
+                    .background(.panel)
+                    .border(width: .px(1), color: .border)
+                    .cornerRadius(.px(17))
             }
             .class("profile-summary")
 
@@ -80,5 +83,7 @@ Sizing modifiers such as `.width(...)`, `.minWidth(...)`, `.maxWidth(...)`, `.he
 Display and margin modifiers are generic view modifiers. Use `.display(...)` for CSS display values such as `.block`, `.flex`, and `.grid`; use `.margin(...)` for CSS margins such as `.margin(.bottom, .px(5))`, `.margin(.horizontal, .px(16))`, and `.margin(.all, .px(20))`. `.padding(...)` follows SwiftWebUI edge semantics, while `.margin(...)` maps directly to CSS margins.
 
 Use `Text.semanticRole(_:)` for HTML meaning, such as `.h1` for the page heading or `.p` for paragraph copy. Use `.font(.largeTitle)`, `.font(.system(size:weight:design:))`, `.foregroundStyle(...)`, `.class(...)`, and other styling modifiers for visual presentation; font choices do not imply heading or paragraph elements, and semantic roles do not imply visual font styling.
+
+Prefer typed visual modifiers for common styling: `.background(.panel)`, `.foregroundStyle(.muted)`, and `.border(width: .px(1), color: .border)` lower to SwiftCSS-backed declarations. Built-in color tokens render as CSS custom properties such as `var(--panel)` and `var(--border)`, so external stylesheets can provide the theme values. Raw string overloads such as `.background("linear-gradient(...)")` and `.border("1px solid currentColor")` remain available as low-level CSS escape hatches.
 
 Use `.attribute(_:_:)` as an escape hatch for valid HTML attributes that do not have typed SwiftWebUI modifiers yet. Prefer typed modifiers when available; `.attribute(_:_:)` is useful for `data-*`, ARIA, and other generic attributes.

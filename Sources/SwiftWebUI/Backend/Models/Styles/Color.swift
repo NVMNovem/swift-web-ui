@@ -7,7 +7,7 @@
 
 import SwiftCSS
 
-public struct Color: Equatable, Sendable, ExpressibleByStringLiteral {
+public struct Color: Hashable, Sendable, ExpressibleByStringLiteral {
 
     public var cssValue: String {
         cssColor.rawValue
@@ -23,18 +23,27 @@ public struct Color: Equatable, Sendable, ExpressibleByStringLiteral {
         self.cssColor = CSSColor(value)
     }
 
-    public static let primary = Color("var(--color-primary, #111827)")
-    public static let secondary = Color("var(--color-secondary, #4b5563)")
-    public static let accent = Color("var(--color-accent, #2563eb)")
-    public static let surface = Color("var(--color-surface, #ffffff)")
-    public static let border = Color("var(--color-border, #d1d5db)")
-    public static let clear = Color("transparent")
-    public static let white = Color("#fff")
-    public static let black = Color("#000")
-}
+    public static func css(_ value: String) -> Color {
+        Color(value)
+    }
 
-public extension Color {
-    static func == (lhs: Color, rhs: Color) -> Bool {
+    public static let accent = Color.css("var(--accent)")
+    public static let panel = Color.css("var(--panel)")
+    public static let border = Color.css("var(--border)")
+    public static let muted = Color.css("var(--muted)")
+    public static let primary = Color.css("var(--primary)")
+    public static let white = Color.css("#fff")
+
+    public static let secondary = Color.muted
+    public static let surface = Color.panel
+    public static let clear = Color.css("transparent")
+    public static let black = Color.css("#000")
+    
+    public static func == (lhs: Color, rhs: Color) -> Bool {
         lhs.cssValue == rhs.cssValue
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(cssValue)
     }
 }
