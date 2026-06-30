@@ -321,6 +321,52 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains("gap: 10px"))
 }
 
+@Test func edgeBasedPaddingAndMarginShorthandCompilesAndRendersCSS() {
+    let originalPadding = HTMLRenderer().renderView(
+        Text("Hello")
+            .padding(.vertical, .px(21))
+            .padding(.horizontal, .px(24))
+    )
+    let chainedPadding = HTMLRenderer().renderView(
+        Text("Hello")
+            .font(.body)
+            .padding(.vertical, .px(21))
+            .padding(.horizontal, .px(24))
+    )
+    let originalMargin = HTMLRenderer().renderView(
+        Text("Hello")
+            .margin(.bottom, .px(5))
+    )
+    let chainedMargin = HTMLRenderer().renderView(
+        Text("Hello")
+            .font(.body)
+            .margin(.bottom, .px(5))
+    )
+    let explicitEdge = HTMLRenderer().renderView(
+        Text("Hello")
+            .padding(SwiftWebUI.Edge.vertical, .px(21))
+    )
+
+    let originalPaddingCSS = originalPadding.cssString()
+    let chainedPaddingCSS = chainedPadding.cssString()
+    let originalMarginCSS = originalMargin.cssString()
+    let chainedMarginCSS = chainedMargin.cssString()
+    let explicitEdgeCSS = explicitEdge.cssString()
+
+    #expect(originalPaddingCSS.contains("padding-top: 21px"))
+    #expect(originalPaddingCSS.contains("padding-bottom: 21px"))
+    #expect(originalPaddingCSS.contains("padding-left: 24px"))
+    #expect(originalPaddingCSS.contains("padding-right: 24px"))
+    #expect(chainedPaddingCSS.contains("padding-top: 21px"))
+    #expect(chainedPaddingCSS.contains("padding-bottom: 21px"))
+    #expect(chainedPaddingCSS.contains("padding-left: 24px"))
+    #expect(chainedPaddingCSS.contains("padding-right: 24px"))
+    #expect(originalMarginCSS.contains("margin-bottom: 5px"))
+    #expect(chainedMarginCSS.contains("margin-bottom: 5px"))
+    #expect(explicitEdgeCSS.contains("padding-top: 21px"))
+    #expect(explicitEdgeCSS.contains("padding-bottom: 21px"))
+}
+
 @Test func displayModifierRendersSwiftCSSDisplayProperty() {
     let block = HTMLRenderer().renderView(
         Text("Hello")
