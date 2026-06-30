@@ -14,17 +14,17 @@ enum PortfolioTab: String, CaseIterable {
 }
 
 extension Color {
-    static let panel = Color.css("var(--panel)")
-    static let border = Color.css("var(--border)")
-    static let muted = Color.css("var(--muted)")
-    static let primary = Color.css("var(--primary)")
+    static let panel = Color("var(--panel)")
+    static let border = Color("var(--border)")
+    static let muted = Color("var(--muted)")
+    static let primary = Color("var(--primary)")
 }
 
 struct PortfolioPreview: View {
     @State private var selectedTab = PortfolioTab.info
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: .px(24)) {
             Group {
                 Text("Maak websites met Swift.")
                     .semanticRole(.h1)
@@ -38,10 +38,10 @@ struct PortfolioPreview: View {
                     .foregroundStyle(.muted)
             }
 
-            Grid(spacing: 16) {
+            Grid(spacing: .px(16)) {
                 Image("assets/profile1.jpeg", alt: "Profile")
                     .margin(.top, .px(24))
-                    .width(.percent(100))
+                    .width(Length("100%"))
                     .maxWidth(.px(380))
 
                 Text("Reusable layout, semantic HTML, and SwiftCSS-backed styling.")
@@ -62,7 +62,7 @@ struct PortfolioPreview: View {
                 .set($selectedTab, to: .contact)
                 .buttonStyle(.primary)
         }
-        .padding(24)
+        .padding(.px(24))
     }
 }
 
@@ -107,12 +107,16 @@ Link("Website", destination: "https://example.com")
     .textDecoration(.underline)
 ```
 
-Prefer typed visual modifiers for common styling: `.background(.css("var(--panel)"))`, `.foregroundStyle(.css("var(--muted)"))`, and `.border(width: .px(1), color: .css("var(--border)"))` lower to SwiftCSS-backed declarations. SwiftWebUI provides generic `Color.css(...)`, `.clear`, `.black`, and `.white`; apps and sites should define their own design tokens in their own module, for example:
+SwiftWebUI re-exports SwiftCSS, so downstream users can write `import SwiftWebUI` and use SwiftCSS value types such as `Length`, `Color`, `Angle`, `Percentage`, and `Time` without a separate `import SwiftCSS`. SwiftWebUI no longer defines its own `Color` or `Length`.
+
+Prefer typed visual modifiers for common styling: `.background(Color("var(--panel)"))`, `.foregroundStyle(Color("var(--muted)"))`, and `.border(width: .px(1), color: Color("var(--border)"))` lower to SwiftCSS-backed declarations. Apps and sites should define their own design tokens by extending SwiftCSS `Color` in their own module, for example:
 
 ```swift
 extension Color {
-    static let panel = Color.css("var(--panel)")
-    static let border = Color.css("var(--border)")
+    static let panel = Color("var(--panel)")
+    static let border = Color("var(--border)")
+    static let muted = Color("var(--muted)")
+    static let activeTint = Color("var(--active-tint)")
 }
 ```
 

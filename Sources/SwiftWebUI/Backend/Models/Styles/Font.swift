@@ -53,7 +53,7 @@ public struct Font: Hashable, Sendable {
         design: Design? = nil
     ) -> Font {
         var cssProperties: [any CSSProperty] = [
-            FontSize(CSSLength("\(formatFontNumber(size))px"))
+            FontSize(Length("\(formatFontNumber(size))px"))
         ]
 
         if let weight {

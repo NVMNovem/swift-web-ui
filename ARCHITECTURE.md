@@ -88,7 +88,7 @@ Must not:
 Responsibilities:
 
 - `CSSProperty`.
-- CSS values.
+- CSS values such as `Length`, `Color`, `Angle`, `Percentage`, and `Time`.
 - Declarations.
 - Stylesheet rendering.
 - Properties such as `Border`, `Padding`, `Gap`, `Display`, `BackgroundColor`, and `BoxShadow`.
@@ -122,6 +122,7 @@ Must not:
 - Reimplement HTML nodes.
 - Reimplement HTML escaping.
 - Create duplicate CSS property types.
+- Create duplicate CSS value types such as `Color` or `Length`.
 - Reintroduce `SwiftWebUI.Border` or `SwiftWebUI.Shadow` thin wrappers.
 - Own email-specific rendering rules.
 - Become a general site generator.
@@ -195,7 +196,7 @@ Future `SwiftMailUI`:
 
 - May contain `MailDocument`.
 - Must not depend on `SwiftWebUI`.
-- Will depend on lower-level neutral packages such as `SwiftHTML` and `SwiftCS`.
+- Will depend on lower-level neutral packages such as `SwiftHTML` and `SwiftCSS`.
 - May duplicate some primitives initially if needed.
 
 Likely responsibilities:
@@ -247,8 +248,8 @@ For example:
 Text("Hello")
     .semanticRole(.h1)
     .font(.largeTitle)
-    .foregroundStyle(.css("var(--primary)"))
-    .padding(24)
+    .foregroundStyle(Color("var(--primary)"))
+    .padding(.px(24))
 ```
 
 This should be represented as `ViewModifierData` or equivalent modifier storage. It should not immediately commit to a particular HTML or CSS output shape.
@@ -367,8 +368,9 @@ The important architectural direction is:
 
 - Do not create custom HTML node systems inside `SwiftWebUI`.
 - Do not duplicate `SwiftCSS` properties in `SwiftWebUI`.
+- Do not duplicate `SwiftCSS` values in `SwiftWebUI`.
 - Do not add thin string wrappers in `SwiftWebUI` unless they add real UI semantics.
-- Do not reintroduce `SwiftWebUI.Border` or `SwiftWebUI.Shadow`.
+- Do not reintroduce `SwiftWebUI.Border`, `SwiftWebUI.Shadow`, `SwiftWebUI.Color`, or `SwiftWebUI.Length`.
 - Do not let `SwiftCSS` depend on `SwiftWebUI`.
 - Do not create `SwiftWeb` as a separate package unless explicitly requested.
 - Do not create `SwiftMailUI` or `MailDocument` now.
@@ -376,13 +378,14 @@ The important architectural direction is:
 
 Recent cleanup example:
 
-`SwiftWebUI` previously had duplicate `Border` and `Shadow` wrappers. These were removed because `SwiftCSS` already owns `Border` and `BoxShadow`. `SwiftWebUI` modifiers may store or lower to those SwiftCSS types, but they should not define duplicate CSS property models.
+`SwiftWebUI` previously had duplicate `Border`, `Shadow`, `Color`, and `Length` wrappers. These were removed because `SwiftCSS` already owns CSS properties and values. `SwiftWebUI` modifiers may store or lower to SwiftCSS types, but they should not define duplicate CSS property or value models. SwiftWebUI re-exports SwiftCSS for convenience, so clients can import SwiftWebUI and use SwiftCSS `Color`, `Length`, `Angle`, `Percentage`, and `Time` directly.
 
 ## Decision Table
 
 | Concept | Owner | Reason |
 | --- | --- | --- |
 | HTML element rendering | `SwiftHTML` | Low-level HTML concern |
+| CSS values such as `Color` and `Length` | `SwiftCSS` | CSS value syntax |
 | CSS border property | `SwiftCSS` | CSS property |
 | `.border(...)` modifier | `SwiftWebUI` | View API that stores CSS intent |
 | `ButtonStyle` | `SwiftWebUI` | UI/component concept |
@@ -399,7 +402,7 @@ Recent cleanup example:
 - JavaScript resources include a minimal generated client-state runtime for binding-driven `set-state` actions.
 - `WebDocument` wraps `RenderedView` into a full browser HTML document for preview/testing.
 - `@State` and `Binding` carry generated client-state metadata; they do not run Swift in the browser.
-- `SwiftWebUIDummy` is the current proof-of-concept.
+- The current package is `SwiftWebUI`.
 - `SwiftWeb`, `SwiftMailUI`, and `MailDocument` do not exist.
 
 ## Next Decisions

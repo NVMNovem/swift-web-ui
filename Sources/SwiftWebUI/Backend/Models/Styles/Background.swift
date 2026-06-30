@@ -10,24 +10,24 @@ import SwiftCSS
 public struct Background: Equatable, Sendable, ExpressibleByStringLiteral {
     
     public var cssValue: String {
-        cssColor?.rawValue ?? rawCSSValue
+        color?.rawValue ?? rawCSSValue
     }
 
-    var cssColor: CSSColor?
+    var color: SwiftCSS.Color?
     var rawCSSValue: String
 
     public init(_ cssValue: String) {
-        self.cssColor = nil
+        self.color = nil
         self.rawCSSValue = cssValue
     }
 
-    public init(_ color: Color) {
-        self.cssColor = color.cssColor
-        self.rawCSSValue = color.cssValue
+    public init(_ color: SwiftCSS.Color) {
+        self.color = color
+        self.rawCSSValue = color.rawValue
     }
 
     public init(stringLiteral value: String) {
-        self.cssColor = nil
+        self.color = nil
         self.rawCSSValue = value
     }
 }

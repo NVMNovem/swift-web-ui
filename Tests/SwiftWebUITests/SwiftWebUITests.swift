@@ -18,10 +18,10 @@ struct PortfolioPreview: View {
     @State private var selectedTab = PortfolioTab.info
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: .px(24)) {
             Text("Maak websites met Swift.")
                 .font(.largeTitle)
-                .foregroundStyle(.css("var(--primary)"))
+                .foregroundStyle(Color("var(--primary)"))
             
             TabBar(selection: $selectedTab) {
                 Tab("Info", value: PortfolioTab.info)
@@ -33,7 +33,7 @@ struct PortfolioPreview: View {
                 .set($selectedTab, to: .contact)
                 .buttonStyle(.primary)
         }
-        .padding(24)
+        .padding(.px(24))
     }
 }
 
@@ -75,11 +75,11 @@ private func cssRuleCount(in css: String, for className: String) -> Int {
 struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .padding(.horizontal, 15)
-            .padding(.vertical, 5)
+            .padding(.horizontal, .px(15))
+            .padding(.vertical, .px(5))
             .bold()
-            .foregroundStyle(.white)
-            .background(.css("var(--accent)"))
+            .foregroundStyle(Color("#fff"))
+            .background(Color("var(--accent)"))
             .clipShape(.capsule)
     }
 }
@@ -131,7 +131,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         Text("Styled")
             .semanticRole(.p)
             .font(.largeTitle)
-            .foregroundStyle(.css("var(--primary)"))
+            .foregroundStyle(Color("var(--primary)"))
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
@@ -320,7 +320,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 
 @Test func semanticTextRolesRenderInsideVStackGroupAndSection() {
     let rendered = HTMLRenderer().renderView(
-        VStack(spacing: 12) {
+        VStack(spacing: .px(12)) {
             Group {
                 Text("Title").semanticRole(.h1)
                 Text("Intro").semanticRole(.p)
@@ -338,9 +338,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 
 @Test func rendersNestedStacks() {
     let rendered = HTMLRenderer().renderView(
-        VStack(spacing: 20) {
+        VStack(spacing: .px(20)) {
             Text("Top")
-            HStack(spacing: 8) {
+            HStack(spacing: .px(8)) {
                 Text("Left")
                 Text("Right")
             }
@@ -369,15 +369,15 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         Text("Styled")
             .display(.block)
             .margin(.bottom, .px(5))
-            .padding(.horizontal, 16)
-            .frame(width: 320, height: nil, maxWidth: .percent(100))
-            .background(.white)
-            .foregroundStyle(.css("var(--primary)"))
+            .padding(.horizontal, .px(16))
+            .frame(width: .px(320), height: nil, maxWidth: Length("100%"))
+            .background(Color("#fff"))
+            .foregroundStyle(Color("var(--primary)"))
             .font(.largeTitle)
-            .cornerRadius(12)
+            .cornerRadius(.px(12))
             .border("1px solid currentColor")
             .shadow("0 12px 40px rgba(0, 0, 0, 0.12)")
-            .gap(10)
+            .gap(.px(10))
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
@@ -404,19 +404,19 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func typedBackgroundAndBorderModifiersRenderCSS() {
     let cssBackground = HTMLRenderer().renderView(
         Text("Panel")
-            .background(.css("var(--panel)"))
+            .background(Color("var(--panel)"))
     )
     let tokenBackground = HTMLRenderer().renderView(
         Text("Panel")
-            .background(.css("var(--panel)"))
+            .background(Color("var(--panel)"))
     )
     let defaultBorder = HTMLRenderer().renderView(
         Text("Panel")
-            .border(width: .px(1), color: .css("var(--border)"))
+            .border(width: .px(1), color: Color("var(--border)"))
     )
     let dashedBorder = HTMLRenderer().renderView(
         Text("Panel")
-            .border(width: .px(1), style: .dashed, color: .css("var(--accent)"))
+            .border(width: .px(1), style: .dashed, color: Color("var(--accent)"))
     )
 
     #expect(cssBackground.cssString().contains("background-color: var(--panel)"))
@@ -429,8 +429,8 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let typed = HTMLRenderer().renderView(
         Text("Panel")
             .class("metric-card")
-            .background(.css("var(--panel)"))
-            .border(width: .px(1), color: .css("var(--border)"))
+            .background(Color("var(--panel)"))
+            .border(width: .px(1), color: Color("var(--border)"))
     )
     let raw = HTMLRenderer().renderView(
         Text("Panel")
@@ -452,7 +452,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func typedForegroundStyleTokenRendersCSS() {
     let rendered = HTMLRenderer().renderView(
         Text("Muted")
-            .foregroundStyle(.css("var(--muted)"))
+            .foregroundStyle(Color("var(--muted)"))
     )
 
     #expect(rendered.cssString().contains("color: var(--muted)"))
@@ -609,7 +609,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func sizingModifiersRenderOnNormalViews() {
     let rendered = HTMLRenderer().renderView(
         Text("Sized")
-            .width(.percent(100))
+            .width(Length("100%"))
             .minWidth(.px(120))
             .maxWidth(.px(380))
             .height(.px(240))
@@ -633,7 +633,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func sizingModifiersRenderOnImage() {
     let rendered = HTMLRenderer().renderView(
         Image("assets/profile1.jpeg", alt: "Damian Van de Kauter")
-            .width(.percent(100))
+            .width(Length("100%"))
             .maxWidth(.px(380))
     )
     let html = rendered.htmlString()
@@ -895,7 +895,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func renderViewReturnsContentAndResourcesSeparately() {
     let rendered = HTMLRenderer().renderView(
         Text("Hello")
-            .foregroundStyle(.css("var(--primary)"))
+            .foregroundStyle(Color("var(--primary)"))
     )
     let className = singleGeneratedClass(in: rendered)
     
@@ -910,11 +910,11 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func renderReturnsHTMLOnlyString() {
     let html = HTMLRenderer().render(
         Text("Hello")
-            .foregroundStyle(.css("var(--primary)"))
+            .foregroundStyle(Color("var(--primary)"))
     )
     let rendered = HTMLRenderer().renderView(
         Text("Hello")
-            .foregroundStyle(.css("var(--primary)"))
+            .foregroundStyle(Color("var(--primary)"))
     )
     let className = singleGeneratedClass(in: rendered)
     
@@ -926,7 +926,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let rendered = HTMLRenderer().renderView(
         Link("Work", destination: "#work")
             .class("button primary")
-            .padding(12)
+            .padding(.px(12))
     )
     let className = singleGeneratedClass(in: rendered)
     
@@ -1351,7 +1351,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         title: "SwiftWebUI Preview",
         renderedView: HTMLRenderer().renderView(
             Text("Hello Document")
-                .foregroundStyle(.css("var(--primary)"))
+                .foregroundStyle(Color("var(--primary)"))
         )
     )
     let html = document.htmlString(prettyPrinted: false)
@@ -1384,7 +1384,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let styledWithoutPath = WebDocument(
         renderedView: HTMLRenderer().renderView(
             Text("Styled")
-                .foregroundStyle(.css("var(--primary)"))
+                .foregroundStyle(Color("var(--primary)"))
         ),
         stylesheetPath: nil
     )
@@ -1451,7 +1451,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 @Test func webDocumentKeepsGeneratedCSSAvailableSeparately() {
     let rendered = HTMLRenderer().renderView(
         Text("Styled")
-            .foregroundStyle(.css("var(--primary)"))
+            .foregroundStyle(Color("var(--primary)"))
     )
     let document = WebDocument(renderedView: rendered)
     

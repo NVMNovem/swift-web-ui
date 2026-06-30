@@ -115,50 +115,50 @@ extension RenderContext {
                 cssProperties.append(contentsOf: paddingProperties(edges, value))
             case .frame(let width, let height, let maxWidth):
                 if let width {
-                    cssProperties.append(Width(width.cssLength))
+                    cssProperties.append(Width(width))
                 }
                 if let height {
-                    cssProperties.append(Height(height.cssLength))
+                    cssProperties.append(Height(height))
                 }
                 if let maxWidth {
-                    cssProperties.append(MaxWidth(maxWidth.cssLength))
+                    cssProperties.append(MaxWidth(maxWidth))
                 }
             case .width(let value):
-                cssProperties.append(Width(value.cssLength))
+                cssProperties.append(Width(value))
             case .minWidth(let value):
-                cssProperties.append(MinWidth(value.cssLength))
+                cssProperties.append(MinWidth(value))
             case .maxWidth(let value):
-                cssProperties.append(MaxWidth(value.cssLength))
+                cssProperties.append(MaxWidth(value))
             case .height(let value):
-                cssProperties.append(Height(value.cssLength))
+                cssProperties.append(Height(value))
             case .minHeight(let value):
-                cssProperties.append(MinHeight(value.cssLength))
+                cssProperties.append(MinHeight(value))
             case .maxHeight(let value):
-                cssProperties.append(MaxHeight(value.cssLength))
+                cssProperties.append(MaxHeight(value))
             case .background(let background):
-                if let color = background.cssColor {
+                if let color = background.color {
                     cssProperties.append(BackgroundColor(color))
                 } else {
                     cssProperties.append(RawProperty("background", background.cssValue))
                 }
             case .foregroundStyle(let color):
-                cssProperties.append(SwiftCSS.Color(color.cssColor))
+                cssProperties.append(SwiftCSS.Color(color))
             case .fontWeight(let value):
                 cssProperties.append(FontWeight(value))
             case .font(let token):
                 cssProperties.append(contentsOf: token.cssProperties)
             case .letterSpacing(let value):
-                cssProperties.append(LetterSpacing(value.cssLength))
+                cssProperties.append(LetterSpacing(value))
             case .textTransform(let value):
                 cssProperties.append(SwiftCSS.TextTransform(value.cssValue))
             case .lineHeight(let value):
-                cssProperties.append(LineHeight(value.cssLength))
+                cssProperties.append(LineHeight(value))
             case .textAlign(let value):
                 cssProperties.append(TextAlign(value.cssValue))
             case .textDecoration(let value):
                 cssProperties.append(SwiftCSS.TextDecoration(value.cssValue))
             case .cornerRadius(let value):
-                cssProperties.append(BorderRadius(value.cssLength))
+                cssProperties.append(BorderRadius(value))
             case .clipShape(let shape):
                 cssProperties.append(contentsOf: shape.cssProperties)
             case .border(let border):
@@ -166,7 +166,7 @@ extension RenderContext {
             case .shadow(let shadow):
                 cssProperties.append(shadow)
             case .gap(let value):
-                cssProperties.append(Gap(value.cssLength))
+                cssProperties.append(Gap(value))
             case .buttonStyleToken(let token):
                 if let className = token.className {
                     classNames.append(className)
@@ -196,44 +196,44 @@ extension RenderContext {
         return ElementAttributes(htmlAttributes: attributes)
     }
 
-    private func paddingProperties(_ edges: Edge.Set, _ value: Length) -> [any CSSProperty] {
+    private func paddingProperties(_ edges: Edge.Set, _ value: SwiftCSS.Length) -> [any CSSProperty] {
         if edges == .all {
-            return [Padding(value.cssLength)]
+            return [Padding(value)]
         }
 
         var properties: [any CSSProperty] = []
         if edges.contains(.top) {
-            properties.append(RawProperty("padding-top", value.cssValue))
+            properties.append(RawProperty("padding-top", value.rawValue))
         }
         if edges.contains(.leading) {
-            properties.append(RawProperty("padding-left", value.cssValue))
+            properties.append(RawProperty("padding-left", value.rawValue))
         }
         if edges.contains(.bottom) {
-            properties.append(RawProperty("padding-bottom", value.cssValue))
+            properties.append(RawProperty("padding-bottom", value.rawValue))
         }
         if edges.contains(.trailing) {
-            properties.append(RawProperty("padding-right", value.cssValue))
+            properties.append(RawProperty("padding-right", value.rawValue))
         }
         return properties
     }
 
-    private func marginProperties(_ edges: Edge.Set, _ value: Length) -> [any CSSProperty] {
+    private func marginProperties(_ edges: Edge.Set, _ value: SwiftCSS.Length) -> [any CSSProperty] {
         if edges == .all {
-            return [Margin(value.cssLength)]
+            return [Margin(value)]
         }
 
         var properties: [any CSSProperty] = []
         if edges.contains(.top) {
-            properties.append(MarginTop(value.cssLength))
+            properties.append(MarginTop(value))
         }
         if edges.contains(.leading) {
-            properties.append(MarginLeft(value.cssLength))
+            properties.append(MarginLeft(value))
         }
         if edges.contains(.bottom) {
-            properties.append(MarginBottom(value.cssLength))
+            properties.append(MarginBottom(value))
         }
         if edges.contains(.trailing) {
-            properties.append(MarginRight(value.cssLength))
+            properties.append(MarginRight(value))
         }
         return properties
     }

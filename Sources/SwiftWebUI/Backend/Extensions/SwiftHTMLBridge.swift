@@ -97,7 +97,7 @@ extension VStack: SwiftHTMLRenderable {
             AlignItems(alignment.alignItemsValue)
         ]
         if let spacing {
-            css.append(Gap(spacing.cssLength))
+            css.append(Gap(spacing))
         }
 
         let attributes = context.elementAttributes(css: css)
@@ -118,7 +118,7 @@ extension HStack: SwiftHTMLRenderable {
             AlignItems(alignment.alignItemsValue)
         ]
         if let spacing {
-            css.append(Gap(spacing.cssLength))
+            css.append(Gap(spacing))
         }
 
         let attributes = context.elementAttributes(css: css)
@@ -137,7 +137,7 @@ extension Grid: SwiftHTMLRenderable {
             Display(.grid)
         ]
         if let spacing {
-            css.append(Gap(spacing.cssLength))
+            css.append(Gap(spacing))
         }
 
         let attributes = context.elementAttributes(css: css)
@@ -281,15 +281,18 @@ extension TabBar: SwiftHTMLRenderable {
 }
 
 private func tabStyleCSS(selected: Bool) -> [any CSSProperty] {
-    [
+    let black = SwiftCSS.Color("#000")
+    let white = SwiftCSS.Color("#fff")
+
+    return [
         Display(.inlineFlex),
         AlignItems(.center),
         Gap(.px(6)),
         Padding(.init("0.5rem 0.875rem")),
         BorderRadius(.px(999)),
-        Border("1px solid \(Color.black.cssValue)"),
-        BackgroundColor(selected ? Color.black.cssColor : Color.white.cssColor),
-        SwiftCSS.Color(selected ? Color.white.cssColor : Color.black.cssColor),
+        Border("1px solid \(black.rawValue)"),
+        BackgroundColor(selected ? black : white),
+        SwiftCSS.Color(selected ? white : black),
         FontWeight(selected ? "700" : "600")
     ]
 }
