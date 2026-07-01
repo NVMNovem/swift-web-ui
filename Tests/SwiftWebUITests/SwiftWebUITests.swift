@@ -706,6 +706,212 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains("display: grid"))
 }
 
+@Test func articleRendersArticleElement() {
+    let html = HTMLRenderer().render(
+        Article {
+            Text("A")
+        }
+    )
+
+    #expect(html == "<article><span>A</span></article>")
+}
+
+@Test func articleSupportsClassIDAttributeAndModifiers() {
+    let rendered = HTMLRenderer().renderView(
+        Article {
+            Text("A")
+        }
+        .class("timeline-item")
+        .id("timeline-2026-06")
+        .attribute("data-timeline-date", "2026-06")
+        .padding(.px(12))
+    )
+    let className = singleGeneratedClass(in: rendered)
+
+    #expect(rendered.htmlString() == "<article data-timeline-date=\"2026-06\" class=\"timeline-item \(className)\" id=\"timeline-2026-06\"><span>A</span></article>")
+    #expect(rendered.cssString().contains("padding: 12px"))
+}
+
+@Test func formRendersFormElement() {
+    let html = HTMLRenderer().render(
+        Form {
+            Text("A")
+        }
+    )
+
+    #expect(html == "<form><span>A</span></form>")
+}
+
+@Test func formPreservesActionMethodAndEnctypeAttributes() {
+    let html = HTMLRenderer().render(
+        Form {
+            Text("A")
+        }
+        .attribute("action", "mailto:test@example.com")
+        .attribute("method", "post")
+        .attribute("enctype", "text/plain")
+    )
+
+    #expect(html == "<form action=\"mailto:test@example.com\" method=\"post\" enctype=\"text/plain\"><span>A</span></form>")
+}
+
+@Test func formSupportsClassIDAttributeAndModifiers() {
+    let rendered = HTMLRenderer().renderView(
+        Form {
+            Text("A")
+        }
+        .class("contact-form")
+        .id("contact")
+        .attribute("data-kind", "contact")
+        .padding(.px(12))
+    )
+    let className = singleGeneratedClass(in: rendered)
+
+    #expect(rendered.htmlString() == "<form data-kind=\"contact\" class=\"contact-form \(className)\" id=\"contact\"><span>A</span></form>")
+    #expect(rendered.cssString().contains("padding: 12px"))
+}
+
+@Test func textLabelRendersLabelElementAndPreservesForAttribute() {
+    let html = HTMLRenderer().render(
+        Label("Naam")
+            .attribute("for", "contact-name")
+    )
+
+    #expect(html == "<label for=\"contact-name\">Naam</label>")
+}
+
+@Test func containerLabelRendersNestedContent() {
+    let html = HTMLRenderer().render(
+        Label {
+            Text("Naam")
+        }
+    )
+
+    #expect(html == "<label><span>Naam</span></label>")
+}
+
+@Test func labelSupportsClassIDAttributeAndModifiers() {
+    let rendered = HTMLRenderer().renderView(
+        Label("Naam")
+            .class("field-label")
+            .id("name-label")
+            .attribute("data-kind", "label")
+            .bold()
+    )
+    let className = singleGeneratedClass(in: rendered)
+
+    #expect(rendered.htmlString() == "<label data-kind=\"label\" class=\"field-label \(className)\" id=\"name-label\">Naam</label>")
+    #expect(rendered.cssString().contains("font-weight: bold"))
+}
+
+@Test func inputRendersInputElementAndPreservesAttributes() {
+    let html = HTMLRenderer().render(
+        Input()
+            .id("contact-name")
+            .attribute("type", "text")
+            .attribute("name", "Naam")
+            .attribute("autocomplete", "name")
+            .attribute("required", "")
+    )
+
+    #expect(html == "<input type=\"text\" name=\"Naam\" autocomplete=\"name\" required=\"\" id=\"contact-name\">")
+}
+
+@Test func inputSupportsClassIDAttributeAndModifiers() {
+    let rendered = HTMLRenderer().renderView(
+        Input()
+            .class("field-input")
+            .id("name")
+            .attribute("data-kind", "input")
+            .padding(.px(8))
+    )
+    let className = singleGeneratedClass(in: rendered)
+
+    #expect(rendered.htmlString() == "<input data-kind=\"input\" class=\"field-input \(className)\" id=\"name\">")
+    #expect(rendered.cssString().contains("padding: 8px"))
+}
+
+@Test func textAreaRendersTextareaElementAndPreservesAttributes() {
+    let html = HTMLRenderer().render(
+        TextArea()
+            .id("contact-message")
+            .attribute("name", "Bericht")
+            .attribute("required", "")
+    )
+
+    #expect(html == "<textarea name=\"Bericht\" required=\"\" id=\"contact-message\"></textarea>")
+}
+
+@Test func textAreaSupportsClassIDAttributeAndModifiers() {
+    let rendered = HTMLRenderer().renderView(
+        TextArea()
+            .class("field-textarea")
+            .id("message")
+            .attribute("data-kind", "textarea")
+            .minHeight(.px(120))
+    )
+    let className = singleGeneratedClass(in: rendered)
+
+    #expect(rendered.htmlString() == "<textarea data-kind=\"textarea\" class=\"field-textarea \(className)\" id=\"message\"></textarea>")
+    #expect(rendered.cssString().contains("min-height: 120px"))
+}
+
+@Test func footerRendersFooterElement() {
+    let html = HTMLRenderer().render(
+        Footer {
+            Text("Copyright").semanticRole(.p)
+        }
+    )
+
+    #expect(html == "<footer><p>Copyright</p></footer>")
+}
+
+@Test func footerSupportsClassIDAttributeAndModifiers() {
+    let rendered = HTMLRenderer().renderView(
+        Footer {
+            Text("Copyright").semanticRole(.p)
+        }
+        .class("site-footer")
+        .id("footer")
+        .attribute("data-kind", "footer")
+        .margin(.top, .px(24))
+    )
+    let className = singleGeneratedClass(in: rendered)
+
+    #expect(rendered.htmlString() == "<footer data-kind=\"footer\" class=\"site-footer \(className)\" id=\"footer\"><p>Copyright</p></footer>")
+    #expect(rendered.cssString().contains("margin-top: 24px"))
+}
+
+@Test func nestedFormStructureRendersCorrectly() {
+    let html = HTMLRenderer().render(
+        Form {
+            Label("Naam")
+                .attribute("for", "contact-name")
+            Input()
+                .id("contact-name")
+                .attribute("type", "text")
+                .attribute("name", "Naam")
+                .attribute("autocomplete", "name")
+                .attribute("required", "")
+            Label {
+                Text("Bericht")
+            }
+            .attribute("for", "contact-message")
+            TextArea()
+                .id("contact-message")
+                .attribute("name", "Bericht")
+                .attribute("required", "")
+            Button("Verstuur")
+                .attribute("type", "submit")
+        }
+        .attribute("action", "mailto:test@example.com")
+        .attribute("method", "post")
+        .attribute("enctype", "text/plain")
+    )
+
+    #expect(html == "<form action=\"mailto:test@example.com\" method=\"post\" enctype=\"text/plain\"><label for=\"contact-name\">Naam</label><input type=\"text\" name=\"Naam\" autocomplete=\"name\" required=\"\" id=\"contact-name\"><label for=\"contact-message\"><span>Bericht</span></label><textarea name=\"Bericht\" required=\"\" id=\"contact-message\"></textarea><button type=\"submit\">Verstuur</button></form>")
+}
+
 @Test func rendersClassAndIDModifiers() {
     let html = HTMLRenderer().render(
         Link("Work", destination: "#work")
@@ -715,6 +921,61 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     )
     
     #expect(html == "<a href=\"#work\" class=\"button primary\" id=\"work-link\">Work</a>")
+}
+
+@Test func textOnlyLinkStillRendersDirectTextContent() {
+    let html = HTMLRenderer().render(
+        Link("Title", destination: "https://example.com")
+    )
+
+    #expect(html == "<a href=\"https://example.com\">Title</a>")
+}
+
+@Test func containerLinkRendersNestedChildren() {
+    let html = HTMLRenderer().render(
+        Link(destination: "https://example.com") {
+            Image("project.png", alt: "Project")
+            VStack {
+                Text("Title")
+                Text("Description")
+            }
+        }
+    )
+
+    #expect(html.contains("<a href=\"https://example.com\">"))
+    #expect(html.contains("<img src=\"project.png\" alt=\"Project\">"))
+    #expect(html.contains("<span>Title</span><span>Description</span>"))
+    #expect(html.hasSuffix("</a>"))
+}
+
+@Test func containerLinkPreservesHrefAndAttributes() {
+    let html = HTMLRenderer().render(
+        Link(destination: "https://example.com") {
+            Text("Project")
+        }
+        .class("project-card")
+        .id("project-card")
+        .attribute("target", "_blank")
+        .attribute("rel", "noreferrer")
+    )
+
+    #expect(html == "<a href=\"https://example.com\" target=\"_blank\" rel=\"noreferrer\" class=\"project-card\" id=\"project-card\"><span>Project</span></a>")
+}
+
+@Test func containerLinkModifiersCompose() {
+    let rendered = HTMLRenderer().renderView(
+        Link(destination: "https://example.com") {
+            Text("Project")
+        }
+        .class("project-card")
+        .padding(.px(16))
+        .textDecoration(.underline)
+    )
+    let className = singleGeneratedClass(in: rendered)
+
+    #expect(rendered.htmlString() == "<a href=\"https://example.com\" class=\"project-card \(className)\"><span>Project</span></a>")
+    #expect(rendered.cssString().contains("padding: 16px"))
+    #expect(rendered.cssString().contains("text-decoration: underline"))
 }
 
 @Test func rendersGenericDataAttribute() {

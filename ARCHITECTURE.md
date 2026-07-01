@@ -107,7 +107,7 @@ Responsibilities:
 
 - `View`.
 - `ViewBuilder`.
-- Primitive browser web views such as `Text`, `VStack`, `HStack`, `Grid`, `Button`, `Link`, `Image`, `Section`, and `Div`.
+- Primitive browser web views such as `Text`, `VStack`, `HStack`, `Grid`, `Button`, `Link`, `Image`, `Section`, `Article`, `Form`, `Label`, `Input`, `TextArea`, `Footer`, and `Div`.
 - Modifiers stored as data and intent.
 - `ButtonStyle` and semantic UI styling.
 - `@State` and `Binding` architecture placeholders.
@@ -136,6 +136,12 @@ Must not:
 `VStack`, `HStack`, and `Grid` remain public layout primitives. They express vertical, horizontal, and grid layout intent and lower through SwiftCSS-backed layout declarations during rendering. They are not aliases for `Div`, even though the browser output currently uses `div` elements.
 
 `Section` remains a public semantic container for HTML sectioning intent.
+
+`Article` is a public semantic content container for self-contained HTML article intent, such as cards, posts, projects, and timeline entries. It lowers through `SwiftHTML.Article` and should stay structurally aligned with `Section` and `Div`.
+
+`Link("Title", destination:)` is the shorthand for simple text anchors and renders direct anchor text. `Link(destination:) { ... }` is the container form for card and nested links; it preserves the same `href` behavior while allowing arbitrary child `View` content inside `SwiftHTML.A`.
+
+`Form`, `Label`, `Input`, `TextArea`, and `Footer` are generic document and form primitives. They lower through matching SwiftHTML elements, preserve generic `.class`, `.id`, and `.attribute` modifiers, and intentionally avoid typed form-specific attributes until those APIs are designed. `Input` is a void element. `TextArea`, `Form`, `Label`, and `Footer` are container elements; `TextArea` currently renders an empty container.
 
 `Text.semanticRole(_:)` expresses inline or block text meaning while keeping concrete HTML nodes in `SwiftHTML`. Plain `Text` defaults to `span`; callers can opt into paragraph or heading semantics with roles such as `.p` and `.h1`. Styling remains separate: `.font(...)`, `.foregroundStyle(...)`, `.class(...)`, and related modifiers control presentation and must not imply heading or paragraph HTML.
 

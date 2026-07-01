@@ -8,12 +8,23 @@
 public struct Link: View {
     public typealias Body = AnyView
 
-    var label: String
+    var textLabel: String?
     var destination: String
+    var content: AnyView
 
     public init(_ label: String, destination: String) {
-        self.label = label
+        self.textLabel = label
         self.destination = destination
+        self.content = AnyView(EmptyView())
+    }
+
+    public init<Content: View>(
+        destination: String,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.textLabel = nil
+        self.destination = destination
+        self.content = AnyView(content())
     }
 
     public var body: AnyView {

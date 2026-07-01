@@ -153,9 +153,14 @@ extension Grid: SwiftHTMLRenderable {
 extension Link: SwiftHTMLRenderable {
     func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
         let attributes = context.elementAttributes([.href(destination)])
+        var childContext = context.clearingModifiers()
         return [
             SwiftHTML.A(attributes.attributes) {
-                SwiftHTML.TextNode(label)
+                if let textLabel {
+                    SwiftHTML.TextNode(textLabel)
+                } else {
+                    content.renderSwiftHTML(context: &childContext)
+                }
             }
         ]
     }
@@ -327,6 +332,74 @@ extension Section: SwiftHTMLRenderable {
     }
 }
 
+extension Article: SwiftHTMLRenderable {
+    func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        let attributes = context.elementAttributes()
+        var childContext = context.clearingModifiers()
+        return [
+            SwiftHTML.Article(attributes.attributes) {
+                content.renderSwiftHTML(context: &childContext)
+            }
+        ]
+    }
+}
+
+extension Form: SwiftHTMLRenderable {
+    func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        let attributes = context.elementAttributes()
+        var childContext = context.clearingModifiers()
+        return [
+            SwiftHTML.Form(attributes.attributes) {
+                content.renderSwiftHTML(context: &childContext)
+            }
+        ]
+    }
+}
+
+extension Label: SwiftHTMLRenderable {
+    func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        let attributes = context.elementAttributes()
+        var childContext = context.clearingModifiers()
+        return [
+            SwiftHTML.Label(attributes.attributes) {
+                if let textLabel {
+                    SwiftHTML.TextNode(textLabel)
+                } else {
+                    content.renderSwiftHTML(context: &childContext)
+                }
+            }
+        ]
+    }
+}
+
+extension Input: SwiftHTMLRenderable {
+    func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        let attributes = context.elementAttributes()
+        return [SwiftHTMLInput(attributes.attributes)]
+    }
+}
+
+extension TextArea: SwiftHTMLRenderable {
+    func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        let attributes = context.elementAttributes()
+        return [
+            SwiftHTML.TextArea(attributes.attributes) {}
+        ]
+    }
+}
+
+extension Footer: SwiftHTMLRenderable {
+    func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        let attributes = context.elementAttributes()
+        var childContext = context.clearingModifiers()
+        return [
+            SwiftHTML.Footer(attributes.attributes) {
+                content.renderSwiftHTML(context: &childContext)
+            }
+        ]
+    }
+}
+
 extension Div: SwiftHTMLRenderable {
     func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
         let attributes = context.elementAttributes()
@@ -389,6 +462,17 @@ struct SwiftHTMLButton: SwiftHTML.ContainerElement {
 // modifier attributes need the same thin adapter shape as Button.
 struct SwiftHTMLImage: SwiftHTML.VoidElement {
     let tag = "img"
+    let attributes: [SwiftHTML.Attribute]
+
+    init(_ attributes: [SwiftHTML.Attribute]) {
+        self.attributes = attributes
+    }
+}
+
+// SwiftHTML's Input currently exposes only a variadic initializer, so dynamic
+// modifier attributes need the same thin adapter shape as Image.
+struct SwiftHTMLInput: SwiftHTML.VoidElement {
+    let tag = "input"
     let attributes: [SwiftHTML.Attribute]
 
     init(_ attributes: [SwiftHTML.Attribute]) {

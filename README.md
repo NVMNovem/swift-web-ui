@@ -39,16 +39,24 @@ struct PortfolioPreview: View {
             }
 
             Grid(spacing: .px(16)) {
-                Image("assets/profile1.jpeg", alt: "Profile")
-                    .margin(.top, .px(24))
-                    .width(Length("100%"))
-                    .maxWidth(.px(380))
+                Article {
+                    Link(destination: "https://example.com/project") {
+                        Image("assets/profile1.jpeg", alt: "Project preview")
+                            .width(Length("100%"))
 
-                Text("Reusable layout, semantic HTML, and SwiftCSS-backed styling.")
-                    .semanticRole(.p)
-                    .background(.panel)
-                    .border(width: .px(1), color: .border)
-                    .cornerRadius(.px(17))
+                        VStack(alignment: .leading, spacing: .px(8)) {
+                            Text("Reusable layout")
+                                .semanticRole(.h2)
+
+                            Text("Semantic HTML and SwiftCSS-backed styling.")
+                                .semanticRole(.p)
+                                .foregroundStyle(.muted)
+                        }
+                    }
+                    .class("project-card")
+                }
+                .class("portfolio-item")
+                .attribute("data-timeline-date", "2026-06")
             }
             .class("profile-summary")
 
@@ -83,7 +91,7 @@ let js = rendered.jsString(prettyPrinted: false)
 
 Use `Group` for layout-neutral composition. An unmodified `Group` renders transparently with no wrapper; a modified `Group`, such as `Group { ... }.class("hero")`, renders an implicit `div` wrapper so the attributes and generated CSS class have an HTML element to attach to.
 
-Use `VStack`, `HStack`, and `Grid` for layout intent. Use `Div` only when you specifically want a low-level `div` escape hatch.
+Use `VStack`, `HStack`, and `Grid` for layout intent. Use `Article` for self-contained semantic content such as cards, posts, projects, or timeline entries. Use `Div` only when you specifically want a low-level `div` escape hatch.
 
 Sizing modifiers such as `.width(...)`, `.minWidth(...)`, `.maxWidth(...)`, `.height(...)`, `.minHeight(...)`, and `.maxHeight(...)` are generic view modifiers. They apply to all rendered views, including `Image`, and lower through SwiftCSS-backed generated classes.
 
@@ -105,6 +113,61 @@ Text("Paragraph")
 
 Link("Website", destination: "https://example.com")
     .textDecoration(.underline)
+```
+
+`Link("Title", destination:)` is shorthand for simple text links and renders direct anchor text. Use `Link(destination:) { ... }` when the anchor needs to wrap nested/card content:
+
+```swift
+Link(destination: "https://example.com") {
+    Image("assets/project.jpeg", alt: "Project preview")
+    VStack {
+        Text("Project title")
+        Text("Project description")
+    }
+}
+.class("project-card")
+.attribute("target", "_blank")
+.attribute("rel", "noreferrer")
+```
+
+Use `Form`, `Label`, `Input`, and `TextArea` for static browser form markup. Typed form attributes are intentionally deferred; use `.attribute(_:_:)` for generic HTML attributes:
+
+```swift
+Form {
+    Label("Name")
+        .attribute("for", "contact-name")
+
+    Input()
+        .id("contact-name")
+        .attribute("type", "text")
+        .attribute("name", "name")
+        .attribute("autocomplete", "name")
+        .attribute("required", "")
+
+    Label { Text("Message") }
+        .attribute("for", "contact-message")
+
+    TextArea()
+        .id("contact-message")
+        .attribute("name", "message")
+        .attribute("required", "")
+
+    Button("Send")
+        .attribute("type", "submit")
+}
+.attribute("action", "mailto:hello@example.com")
+.attribute("method", "post")
+.attribute("enctype", "text/plain")
+```
+
+`Footer` renders semantic footer content:
+
+```swift
+Footer {
+    Text("Copyright 2026")
+        .semanticRole(.p)
+}
+.class("site-footer")
 ```
 
 SwiftWebUI re-exports SwiftCSS, so downstream users can write `import SwiftWebUI` and use SwiftCSS value types such as `Length`, `Color`, `Angle`, `Percentage`, and `Time` without a separate `import SwiftCSS`. SwiftWebUI no longer defines its own `Color` or `Length`.

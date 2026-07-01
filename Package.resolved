@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/NVMNovem/swift-html",
       "state" : {
-        "revision" : "e84764b2595f52930c490c6f177127facb22821f",
-        "version" : "0.0.8"
+        "revision" : "7b18d04418e2b11356f9645f7137d27505b9366c",
+        "version" : "0.0.9"
       }
     }
   ],
