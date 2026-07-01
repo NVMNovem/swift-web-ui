@@ -20,6 +20,31 @@ For SwiftWebUI changes:
 4. Update README examples when the recommended public API changes.
 5. Update `ARCHITECTURE.md` when ownership boundaries or architecture change.
 
+## DocC Validation
+
+Generate the SwiftWebUI symbol graph before running direct DocC conversion:
+
+```sh
+swift package dump-symbol-graph
+```
+
+Then include the generated symbol graph directory when converting the catalog:
+
+```sh
+xcrun docc convert Sources/SwiftWebUI/SwiftWebUI.docc \
+  --fallback-display-name SwiftWebUI \
+  --fallback-bundle-identifier com.novem.swiftwebui \
+  --fallback-bundle-version 0.0.1 \
+  --additional-symbol-graph-dir .build/arm64-apple-macosx/symbolgraph \
+  --output-path /tmp/SwiftWebUI.doccarchive
+```
+
+The `--additional-symbol-graph-dir` path is required for DocC to resolve
+SwiftWebUI symbols such as ``View``, ``TabView``, ``Font``, and
+``WebDocument``. Running `xcrun docc convert` without that path only sees the
+article catalog, so symbol links are reported as unresolved even when the
+public APIs exist.
+
 ## Discussion
 
 Documentation is part of the Definition of Done. A change that adds public API, changes behavior, adds a modifier, adds a view, or changes architecture is incomplete until the relevant DocC articles and symbol comments are updated.

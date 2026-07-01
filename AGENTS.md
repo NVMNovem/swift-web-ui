@@ -44,3 +44,24 @@ MUST update:
 A pull request or Codex task is considered incomplete if documentation is not updated.
 
 Documentation is part of the Definition of Done.
+
+## DocC Validation
+
+Before running direct DocC conversion, generate SwiftWebUI symbol graphs:
+
+```sh
+swift package dump-symbol-graph
+```
+
+Then pass the generated symbol graph directory to DocC:
+
+```sh
+xcrun docc convert Sources/SwiftWebUI/SwiftWebUI.docc \
+  --fallback-display-name SwiftWebUI \
+  --fallback-bundle-identifier com.novem.swiftwebui \
+  --fallback-bundle-version 0.0.1 \
+  --additional-symbol-graph-dir .build/arm64-apple-macosx/symbolgraph \
+  --output-path /tmp/SwiftWebUI.doccarchive
+```
+
+Without `--additional-symbol-graph-dir`, DocC cannot resolve SwiftWebUI symbols such as `View`, `TabView`, `Font`, or `WebDocument`.
