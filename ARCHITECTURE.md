@@ -173,7 +173,23 @@ RenderedView
 
 ### Client-State Components
 
-Components such as `TabBar` are generated-code-first. `TabBar(selection:)` still supports a static selection value, and `TabBar(selection: $binding)` uses binding metadata to render accessible tab markup plus client-state data attributes. The browser runtime is intentionally small: it listens for generated `set-state` actions and updates matching tab or panel attributes/classes. It does not run Swift in the browser, perform DOM diffing, evaluate arbitrary expressions, or translate general Swift closures to JavaScript. Tab styling must continue to lower through SwiftCSS declarations rather than direct CSS rendering in SwiftWebUI.
+Components such as `TabBar` and `TabView` are generated-code-first. `TabBar(selection:)` supports a static selection value and renders only accessible tab controls, making it suitable for navigation tabs, segmented controls, filters, and timeline selectors. `TabView(selection:)` owns both the tab controls and the matching tab panels, making it suitable for tabbed content. Binding initializers such as `TabBar(selection: $binding)` and `TabView(selection: $binding)` use binding metadata to render client-state data attributes. The browser runtime is intentionally small: it listens for generated `set-state` actions and updates matching tab or panel attributes/classes. It does not run Swift in the browser, perform DOM diffing, evaluate arbitrary expressions, or translate general Swift closures to JavaScript. Tab styling must continue to lower through SwiftCSS declarations rather than direct CSS rendering in SwiftWebUI.
+
+```swift
+TabBar(selection: $section) {
+    Tab("Home", value: Section.home)
+    Tab("Work", value: Section.work)
+}
+
+TabView(selection: $section) {
+    Tab("Home", value: Section.home) {
+        Text("Home panel")
+    }
+    Tab("Work", value: Section.work) {
+        Text("Work panel")
+    }
+}
+```
 
 ### SwiftJS
 

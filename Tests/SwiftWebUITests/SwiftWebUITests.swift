@@ -23,10 +23,16 @@ struct PortfolioPreview: View {
                 .font(.largeTitle)
                 .foregroundStyle(Color("var(--primary)"))
             
-            TabBar(selection: $selectedTab) {
-                Tab("Info", value: PortfolioTab.info)
-                Tab("Persoonlijk", value: PortfolioTab.personal)
-                Tab("Contact", value: PortfolioTab.contact)
+            TabView(selection: $selectedTab) {
+                Tab("Info", value: PortfolioTab.info) {
+                    Text("Info panel")
+                }
+                Tab("Persoonlijk", value: PortfolioTab.personal) {
+                    Text("Persoonlijk panel")
+                }
+                Tab("Contact", value: PortfolioTab.contact) {
+                    Text("Contact panel")
+                }
             }
             
             Button("Toon contact")
@@ -1385,46 +1391,135 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(metadata?.initialValue == "contact")
 }
 
-@Test func tabBarStaticSelectionCompilesAndRendersAccessibleTabs() {
+@Test func tabViewStaticSelectionCompilesAndRendersAccessibleTabsAndPanels() {
     let rendered = HTMLRenderer().renderView(
-        TabBar(selection: PortfolioTab.info) {
-            Tab("Info", value: PortfolioTab.info)
-            Tab("Persoonlijk", value: PortfolioTab.personal)
-            Tab("Contact", value: PortfolioTab.contact)
+        TabView(selection: PortfolioTab.info) {
+            Tab("Info", value: PortfolioTab.info) {
+                Text("Info panel")
+            }
+            Tab("Persoonlijk", value: PortfolioTab.personal) {
+                Text("Persoonlijk panel")
+            }
+            Tab("Contact", value: PortfolioTab.contact) {
+                Text("Contact panel")
+            }
         }
     )
     let html = rendered.htmlString()
     let css = rendered.cssString()
     let classes = uniqueGeneratedClassNames(in: html)
     
-    #expect(classes.count == 3)
-    #expect(html.contains("<div role=\"tablist\" class=\"swiftwebui-tab-bar \(classes.first ?? "")\">"))
-    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"true\" class=\"swiftwebui-tab swiftwebui-tab-selected \(classes.dropFirst().first ?? "")\"><span>Info</span></button>"))
-    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"swiftwebui-tab \(classes.dropFirst(2).first ?? "")\"><span>Persoonlijk</span></button>"))
-    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"swiftwebui-tab \(classes.dropFirst(2).first ?? "")\"><span>Contact</span></button>"))
+    #expect(classes.count == 4)
+    #expect(html.contains("data-swiftwebui-tab-view=\"true\""))
+    #expect(html.contains("<div role=\"tablist\" class=\"swiftwebui-tab-list \(classes.dropFirst().first ?? "")\">"))
+    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"true\" class=\"swiftwebui-tab swiftwebui-tab-selected \(classes.dropFirst(2).first ?? "")\"><span>Info</span></button>"))
+    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"swiftwebui-tab \(classes.dropFirst(3).first ?? "")\"><span>Persoonlijk</span></button>"))
+    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"swiftwebui-tab \(classes.dropFirst(3).first ?? "")\"><span>Contact</span></button>"))
+    #expect(html.contains("<div role=\"tabpanel\" class=\"swiftwebui-tab-panel\"><span>Info panel</span></div>"))
+    #expect(html.contains("<div role=\"tabpanel\" class=\"swiftwebui-tab-panel\" hidden=\"hidden\"><span>Persoonlijk panel</span></div>"))
+    #expect(html.contains("<div role=\"tabpanel\" class=\"swiftwebui-tab-panel\" hidden=\"hidden\"><span>Contact panel</span></div>"))
     #expect(!html.contains("style="))
     #expect(css.contains(".\(classes.first ?? "")"))
     #expect(css.contains("display: flex"))
+    #expect(css.contains("flex-direction: column"))
     #expect(css.contains("gap: 8px"))
     #expect(css.contains(".\(classes.dropFirst().first ?? "")"))
+    #expect(css.contains("flex-direction: row"))
+    #expect(css.contains(".\(classes.dropFirst(2).first ?? "")"))
     #expect(css.contains("background-color: #000"))
     #expect(css.contains("color: #fff"))
-    #expect(css.contains(".\(classes.dropFirst(2).first ?? "")"))
+    #expect(css.contains(".\(classes.dropFirst(3).first ?? "")"))
     #expect(css.contains("background-color: #fff"))
     #expect(css.contains("color: #000"))
 }
 
-@Test func tabBarSupportsViewLabelsAndConditionalTabs() {
-    let includeContact = true
+@Test func tabBarStaticSelectionRendersTabListTabsAndNoPanels() {
     let rendered = HTMLRenderer().renderView(
         TabBar(selection: PortfolioTab.personal) {
+            Tab("Info", value: PortfolioTab.info)
+            Tab("Persoonlijk", value: PortfolioTab.personal)
+            Tab("Contact", value: PortfolioTab.contact)
+        }
+    )
+    let html = rendered.htmlString()
+
+    #expect(html.contains("data-swiftwebui-tab-bar=\"true\""))
+    #expect(html.contains("role=\"tablist\""))
+    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"false\""))
+    #expect(html.contains("<button type=\"button\" role=\"tab\" aria-selected=\"true\""))
+    #expect(html.contains("<span>Info</span>"))
+    #expect(html.contains("<span>Persoonlijk</span>"))
+    #expect(html.contains("<span>Contact</span>"))
+    #expect(!html.contains("role=\"tabpanel\""))
+    #expect(rendered.jsString().isEmpty)
+}
+
+@Test func tabBarBindingSelectionRendersClientStateActionsAndRuntimeWithoutPanels() {
+    struct BoundTabBar: View {
+        @State var selection = PortfolioTab.contact
+
+        var body: some View {
+            TabBar(selection: $selection) {
+                Tab("Info", value: PortfolioTab.info)
+                Tab("Contact", value: PortfolioTab.contact)
+            }
+        }
+    }
+
+    let rendered = HTMLRenderer().renderView(BoundTabBar())
+    let html = rendered.htmlString()
+    let js = rendered.jsString()
+
+    #expect(html.contains("data-swiftwebui-tab-bar=\"true\""))
+    #expect(html.contains("data-swiftwebui-state-key=\"state-"))
+    #expect(html.contains("data-swiftwebui-state-initial-value=\"contact\""))
+    #expect(html.contains("data-swiftwebui-action=\"set-state\""))
+    #expect(html.contains("data-swiftwebui-state-value=\"info\""))
+    #expect(html.contains("data-swiftwebui-state-value=\"contact\""))
+    #expect(html.contains("data-swiftwebui-selected=\"true\""))
+    #expect(!html.contains("role=\"tabpanel\""))
+    #expect(!js.isEmpty)
+    #expect(js.contains("set-state"))
+    #expect(js.contains("aria-selected"))
+    #expect(js.contains("swiftwebui-tab-selected"))
+}
+
+@Test func tabBarComposesClassIDAndAttributesOnWrapper() {
+    let rendered = HTMLRenderer().renderView(
+        TabBar(selection: TimeLineNavigation.funico) {
+            Tab("Novem", value: TimeLineNavigation.novem)
+            Tab("Funico", value: TimeLineNavigation.funico)
+        }
+        .class("timeline-tabs")
+        .id("timeline-tabs")
+        .attribute("data-section", "timeline")
+    )
+    let html = rendered.htmlString()
+
+    #expect(html.contains("data-swiftwebui-tab-bar=\"true\""))
+    #expect(html.contains("data-section=\"timeline\""))
+    #expect(html.contains("class=\"swiftwebui-tab-bar timeline-tabs "))
+    #expect(html.contains("id=\"timeline-tabs\""))
+    #expect(!html.contains("role=\"tabpanel\""))
+}
+
+@Test func tabViewSupportsViewLabelsAndConditionalTabs() {
+    let includeContact = true
+    let rendered = HTMLRenderer().renderView(
+        TabView(selection: PortfolioTab.personal) {
             Tab(value: PortfolioTab.info) {
                 Image("/briefcase.svg", alt: "Werk")
                 Text("Werk")
+            } content: {
+                Text("Werk panel")
             }
-            Tab("Persoonlijk", value: PortfolioTab.personal)
+            Tab("Persoonlijk", value: PortfolioTab.personal) {
+                Text("Persoonlijk panel")
+            }
             if includeContact {
-                Tab("Contact", value: PortfolioTab.contact)
+                Tab("Contact", value: PortfolioTab.contact) {
+                    Text("Contact panel")
+                }
             }
         }
     )
@@ -1433,18 +1528,25 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(html.contains("<img src=\"/briefcase.svg\" alt=\"Werk\"><span>Werk</span>"))
     #expect(html.contains("<span>Persoonlijk</span>"))
     #expect(html.contains("<span>Contact</span>"))
+    #expect(html.contains("<span>Werk panel</span>"))
+    #expect(html.contains("<span>Persoonlijk panel</span>"))
+    #expect(html.contains("<span>Contact panel</span>"))
     #expect(html.contains("aria-selected=\"true\""))
     #expect(html.contains("aria-selected=\"false\""))
 }
 
-@Test func tabBarBindingSelectionRendersClientStateAttributesAndRuntime() {
+@Test func tabViewBindingSelectionRendersClientStateAttributesPanelsAndRuntime() {
     struct BoundTabs: View {
         @State var selection = PortfolioTab.contact
         
         var body: some View {
-            TabBar(selection: $selection) {
-                Tab("Info", value: PortfolioTab.info)
-                Tab("Contact", value: PortfolioTab.contact)
+            TabView(selection: $selection) {
+                Tab("Info", value: PortfolioTab.info) {
+                    Text("Info panel")
+                }
+                Tab("Contact", value: PortfolioTab.contact) {
+                    Text("Contact panel")
+                }
             }
         }
     }
@@ -1456,11 +1558,18 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(html.contains("<span>Contact</span></button>"))
     #expect(html.contains("aria-selected=\"true\""))
     #expect(html.contains("role=\"tablist\""))
+    #expect(html.contains("role=\"tabpanel\""))
+    #expect(html.contains("data-swiftwebui-tab-view=\"true\""))
     #expect(html.contains("data-swiftwebui-state-key=\"state-"))
     #expect(html.contains("data-swiftwebui-state-initial-value=\"contact\""))
     #expect(html.contains("data-swiftwebui-action=\"set-state\""))
     #expect(html.contains("data-swiftwebui-state-value=\"info\""))
     #expect(html.contains("data-swiftwebui-state-value=\"contact\""))
+    #expect(html.contains("data-swiftwebui-state-panel-key=\"state-"))
+    #expect(html.contains("data-swiftwebui-state-panel-value=\"info\""))
+    #expect(html.contains("data-swiftwebui-state-panel-value=\"contact\""))
+    #expect(html.contains("<div role=\"tabpanel\" class=\"swiftwebui-tab-panel\" hidden=\"hidden\" data-swiftwebui-state-panel-key=\"state-"))
+    #expect(html.contains("<div role=\"tabpanel\" class=\"swiftwebui-tab-panel\" data-swiftwebui-state-panel-key=\"state-"))
     #expect(html.contains("data-swiftwebui-selected=\"true\""))
     #expect(!js.isEmpty)
     #expect(js.contains("document.addEventListener(\"click\""))
@@ -1506,9 +1615,13 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         
         var body: some View {
             VStack {
-                TabBar(selection: $selection) {
-                    Tab("Info", value: PortfolioTab.info)
-                    Tab("Contact", value: PortfolioTab.contact)
+                TabView(selection: $selection) {
+                    Tab("Info", value: PortfolioTab.info) {
+                        Text("Info panel")
+                    }
+                    Tab("Contact", value: PortfolioTab.contact) {
+                        Text("Contact panel")
+                    }
                 }
                 
                 Button("Show Info")
@@ -1534,9 +1647,13 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         @State var selection = PortfolioTab.info
         
         var body: some View {
-            TabBar(selection: $selection) {
-                Tab("Info", value: PortfolioTab.info)
-                Tab("Contact", value: PortfolioTab.contact)
+            TabView(selection: $selection) {
+                Tab("Info", value: PortfolioTab.info) {
+                    Text("Info panel")
+                }
+                Tab("Contact", value: PortfolioTab.contact) {
+                    Text("Contact panel")
+                }
             }
         }
     }
@@ -1555,11 +1672,15 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 }
 
 
-@Test func clientStateRuntimeIsNotEmittedForStaticTabBarWithoutActions() {
+@Test func clientStateRuntimeIsNotEmittedForStaticTabViewWithoutActions() {
     let rendered = HTMLRenderer().renderView(
-        TabBar(selection: PortfolioTab.info) {
-            Tab("Info", value: PortfolioTab.info)
-            Tab("Contact", value: PortfolioTab.contact)
+        TabView(selection: PortfolioTab.info) {
+            Tab("Info", value: PortfolioTab.info) {
+                Text("Info panel")
+            }
+            Tab("Contact", value: PortfolioTab.contact) {
+                Text("Contact panel")
+            }
         }
     )
     
@@ -1693,9 +1814,13 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         @State var selection = PortfolioTab.info
         
         var body: some View {
-            TabBar(selection: $selection) {
-                Tab("Info", value: PortfolioTab.info)
-                Tab("Contact", value: PortfolioTab.contact)
+            TabView(selection: $selection) {
+                Tab("Info", value: PortfolioTab.info) {
+                    Text("Info panel")
+                }
+                Tab("Contact", value: PortfolioTab.contact) {
+                    Text("Contact panel")
+                }
             }
         }
     }
@@ -1762,6 +1887,25 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(!combinedSource.contains("var cssProperty: any CSSProperty {\n        SwiftCSS.Border"))
 }
 
+@Test func publicTabBarSymbolExistsAsSelectionOnlyPrimitive() throws {
+    let sourceRoot = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .appending(path: "Sources/SwiftWebUI")
+
+    let sourceFiles = try FileManager.default
+        .subpathsOfDirectory(atPath: sourceRoot.path())
+        .filter { $0.hasSuffix(".swift") }
+
+    let combinedSource = try sourceFiles
+        .map { try String(contentsOf: sourceRoot.appending(path: $0), encoding: .utf8) }
+        .joined(separator: "\n")
+
+    #expect(combinedSource.contains("public struct TabBar"))
+    #expect(combinedSource.contains("extension TabBar: SwiftHTMLRenderable"))
+}
+
 @Test func exportPortfolioSpikeToFiles() throws {
     let rendered = HTMLRenderer().renderView(PortfolioPreview())
     let document = WebDocument(
@@ -1795,9 +1939,13 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         
         var body: some View {
             VStack {
-                TabBar(selection: $selection) {
-                    Tab("Info", value: PortfolioTab.info)
-                    Tab("Contact", value: PortfolioTab.contact)
+                TabView(selection: $selection) {
+                    Tab("Info", value: PortfolioTab.info) {
+                        Text("Info panel")
+                    }
+                    Tab("Contact", value: PortfolioTab.contact) {
+                        Text("Contact panel")
+                    }
                 }
                 Button("Show Contact")
                     .set($selection, to: .contact)

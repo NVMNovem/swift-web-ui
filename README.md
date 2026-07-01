@@ -60,10 +60,19 @@ struct PortfolioPreview: View {
             }
             .class("profile-summary")
 
-            TabBar(selection: $selectedTab) {
-                Tab("Info", value: PortfolioTab.info)
-                Tab("Persoonlijk", value: PortfolioTab.personal)
-                Tab("Contact", value: PortfolioTab.contact)
+            TabView(selection: $selectedTab) {
+                Tab("Info", value: PortfolioTab.info) {
+                    Text("Profile summary")
+                        .semanticRole(.p)
+                }
+                Tab("Persoonlijk", value: PortfolioTab.personal) {
+                    Text("Personal details")
+                        .semanticRole(.p)
+                }
+                Tab("Contact", value: PortfolioTab.contact) {
+                    Text("Contact options")
+                        .semanticRole(.p)
+                }
             }
 
             Button("Toon contact")
@@ -87,7 +96,30 @@ let css = rendered.cssString(prettyPrinted: false)
 let js = rendered.jsString(prettyPrinted: false)
 ```
 
-`TabBar(selection: $state)` and `.set($state, to:)` generate HTML data attributes plus a small JavaScript resource for client-side state changes. Swift does not run in the browser, and `Button { selectedTab = ... }` closure translation is deferred.
+`TabBar` and `TabView` cover different tab-like controls. Use `TabBar` for selection-only controls such as navigation tabs, segmented controls, filters, and timeline selectors:
+
+```swift
+TabBar(selection: $selectedTab) {
+    Tab("Info", value: PortfolioTab.info)
+    Tab("Persoonlijk", value: PortfolioTab.personal)
+    Tab("Contact", value: PortfolioTab.contact)
+}
+```
+
+Use `TabView` when the component owns both the tab controls and the matching panels:
+
+```swift
+TabView(selection: $selectedTab) {
+    Tab("Info", value: PortfolioTab.info) {
+        Text("Profile summary")
+    }
+    Tab("Contact", value: PortfolioTab.contact) {
+        Text("Contact options")
+    }
+}
+```
+
+`TabBar(selection: $state)`, `TabView(selection: $state)`, and `.set($state, to:)` generate HTML data attributes plus a small JavaScript resource for client-side state changes. Swift does not run in the browser, and `Button { selectedTab = ... }` closure translation is deferred.
 
 Use `Group` for layout-neutral composition. An unmodified `Group` renders transparently with no wrapper; a modified `Group`, such as `Group { ... }.class("hero")`, renders an implicit `div` wrapper so the attributes and generated CSS class have an HTML element to attach to.
 

@@ -235,10 +235,111 @@ extension Tab: SwiftHTMLRenderable {
     func tabCSS(selected: Bool) -> [any CSSProperty] {
         tabStyleCSS(selected: selected)
     }
+
+    func renderPanelSwiftHTML(
+        context: inout RenderContext,
+        selected: Bool,
+        clientState: ClientStateBinding?
+    ) -> [any SwiftHTML.HTMLNode] {
+        var baseAttributes: [SwiftHTML.Attribute] = [
+            .init("role", "tabpanel"),
+            .class("swiftwebui-tab-panel")
+        ]
+
+        if !selected {
+            baseAttributes.append(.init("hidden", "hidden"))
+        }
+
+        if let clientState {
+            baseAttributes.append(.init("data-swiftwebui-state-panel-key", clientState.key))
+            baseAttributes.append(.init("data-swiftwebui-state-panel-value", clientStateValueString(value)))
+        }
+
+        var childContext = context.clearingModifiers()
+        return [
+            SwiftHTML.Div(baseAttributes) {
+                content.renderSwiftHTML(context: &childContext)
+            }
+        ]
+    }
+}
+
+extension TabView: SwiftHTMLRenderable {
+    func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        var wrapperAttributes: [SwiftHTML.Attribute] = [
+            .init("data-swiftwebui-tab-view", "true"),
+            .class("swiftwebui-tab-view")
+        ]
+        if let clientState {
+            wrapperAttributes.append(.init("data-swiftwebui-state-key", clientState.key))
+            wrapperAttributes.append(.init("data-swiftwebui-state-initial-value", clientState.initialValue))
+        }
+
+        let wrapper = context.elementAttributes(
+            wrapperAttributes,
+            css: [
+                Display(.flex),
+                RawProperty("flex-direction", "column"),
+                Gap(.px(12))
+            ]
+        )
+        var childContext = context.clearingModifiers()
+        return [
+            SwiftHTML.Div(wrapper.attributes) {
+                renderTabListSwiftHTML(context: &childContext)
+                tabs.flatMap { tab in
+                    tab.renderPanelSwiftHTML(
+                        context: &childContext,
+                        selected: tab.value == selection,
+                        clientState: clientState
+                    )
+                }
+            }
+        ]
+    }
 }
 
 extension TabBar: SwiftHTMLRenderable {
     func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        var wrapperAttributes: [SwiftHTML.Attribute] = [
+            .init("data-swiftwebui-tab-bar", "true"),
+            .class("swiftwebui-tab-bar")
+        ]
+        if let clientState {
+            wrapperAttributes.append(.init("data-swiftwebui-state-key", clientState.key))
+            wrapperAttributes.append(.init("data-swiftwebui-state-initial-value", clientState.initialValue))
+        }
+
+        let wrapper = context.elementAttributes(
+            wrapperAttributes,
+            css: [
+                Display(.flex),
+                RawProperty("flex-direction", "row"),
+                AlignItems(.center)
+            ]
+        )
+        var childContext = context.clearingModifiers()
+        return [
+            SwiftHTML.Div(wrapper.attributes) {
+                renderTabListSwiftHTML(context: &childContext)
+            }
+        ]
+    }
+}
+
+private protocol TabControlContainer {
+    associatedtype Value: Hashable
+
+    var selection: Value { get }
+    var clientState: ClientStateBinding? { get }
+    var tabs: [Tab<Value>] { get }
+}
+
+extension TabView: TabControlContainer {}
+extension TabBar: TabControlContainer {}
+
+private extension TabControlContainer {
+    func renderTabListSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
         let selectedClass: String?
         let unselectedClass: String?
         if clientState != nil {
@@ -249,18 +350,18 @@ extension TabBar: SwiftHTMLRenderable {
             selectedClass = nil
             unselectedClass = nil
         }
-        
-        var baseAttributes: [SwiftHTML.Attribute] = [
+
+        var tabListAttributes: [SwiftHTML.Attribute] = [
             .init("role", "tablist"),
-            .class("swiftwebui-tab-bar")
+            .class("swiftwebui-tab-list")
         ]
         if let clientState {
-            baseAttributes.append(.init("data-swiftwebui-state-key", clientState.key))
-            baseAttributes.append(.init("data-swiftwebui-state-initial-value", clientState.initialValue))
+            tabListAttributes.append(.init("data-swiftwebui-state-key", clientState.key))
+            tabListAttributes.append(.init("data-swiftwebui-state-initial-value", clientState.initialValue))
         }
-        
-        let attributes = context.elementAttributes(
-            baseAttributes,
+
+        let tabList = context.elementAttributes(
+            tabListAttributes,
             css: [
                 Display(.flex),
                 RawProperty("flex-direction", "row"),
@@ -268,12 +369,12 @@ extension TabBar: SwiftHTMLRenderable {
                 Gap(.px(8))
             ]
         )
-        var childContext = context.clearingModifiers()
+
         return [
-            SwiftHTML.Div(attributes.attributes) {
+            SwiftHTML.Div(tabList.attributes) {
                 tabs.flatMap { tab in
                     tab.renderSwiftHTML(
-                        context: &childContext,
+                        context: &context,
                         selected: tab.value == selection,
                         clientState: clientState,
                         selectedClass: selectedClass,

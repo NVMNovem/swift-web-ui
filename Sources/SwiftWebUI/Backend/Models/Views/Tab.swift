@@ -10,15 +10,44 @@ public struct Tab<Value: Hashable>: View {
 
     var value: Value
     var label: AnyView
+    var content: AnyView
 
-    public init(_ title: String, value: Value) {
+    public init(
+        _ title: String,
+        value: Value
+    ) {
         self.value = value
         self.label = AnyView(Text(title))
+        self.content = AnyView(EmptyView())
     }
 
-    public init<Label: View>(value: Value, @ViewBuilder label: () -> Label) {
+    public init<Content: View>(
+        _ title: String,
+        value: Value,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.value = value
+        self.label = AnyView(Text(title))
+        self.content = AnyView(content())
+    }
+
+    public init<Label: View, Content: View>(
+        value: Value,
+        @ViewBuilder label: () -> Label,
+        @ViewBuilder content: () -> Content
+    ) {
         self.value = value
         self.label = AnyView(label())
+        self.content = AnyView(content())
+    }
+
+    public init<Label: View>(
+        value: Value,
+        @ViewBuilder label: () -> Label
+    ) {
+        self.value = value
+        self.label = AnyView(label())
+        self.content = AnyView(EmptyView())
     }
 
     public var body: AnyView {
