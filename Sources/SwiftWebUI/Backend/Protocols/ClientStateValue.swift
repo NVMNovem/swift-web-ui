@@ -5,6 +5,7 @@
 //  Created by Damian Van de Kauter on 28/06/2026.
 //
 
+/// A value that can be represented as a browser client-state string.
 public protocol ClientStateValue {
     
     var clientStateValue: String { get }

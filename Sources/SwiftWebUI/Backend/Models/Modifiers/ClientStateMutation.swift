@@ -5,6 +5,7 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// A generated browser-side state mutation emitted as data attributes.
 public struct ClientStateMutation: Equatable, Sendable {
     
     public var key: String

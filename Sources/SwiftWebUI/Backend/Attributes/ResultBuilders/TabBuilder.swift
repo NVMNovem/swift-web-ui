@@ -5,6 +5,7 @@
 //  Created by Damian Van de Kauter on 25/06/2026.
 //
 
+/// Builds the tab arrays consumed by ``TabBar`` and ``TabView``.
 @resultBuilder
 public enum TabBuilder<Value: Hashable> {
     public static func buildExpression(_ expression: Tab<Value>) -> [Tab<Value>] {

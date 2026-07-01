@@ -11,22 +11,27 @@ import SwiftHTML
 public extension View {
     // Modifiers stay as data so later renderers can emit extracted CSS classes
     // or JavaScript bindings without changing the SwiftWebUI view declarations.
+    /// Adds an HTML class to the rendered element.
     func `class`(_ name: String) -> ModifiedView<Self> {
         modified(.cssClass(name))
     }
     
+    /// Adds an HTML `id` to the rendered element.
     func id(_ value: String) -> ModifiedView<Self> {
         modified(.id(value))
     }
     
+    /// Adds a raw HTML attribute to the rendered element.
     func attribute(_ name: String, _ value: String) -> ModifiedView<Self> {
         modified(.attribute(SwiftHTML.Attribute(name, value)))
     }
     
+    /// Applies a CSS display value.
     func display(_ value: DisplayValue) -> ModifiedView<Self> {
         modified(.display(value))
     }
     
+    /// Applies margin to all edges.
     func margin(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
         modified(.margin(.all, value))
     }
@@ -35,6 +40,7 @@ public extension View {
         modified(.margin(edges, value))
     }
     
+    /// Applies padding to all edges.
     func padding(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
         modified(.padding(.all, value))
     }
@@ -43,6 +49,7 @@ public extension View {
         modified(.padding(edges, value))
     }
     
+    /// Applies width, height, and maximum width constraints.
     func frame(width: SwiftCSS.Length? = nil, height: SwiftCSS.Length? = nil, maxWidth: SwiftCSS.Length? = nil) -> ModifiedView<Self> {
         modified(.frame(width: width, height: height, maxWidth: maxWidth))
     }
@@ -71,6 +78,7 @@ public extension View {
         modified(.maxHeight(value))
     }
     
+    /// Applies a background value.
     func background(_ background: Background) -> ModifiedView<Self> {
         modified(.background(background))
     }
@@ -85,46 +93,57 @@ public extension View {
         background(Background(cssValue))
     }
     
+    /// Applies a foreground text color.
     func foregroundStyle(_ color: SwiftCSS.Color) -> ModifiedView<Self> {
         modified(.foregroundStyle(color))
     }
     
+    /// Applies bold font weight.
     func bold() -> ModifiedView<Self> {
         modified(.fontWeight(.bold))
     }
     
+    /// Applies a font token.
     func font(_ font: Font) -> ModifiedView<Self> {
         modified(.font(font))
     }
 
+    /// Applies CSS letter spacing.
     func letterSpacing(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
         modified(.letterSpacing(value))
     }
 
+    /// Applies CSS text transformation.
     func textTransform(_ value: TextTransform) -> ModifiedView<Self> {
         modified(.textTransform(value))
     }
 
+    /// Applies CSS line height.
     func lineHeight(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
         modified(.lineHeight(value))
     }
 
+    /// Applies CSS text alignment.
     func textAlign(_ value: TextAlignment) -> ModifiedView<Self> {
         modified(.textAlign(value))
     }
 
+    /// Applies CSS text decoration.
     func textDecoration(_ value: TextDecoration) -> ModifiedView<Self> {
         modified(.textDecoration(value))
     }
     
+    /// Applies a border radius.
     func cornerRadius(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
         modified(.cornerRadius(value))
     }
     
+    /// Applies generated clipping style for the given shape.
     func clipShape(_ shape: ClipShape) -> ModifiedView<Self> {
         modified(.clipShape(shape))
     }
     
+    /// Applies a SwiftCSS border value.
     func border(_ border: SwiftCSS.Border) -> ModifiedView<Self> {
         modified(.border(border))
     }
@@ -139,6 +158,7 @@ public extension View {
         border(SwiftCSS.Border(cssValue))
     }
     
+    /// Applies a SwiftCSS box-shadow value.
     func shadow(_ shadow: BoxShadow) -> ModifiedView<Self> {
         modified(.shadow(shadow))
     }
@@ -149,20 +169,24 @@ public extension View {
         shadow(BoxShadow(cssValue))
     }
     
+    /// Applies CSS gap.
     func gap(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
         modified(.gap(value))
     }
     
+    /// Applies a reusable button style token.
     func buttonStyle(_ token: ButtonStyleToken) -> ModifiedView<Self> {
         modified(.buttonStyleToken(token))
     }
     
+    /// Applies a static button style.
     func buttonStyle<S: ButtonStyle>(_ style: S) -> ModifiedView<Self> {
         modified(.buttonStyle(AnyButtonStyle(style)))
     }
     
     // Temporary lower-level action model. A future SwiftUI-like Button closure
     // runtime can lower Binding writes into this same client-state intent.
+    /// Emits generated client-state mutation attributes.
     func setState(_ key: String, to value: String) -> ModifiedView<Self> {
         modified(.setState(ClientStateMutation(key: key, value: value)))
     }

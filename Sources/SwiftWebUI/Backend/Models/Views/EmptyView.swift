@@ -5,6 +5,7 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// A view that renders no HTML.
 public struct EmptyView: View {
     public typealias Body = AnyView
 

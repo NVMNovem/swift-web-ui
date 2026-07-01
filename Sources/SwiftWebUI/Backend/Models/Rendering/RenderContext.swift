@@ -8,6 +8,10 @@
 import SwiftCSS
 import SwiftHTML
 
+/// Internal rendering state passed through a SwiftWebUI render pass.
+///
+/// Public mainly for renderer integration points. User code normally interacts
+/// with ``HTMLRenderer`` and ``RenderedView`` instead.
 public struct RenderContext {
     var modifiers: [ViewModifierData]
     private var resources: RenderResourceStorage

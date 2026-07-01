@@ -7,6 +7,7 @@
 
 import SwiftHTML
 
+/// A type-erased SwiftWebUI view.
 public struct AnyView: View {
     public typealias Body = AnyView
 

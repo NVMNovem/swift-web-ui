@@ -5,6 +5,10 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// A browser link that renders an HTML anchor.
+///
+/// Use the string initializer for simple links and the content initializer when
+/// the anchor should wrap nested SwiftWebUI views.
 public struct Link: View {
     public typealias Body = AnyView
 

@@ -5,6 +5,9 @@
 //  Created by Damian Van de Kauter on 25/06/2026.
 //
 
+/// A tab item used by ``TabBar`` and ``TabView``.
+///
+/// A tab has a selection value, label content, and optional panel content.
 public struct Tab<Value: Hashable>: View {
     public typealias Body = AnyView
 

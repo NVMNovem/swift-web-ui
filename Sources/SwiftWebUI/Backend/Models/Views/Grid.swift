@@ -7,6 +7,7 @@
 
 import SwiftCSS
 
+/// A grid layout container backed by SwiftCSS layout declarations.
 public struct Grid<Content: View>: View {
     public typealias Body = AnyView
 

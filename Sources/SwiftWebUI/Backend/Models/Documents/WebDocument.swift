@@ -8,6 +8,10 @@
 import Foundation
 import SwiftHTML
 
+/// A complete browser HTML document built from a rendered SwiftWebUI view.
+///
+/// `WebDocument` wraps ``RenderedView`` content in document markup and links
+/// stylesheet or script paths when matching resources exist.
 public struct WebDocument {
     
     public var title: String?
@@ -101,6 +105,7 @@ public struct WebDocument {
     }
 }
 
+/// A metadata tag rendered in a ``WebDocument`` head.
 public struct MetaTag: Equatable, Sendable {
     
     public var name: String?
@@ -138,6 +143,7 @@ public struct MetaTag: Equatable, Sendable {
     }
 }
 
+/// Writes a ``WebDocument`` and its extracted resources to a folder.
 public struct PreviewExporter {
     
     public static func export(

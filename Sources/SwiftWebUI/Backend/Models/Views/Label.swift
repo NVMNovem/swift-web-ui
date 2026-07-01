@@ -1,3 +1,7 @@
+/// A form label that renders an HTML `label` element.
+///
+/// Use the string initializer for plain labels and the content initializer for
+/// custom label content.
 public struct Label<Content: View>: View {
     public typealias Body = AnyView
 

@@ -5,6 +5,11 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// A button control that renders an HTML `button` element.
+///
+/// The closure initializer is retained as API surface, but arbitrary Swift
+/// closures are not translated to JavaScript. Use generated client-state
+/// modifiers such as `.set(_:to:)` for supported browser-side behavior.
 public struct Button: View {
     public typealias Body = AnyView
 

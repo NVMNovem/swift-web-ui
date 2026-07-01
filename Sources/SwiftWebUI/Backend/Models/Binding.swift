@@ -5,6 +5,7 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// A get-set reference to state with optional generated client-state metadata.
 public struct Binding<Value> {
     
     private let getter: () -> Value

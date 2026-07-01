@@ -17,8 +17,10 @@ private struct FontDeclaration: Hashable, Sendable {
     }
 }
 
+/// A SwiftWebUI font token lowered to SwiftCSS font declarations.
 public struct Font: Hashable, Sendable {
 
+    /// Font weight values supported by ``Font/system(size:weight:design:)``.
     public enum Weight: Hashable, Sendable {
         case ultraLight
         case thin
@@ -32,6 +34,7 @@ public struct Font: Hashable, Sendable {
         case weight(Int)
     }
 
+    /// Generic font family designs supported by ``Font/system(size:weight:design:)``.
     public enum Design: Hashable, Sendable {
         case `default`
         case serif
@@ -47,6 +50,7 @@ public struct Font: Hashable, Sendable {
         }
     }
 
+    /// Creates a system font token with size, optional weight, and optional design.
     public static func system(
         size: Double,
         weight: Weight? = nil,

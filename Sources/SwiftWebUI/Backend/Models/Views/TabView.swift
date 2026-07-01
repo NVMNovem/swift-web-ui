@@ -5,6 +5,10 @@
 //  Created by Damian Van de Kauter on 25/06/2026.
 //
 
+/// A tabbed interface that renders tab controls and matching panels.
+///
+/// Binding-backed tab views emit generated client-state metadata and a small
+/// JavaScript runtime resource for switching panels in the browser.
 public struct TabView<Value: Hashable>: View {
     public typealias Body = AnyView
 

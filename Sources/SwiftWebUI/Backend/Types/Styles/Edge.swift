@@ -5,6 +5,7 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// Edge set used by spacing modifiers such as padding and margin.
 public struct Edge: OptionSet, Sendable {
     public typealias Set = Edge
 

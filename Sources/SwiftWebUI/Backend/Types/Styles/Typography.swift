@@ -7,6 +7,7 @@
 
 import SwiftCSS
 
+/// Text transform values for SwiftWebUI typography modifiers.
 public enum TextTransform: Hashable, Sendable {
     case none
     case uppercase
@@ -14,6 +15,7 @@ public enum TextTransform: Hashable, Sendable {
     case capitalize
 }
 
+/// Text alignment values for SwiftWebUI typography modifiers.
 public enum TextAlignment: Hashable, Sendable {
     case leading
     case center
@@ -21,6 +23,7 @@ public enum TextAlignment: Hashable, Sendable {
     case justified
 }
 
+/// Text decoration values for SwiftWebUI typography modifiers.
 public enum TextDecoration: Hashable, Sendable {
     case none
     case underline

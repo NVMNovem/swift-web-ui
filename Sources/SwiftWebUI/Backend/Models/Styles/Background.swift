@@ -7,6 +7,10 @@
 
 import SwiftCSS
 
+/// A SwiftWebUI background value lowered to SwiftCSS declarations during rendering.
+///
+/// Prefer color-backed backgrounds for design tokens. Raw CSS strings are
+/// available as escape hatches.
 public struct Background: Equatable, Sendable, ExpressibleByStringLiteral {
     
     public var cssValue: String {

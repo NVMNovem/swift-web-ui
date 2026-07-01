@@ -7,6 +7,7 @@
 
 import SwiftCSS
 
+/// A horizontal layout container backed by SwiftCSS layout declarations.
 public struct HStack<Content: View>: View {
     public typealias Body = AnyView
 

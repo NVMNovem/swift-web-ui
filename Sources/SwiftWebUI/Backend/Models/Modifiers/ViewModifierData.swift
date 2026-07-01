@@ -8,6 +8,10 @@
 import SwiftCSS
 import SwiftHTML
 
+/// Data representation of SwiftWebUI modifiers before rendering.
+///
+/// Renderers lower this intent into SwiftHTML attributes, SwiftCSS declarations,
+/// and generated client-state resources.
 public enum ViewModifierData {
     
     case cssClass(String)

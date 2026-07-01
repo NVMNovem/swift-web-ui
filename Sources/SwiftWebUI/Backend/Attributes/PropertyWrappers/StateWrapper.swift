@@ -5,6 +5,10 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// Stores a value for a rendered SwiftWebUI view and projects a client-state binding.
+///
+/// `State` provides initial values and generated binding metadata. It is not a
+/// browser-side Swift runtime.
 @propertyWrapper
 public struct State<Value> {
     private final class Storage {

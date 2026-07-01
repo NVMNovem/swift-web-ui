@@ -24,3 +24,23 @@ Do not show unsupported dynamic behavior as if it works.
 If a feature is static-only, keep the example honest.
 After updating README.md, make sure the example compiles or is clearly marked as illustrative if it cannot be compiled directly.
 
+# Documentation Requirements
+
+Any change that:
+
+- adds public API
+- changes behavior
+- adds a new modifier
+- adds a new view
+- changes architecture
+- changes ownership boundaries
+
+MUST update:
+
+- DocC documentation
+- README examples if relevant
+- ARCHITECTURE.md if relevant
+
+A pull request or Codex task is considered incomplete if documentation is not updated.
+
+Documentation is part of the Definition of Done.

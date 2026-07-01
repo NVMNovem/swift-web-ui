@@ -5,6 +5,10 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// A layout-neutral composition container.
+///
+/// An unmodified group renders transparently. A modified group renders an
+/// implicit `div` so attributes and generated classes have an element target.
 public struct Group<Content: View>: View {
     public typealias Body = AnyView
 
@@ -19,6 +23,9 @@ public struct Group<Content: View>: View {
     }
 }
 
+/// A compatibility carrier for multiple result-builder child views.
+///
+/// Prefer ``Group`` in user-facing code.
 public struct GroupView: View {
     public typealias Body = AnyView
 

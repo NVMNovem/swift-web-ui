@@ -7,6 +7,7 @@
 
 import SwiftHTML
 
+/// Rendered SwiftHTML body content.
 public struct RenderedContent {
     
     public var html: [any SwiftHTML.HTMLNode]
@@ -18,6 +19,7 @@ public struct RenderedContent {
 
 public extension RenderedContent {
     
+    /// Renders the content nodes into an HTML string.
     func htmlString(prettyPrinted: Bool = false) -> String {
         html.map { $0.render(prettyPrinted: prettyPrinted) }.joined()
     }

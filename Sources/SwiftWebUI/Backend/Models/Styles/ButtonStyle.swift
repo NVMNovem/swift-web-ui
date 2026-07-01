@@ -5,6 +5,10 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// A static style description for SwiftWebUI buttons.
+///
+/// Button styles are evaluated during rendering to collect supported modifier
+/// data. They do not receive live browser interaction state.
 public protocol ButtonStyle {
     associatedtype Body: View
 
@@ -13,6 +17,7 @@ public protocol ButtonStyle {
     func makeBody(configuration: Configuration) -> Body
 }
 
+/// Inputs passed to a ``ButtonStyle``.
 public struct ButtonStyleConfiguration {
     
     public let label: Label
@@ -43,6 +48,7 @@ public struct ButtonStyleConfiguration {
     }
 }
 
+/// Type-erased storage for a ``ButtonStyle``.
 public struct AnyButtonStyle {
     
     private let makeModifiers: () -> [ViewModifierData]

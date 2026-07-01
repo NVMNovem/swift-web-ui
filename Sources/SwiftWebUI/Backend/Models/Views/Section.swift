@@ -5,6 +5,7 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// A semantic sectioning container that renders an HTML `section` element.
 public struct Section<Content: View>: View {
     public typealias Body = AnyView
 

@@ -5,6 +5,7 @@
 //  Created by Codex on 30/06/2026.
 //
 
+/// CSS border line styles exposed by SwiftWebUI's typed border modifier.
 public enum BorderLineStyle: String, Hashable, Sendable {
     case none
     case solid
@@ -12,4 +13,3 @@ public enum BorderLineStyle: String, Hashable, Sendable {
     case dotted
     case double
 }
-

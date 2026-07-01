@@ -5,6 +5,7 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// Builds SwiftWebUI child view content from declarative view expressions.
 @resultBuilder
 public enum ViewBuilder {
     public static func buildExpression<V: View>(_ expression: V) -> AnyView {

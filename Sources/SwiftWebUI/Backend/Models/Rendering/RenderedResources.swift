@@ -5,6 +5,7 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// CSS and JavaScript resources collected while rendering a view tree.
 public struct RenderedResources {
     
     public var styles: [StyleResource]
@@ -18,6 +19,7 @@ public struct RenderedResources {
 
 public extension RenderedResources {
     
+    /// Returns all style resources as one CSS string.
     func cssString(prettyPrinted: Bool = true) -> String {
         styles
             .map(\.content)
@@ -26,6 +28,7 @@ public extension RenderedResources {
             .joined(separator: prettyPrinted ? "\n\n" : "")
     }
 
+    /// Returns all script resources as one JavaScript string.
     func jsString(prettyPrinted: Bool = true) -> String {
         scripts
             .map(\.content)

@@ -7,6 +7,7 @@
 
 import SwiftCSS
 
+/// A reusable button style token made from class names and SwiftCSS properties.
 public struct ButtonStyleToken: Equatable, Sendable {
     
     public var className: String?

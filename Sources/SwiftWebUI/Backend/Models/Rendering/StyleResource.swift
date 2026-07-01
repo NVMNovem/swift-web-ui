@@ -5,6 +5,7 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
+/// A rendered CSS resource collected from SwiftWebUI modifiers.
 public struct StyleResource {
     
     public var id: String

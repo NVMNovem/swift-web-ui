@@ -7,6 +7,7 @@
 
 import SwiftCSS
 
+/// A vertical layout container backed by SwiftCSS layout declarations.
 public struct VStack<Content: View>: View {
     public typealias Body = AnyView
 

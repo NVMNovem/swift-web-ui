@@ -5,6 +5,10 @@
 //  Created by Damian Van de Kauter on 25/06/2026.
 //
 
+/// A selection-only tab control.
+///
+/// Use `TabBar` for navigation tabs, segmented controls, filters, and similar
+/// controls that do not own matching content panels.
 public struct TabBar<Value: Hashable>: View {
     public typealias Body = AnyView
 
