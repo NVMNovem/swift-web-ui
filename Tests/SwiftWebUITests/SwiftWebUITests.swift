@@ -324,6 +324,148 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(group.cssString().contains("text-align: center"))
 }
 
+@Test func layoutVisualAndPositionModifiersRenderSwiftCSSProperties() {
+    let layout = HTMLRenderer().renderView(
+        Div {
+            Text("Grid")
+        }
+        .display(.grid)
+        .gridTemplateColumns("repeat(2, 1fr)")
+        .justifyContent(.center)
+        .flexWrap(.wrap)
+    )
+    let visual = HTMLRenderer().renderView(
+        Text("Visual")
+            .opacity(0.5)
+            .transform("translateX(10px)")
+            .transition("opacity 200ms ease")
+            .backdropFilter("blur(18px)")
+            .overflow(.hidden)
+            .objectFit(.cover)
+            .pointerEvents(.none)
+            .cursor(.pointer)
+            .resize(.vertical)
+            .outline(.none)
+            .scrollMarginTop(.px(84))
+    )
+    let positioned = HTMLRenderer().renderView(
+        Text("Positioned")
+            .position(.absolute)
+            .top(.px(10))
+            .right(.px(12))
+            .zIndex(20)
+    )
+
+    #expect(layout.cssString().contains("grid-template-columns: repeat(2, 1fr)"))
+    #expect(layout.cssString().contains("justify-content: center"))
+    #expect(layout.cssString().contains("flex-wrap: wrap"))
+    #expect(visual.cssString().contains("opacity: 0.5"))
+    #expect(visual.cssString().contains("transform: translateX(10px)"))
+    #expect(visual.cssString().contains("transition: opacity 200ms ease"))
+    #expect(visual.cssString().contains("backdrop-filter: blur(18px)"))
+    #expect(visual.cssString().contains("overflow: hidden"))
+    #expect(visual.cssString().contains("object-fit: cover"))
+    #expect(visual.cssString().contains("pointer-events: none"))
+    #expect(visual.cssString().contains("cursor: pointer"))
+    #expect(visual.cssString().contains("resize: vertical"))
+    #expect(visual.cssString().contains("outline: none"))
+    #expect(visual.cssString().contains("scroll-margin-top: 84px"))
+    #expect(positioned.cssString().contains("position: absolute"))
+    #expect(positioned.cssString().contains("top: 10px"))
+    #expect(positioned.cssString().contains("right: 12px"))
+    #expect(positioned.cssString().contains("z-index: 20"))
+}
+
+@Test func offsetModifiersRenderAllEdges() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Edges")
+            .position(.relative)
+            .top(.px(16))
+            .left(.px(13))
+            .right(.px(12))
+            .bottom(.px(12))
+    )
+    let css = rendered.cssString()
+
+    #expect(css.contains("position: relative"))
+    #expect(css.contains("top: 16px"))
+    #expect(css.contains("left: 13px"))
+    #expect(css.contains("right: 12px"))
+    #expect(css.contains("bottom: 12px"))
+}
+
+@Test func lowLevelLayoutAndVisualModifiersComposeWithModifiedViews() {
+    let rendered = HTMLRenderer().renderView(
+        Div {
+            Text("Panel")
+        }
+        .class("panel")
+        .display(.flex)
+        .justifyContent(.center)
+        .flexWrap(.wrap)
+        .opacity(0.5)
+        .transform("translateX(10px)")
+        .transition("opacity 200ms ease")
+        .overflow(.hidden)
+        .objectFit(.cover)
+        .pointerEvents(.none)
+        .cursor(.pointer)
+        .position(.relative)
+        .left(.px(13))
+        .zIndex(20)
+        .resize(.vertical)
+        .outline(.none)
+        .scrollMarginTop(.px(84))
+    )
+    let css = rendered.cssString()
+
+    #expect(rendered.htmlString().contains("class=\"panel "))
+    #expect(css.contains("display: flex"))
+    #expect(css.contains("justify-content: center"))
+    #expect(css.contains("flex-wrap: wrap"))
+    #expect(css.contains("opacity: 0.5"))
+    #expect(css.contains("transform: translateX(10px)"))
+    #expect(css.contains("transition: opacity 200ms ease"))
+    #expect(css.contains("overflow: hidden"))
+    #expect(css.contains("object-fit: cover"))
+    #expect(css.contains("pointer-events: none"))
+    #expect(css.contains("cursor: pointer"))
+    #expect(css.contains("position: relative"))
+    #expect(css.contains("left: 13px"))
+    #expect(css.contains("z-index: 20"))
+    #expect(css.contains("resize: vertical"))
+    #expect(css.contains("outline: none"))
+    #expect(css.contains("scroll-margin-top: 84px"))
+}
+
+@Test func lowLevelLayoutAndVisualModifierClassHashingIsDeterministic() {
+    let first = HTMLRenderer().renderView(
+        Div {
+            Text("Stable")
+        }
+        .display(.grid)
+        .gridTemplateColumns("repeat(2, 1fr)")
+        .justifyContent(.center)
+        .opacity(0.5)
+        .transform("translateX(10px)")
+        .transition("opacity 200ms ease")
+    )
+    let second = HTMLRenderer().renderView(
+        Div {
+            Text("Stable")
+        }
+        .display(.grid)
+        .gridTemplateColumns("repeat(2, 1fr)")
+        .justifyContent(.center)
+        .opacity(0.5)
+        .transform("translateX(10px)")
+        .transition("opacity 200ms ease")
+    )
+
+    #expect(singleGeneratedClass(in: first) == singleGeneratedClass(in: second))
+    #expect(first.cssString() == second.cssString())
+}
+
 @Test func semanticTextRolesRenderInsideVStackGroupAndSection() {
     let rendered = HTMLRenderer().renderView(
         VStack(spacing: .px(12)) {

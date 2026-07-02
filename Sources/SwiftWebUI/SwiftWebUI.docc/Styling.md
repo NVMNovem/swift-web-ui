@@ -34,6 +34,45 @@ Text("Hello")
 - ``BorderLineStyle``
 - ``ClipShape``
 
+### Low-Level Layout and Visual Modifiers
+
+SwiftWebUI also exposes generic CSS-backed modifiers for layout primitives,
+visual state, transforms, and positioning. These modifiers are available on any
+``View`` and on chained ``ModifiedView`` values:
+
+```swift
+Div {
+    Text("Featured project")
+}
+.display(.grid)
+.gridTemplateColumns("repeat(3, minmax(0, 1fr))")
+.justifyContent(.center)
+.flexWrap(.wrap)
+.opacity(0.48)
+.transform("translateX(0)")
+.transition("opacity 220ms ease, transform 280ms ease")
+.overflow(.hidden)
+.objectFit(.cover)
+.backdropFilter("blur(18px)")
+.pointerEvents(.none)
+.cursor(.pointer)
+.position(.relative)
+.top(.px(16))
+.zIndex(20)
+.resize(.vertical)
+.outline(.none)
+.scrollMarginTop(.px(84))
+```
+
+SwiftWebUI stores these calls as modifier data and lowers them through SwiftCSS
+properties and values such as `GridTemplateColumns`, `JustifyContentValue`,
+`FlexWrapValue`, `Opacity`, `Transform`, `Transition`, `BackdropFilter`,
+`OverflowValue`, `ObjectFitValue`, `PointerEventsValue`, `CursorValue`,
+`PositionValue`, `Top`, `ZIndex`, `ResizeValue`, `OutlineValue`, and
+`ScrollMarginTop`. String-accepting modifiers such as `.gridTemplateColumns(...)`,
+`.transform(...)`, `.transition(...)`, and `.backdropFilter(...)` accept CSS
+strings because the corresponding SwiftCSS property value is intentionally broad.
+
 ### Buttons
 
 - ``ButtonStyle``

@@ -292,6 +292,17 @@ Link("Website", destination: "https://example.com")
     .textDecoration(.underline)
 ```
 
+Low-level layout and visual modifiers follow the same data-first path. Generic
+modifiers such as `.gridTemplateColumns(...)`, `.justifyContent(...)`,
+`.flexWrap(...)`, `.opacity(...)`, `.transform(...)`, `.transition(...)`,
+`.backdropFilter(...)`, `.overflow(...)`, `.objectFit(...)`,
+`.pointerEvents(...)`, `.cursor(...)`, `.position(...)`, `.top(...)`,
+`.zIndex(...)`, `.resize(...)`, `.outline(...)`, and `.scrollMarginTop(...)`
+are stored as `ViewModifierData` and lowered through the corresponding SwiftCSS
+property and value types during rendering. SwiftWebUI must not add raw CSS
+property rendering to cover missing SwiftCSS support; new CSS properties and
+value models belong in SwiftCSS first.
+
 Keeping modifiers as data lets renderers choose among several output strategies:
 
 - Inline styles.
