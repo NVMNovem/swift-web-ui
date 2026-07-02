@@ -30,6 +30,21 @@ public extension View {
     func display(_ value: DisplayValue) -> ModifiedView<Self> {
         modified(.display(value))
     }
+
+    /// Applies CSS grid-template-columns.
+    func gridTemplateColumns(_ value: String) -> ModifiedView<Self> {
+        modified(.gridTemplateColumns(value))
+    }
+
+    /// Applies CSS justify-content.
+    func justifyContent(_ value: JustifyContentValue) -> ModifiedView<Self> {
+        modified(.justifyContent(value))
+    }
+
+    /// Applies CSS flex-wrap.
+    func flexWrap(_ value: FlexWrapValue) -> ModifiedView<Self> {
+        modified(.flexWrap(value))
+    }
     
     /// Applies margin to all edges.
     func margin(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
@@ -132,6 +147,91 @@ public extension View {
     func textDecoration(_ value: TextDecoration) -> ModifiedView<Self> {
         modified(.textDecoration(value))
     }
+
+    /// Applies CSS opacity.
+    func opacity(_ value: Double) -> ModifiedView<Self> {
+        modified(.opacity(value))
+    }
+
+    /// Applies CSS transform.
+    func transform(_ value: String) -> ModifiedView<Self> {
+        modified(.transform(value))
+    }
+
+    /// Applies CSS transition.
+    func transition(_ value: String) -> ModifiedView<Self> {
+        modified(.transition(value))
+    }
+
+    /// Applies CSS backdrop-filter.
+    func backdropFilter(_ value: String) -> ModifiedView<Self> {
+        modified(.backdropFilter(value))
+    }
+
+    /// Applies CSS overflow.
+    func overflow(_ value: OverflowValue) -> ModifiedView<Self> {
+        modified(.overflow(value))
+    }
+
+    /// Applies CSS object-fit.
+    func objectFit(_ value: ObjectFitValue) -> ModifiedView<Self> {
+        modified(.objectFit(value))
+    }
+
+    /// Applies CSS pointer-events.
+    func pointerEvents(_ value: PointerEventsValue) -> ModifiedView<Self> {
+        modified(.pointerEvents(value))
+    }
+
+    /// Applies CSS cursor.
+    func cursor(_ value: CursorValue) -> ModifiedView<Self> {
+        modified(.cursor(value))
+    }
+
+    /// Applies CSS position.
+    func position(_ value: PositionValue) -> ModifiedView<Self> {
+        modified(.position(value))
+    }
+
+    /// Applies CSS top offset.
+    func top(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
+        modified(.top(value))
+    }
+
+    /// Applies CSS right offset.
+    func right(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
+        modified(.right(value))
+    }
+
+    /// Applies CSS bottom offset.
+    func bottom(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
+        modified(.bottom(value))
+    }
+
+    /// Applies CSS left offset.
+    func left(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
+        modified(.left(value))
+    }
+
+    /// Applies CSS z-index.
+    func zIndex(_ value: Int) -> ModifiedView<Self> {
+        modified(.zIndex(value))
+    }
+
+    /// Applies CSS resize.
+    func resize(_ value: ResizeValue) -> ModifiedView<Self> {
+        modified(.resize(value))
+    }
+
+    /// Applies CSS outline.
+    func outline(_ value: OutlineValue) -> ModifiedView<Self> {
+        modified(.outline(value))
+    }
+
+    /// Applies CSS scroll-margin-top.
+    func scrollMarginTop(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
+        modified(.scrollMarginTop(value))
+    }
     
     /// Applies a border radius.
     func cornerRadius(_ value: SwiftCSS.Length) -> ModifiedView<Self> {
@@ -232,6 +332,18 @@ public extension ModifiedView {
     func display(_ value: DisplayValue) -> ModifiedView<Content> {
         appending(.display(value))
     }
+
+    func gridTemplateColumns(_ value: String) -> ModifiedView<Content> {
+        appending(.gridTemplateColumns(value))
+    }
+
+    func justifyContent(_ value: JustifyContentValue) -> ModifiedView<Content> {
+        appending(.justifyContent(value))
+    }
+
+    func flexWrap(_ value: FlexWrapValue) -> ModifiedView<Content> {
+        appending(.flexWrap(value))
+    }
     
     func margin(_ value: SwiftCSS.Length) -> ModifiedView<Content> {
         appending(.margin(.all, value))
@@ -321,6 +433,74 @@ public extension ModifiedView {
 
     func textDecoration(_ value: TextDecoration) -> ModifiedView<Content> {
         appending(.textDecoration(value))
+    }
+
+    func opacity(_ value: Double) -> ModifiedView<Content> {
+        appending(.opacity(value))
+    }
+
+    func transform(_ value: String) -> ModifiedView<Content> {
+        appending(.transform(value))
+    }
+
+    func transition(_ value: String) -> ModifiedView<Content> {
+        appending(.transition(value))
+    }
+
+    func backdropFilter(_ value: String) -> ModifiedView<Content> {
+        appending(.backdropFilter(value))
+    }
+
+    func overflow(_ value: OverflowValue) -> ModifiedView<Content> {
+        appending(.overflow(value))
+    }
+
+    func objectFit(_ value: ObjectFitValue) -> ModifiedView<Content> {
+        appending(.objectFit(value))
+    }
+
+    func pointerEvents(_ value: PointerEventsValue) -> ModifiedView<Content> {
+        appending(.pointerEvents(value))
+    }
+
+    func cursor(_ value: CursorValue) -> ModifiedView<Content> {
+        appending(.cursor(value))
+    }
+
+    func position(_ value: PositionValue) -> ModifiedView<Content> {
+        appending(.position(value))
+    }
+
+    func top(_ value: SwiftCSS.Length) -> ModifiedView<Content> {
+        appending(.top(value))
+    }
+
+    func right(_ value: SwiftCSS.Length) -> ModifiedView<Content> {
+        appending(.right(value))
+    }
+
+    func bottom(_ value: SwiftCSS.Length) -> ModifiedView<Content> {
+        appending(.bottom(value))
+    }
+
+    func left(_ value: SwiftCSS.Length) -> ModifiedView<Content> {
+        appending(.left(value))
+    }
+
+    func zIndex(_ value: Int) -> ModifiedView<Content> {
+        appending(.zIndex(value))
+    }
+
+    func resize(_ value: ResizeValue) -> ModifiedView<Content> {
+        appending(.resize(value))
+    }
+
+    func outline(_ value: OutlineValue) -> ModifiedView<Content> {
+        appending(.outline(value))
+    }
+
+    func scrollMarginTop(_ value: SwiftCSS.Length) -> ModifiedView<Content> {
+        appending(.scrollMarginTop(value))
     }
     
     func cornerRadius(_ value: SwiftCSS.Length) -> ModifiedView<Content> {

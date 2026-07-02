@@ -147,6 +147,34 @@ Link("Website", destination: "https://example.com")
     .textDecoration(.underline)
 ```
 
+Low-level layout and visual modifiers are generic view modifiers backed by SwiftCSS properties and values. Use them when the layout or interaction state is a normal CSS concern rather than a SwiftWebUI-specific component:
+
+```swift
+Div {
+    Text("Featured project")
+}
+.display(.grid)
+.gridTemplateColumns("repeat(3, minmax(0, 1fr))")
+.justifyContent(.center)
+.flexWrap(.wrap)
+.opacity(0.48)
+.transform("translateX(0)")
+.transition("opacity 220ms ease, transform 280ms ease")
+.overflow(.hidden)
+.objectFit(.cover)
+.backdropFilter("blur(18px)")
+.pointerEvents(.none)
+.cursor(.pointer)
+.position(.relative)
+.top(.px(16))
+.zIndex(20)
+.resize(.vertical)
+.outline(.none)
+.scrollMarginTop(.px(84))
+```
+
+SwiftWebUI stores these modifiers as data and lowers them through SwiftCSS declarations. String-accepting modifiers such as `.transform(...)` and `.transition(...)` still use SwiftCSS property types; they accept CSS strings because those CSS property values are broad.
+
 `Link("Title", destination:)` is shorthand for simple text links and renders direct anchor text. Use `Link(destination:) { ... }` when the anchor needs to wrap nested/card content:
 
 ```swift

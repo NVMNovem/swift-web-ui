@@ -113,6 +113,12 @@ extension RenderContext {
                 }
             case .display(let value):
                 cssProperties.append(Display(value))
+            case .gridTemplateColumns(let value):
+                cssProperties.append(GridTemplateColumns(value))
+            case .justifyContent(let value):
+                cssProperties.append(JustifyContent(value))
+            case .flexWrap(let value):
+                cssProperties.append(FlexWrap(value))
             case .margin(let edges, let value):
                 cssProperties.append(contentsOf: marginProperties(edges, value))
             case .padding(let edges, let value):
@@ -161,6 +167,40 @@ extension RenderContext {
                 cssProperties.append(TextAlign(value.cssValue))
             case .textDecoration(let value):
                 cssProperties.append(SwiftCSS.TextDecoration(value.cssValue))
+            case .opacity(let value):
+                cssProperties.append(Opacity(value))
+            case .transform(let value):
+                cssProperties.append(Transform(value))
+            case .transition(let value):
+                cssProperties.append(Transition(value))
+            case .backdropFilter(let value):
+                cssProperties.append(BackdropFilter(value))
+            case .overflow(let value):
+                cssProperties.append(Overflow(value))
+            case .objectFit(let value):
+                cssProperties.append(ObjectFit(value))
+            case .pointerEvents(let value):
+                cssProperties.append(PointerEvents(value))
+            case .cursor(let value):
+                cssProperties.append(Cursor(value))
+            case .position(let value):
+                cssProperties.append(Position(value))
+            case .top(let value):
+                cssProperties.append(Top(value))
+            case .right(let value):
+                cssProperties.append(Right(value))
+            case .bottom(let value):
+                cssProperties.append(Bottom(value))
+            case .left(let value):
+                cssProperties.append(Left(value))
+            case .zIndex(let value):
+                cssProperties.append(ZIndex(value))
+            case .resize(let value):
+                cssProperties.append(Resize(value))
+            case .outline(let value):
+                cssProperties.append(Outline(value))
+            case .scrollMarginTop(let value):
+                cssProperties.append(ScrollMarginTop(value))
             case .cornerRadius(let value):
                 cssProperties.append(BorderRadius(value))
             case .clipShape(let shape):

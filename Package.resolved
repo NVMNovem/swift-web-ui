@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/NVMNovem/swift-css",
       "state" : {
-        "revision" : "9bca753c35944ee3bbdf7865d82e6c283179ad40",
-        "version" : "0.1.1"
+        "revision" : "57ff19fbde6c6269d1d784e853dd32ccd0520b48",
+        "version" : "0.1.2"
       }
     },
     {
