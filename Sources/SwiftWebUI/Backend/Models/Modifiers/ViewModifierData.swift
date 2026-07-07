@@ -17,6 +17,8 @@ public enum ViewModifierData {
     case cssClass(String)
     case id(String)
     case attribute(SwiftHTML.Attribute)
+    case bindText(String)
+    case bindAttribute(name: String, field: String)
     case display(DisplayValue)
     case gridTemplateColumns(String)
     case justifyContent(JustifyContentValue)

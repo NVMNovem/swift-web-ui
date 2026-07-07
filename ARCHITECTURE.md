@@ -191,6 +191,14 @@ TabView(selection: $section) {
 }
 ```
 
+### Dynamic Remote Content
+
+`Template` and `RemoteList` are SwiftWebUI-level declarations for small API-driven browser behavior. `Template` lowers through `SwiftHTML.Template`; SwiftWebUI does not create a custom HTML node system for browser templates. Binding modifiers such as `.bindText(_:)` and `.bindAttribute(_:_:)` are declarative data attributes that the generated runtime consumes.
+
+`RemoteList` may register a small generic JavaScript runtime in `resources.scripts`. That runtime should stay data-attribute driven: find remote lists, fetch GET JSON arrays, clone templates, and fill bound text or attributes. It must not become broad hand-written app-specific JavaScript inside SwiftWebUI, must not compile Swift closures to JavaScript, and must not grow into a full reactive runtime.
+
+Future SwiftJS extraction is allowed only after repeated runtime patterns emerge. Until then, keep these generated runtimes narrow, generic, and owned by the SwiftWebUI features that declare them.
+
 ### SwiftJS
 
 `SwiftJS` is a possible future package for JavaScript generation and runtime primitives.

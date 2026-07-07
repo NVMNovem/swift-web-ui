@@ -52,7 +52,8 @@ SwiftWebUI must not duplicate low-level HTML or CSS systems. If a feature is a n
 
 SwiftWebUI owns the higher-level web UI intent: primitive view types such as
 ``Text``, ``VStack``, ``Grid``, ``Button``, ``Link``, ``Image``, ``Article``,
-``Section``, ``Form``, ``Label``, ``Input``, ``TextArea``, and ``Footer``;
+``Section``, ``Form``, ``Label``, ``Input``, ``TextArea``, ``Footer``, and
+``Template``;
 view modifiers stored as data; semantic UI styling such as ``ButtonStyle`` and
 ``ButtonStyleToken``; state placeholders such as ``State`` and ``Binding``;
 rendered resource collection; and ``WebDocument`` as a browser document target.
@@ -64,3 +65,9 @@ SwiftCSS and SwiftHTML.
 > Important: Do not reintroduce `SwiftWebUI.Border` or `SwiftWebUI.Shadow` as thin wrappers. Use SwiftCSS `Border` and `BoxShadow`, or add missing capabilities to SwiftCSS first.
 
 Future packages such as SwiftMailUI should follow the same rule. A future SwiftMailUI package may depend on SwiftHTML and SwiftCSS, but it must not depend on SwiftWebUI.
+
+SwiftWebUI may generate small JavaScript runtimes for declared behavior such as
+client-state controls and ``RemoteList``. These runtimes should stay generic,
+data-attribute driven, and tied to explicit SwiftWebUI declarations. Do not add
+broad hand-written app-specific JavaScript to SwiftWebUI. A future SwiftJS
+package should only be extracted after repeated runtime patterns emerge.

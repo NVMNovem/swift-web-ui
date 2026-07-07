@@ -57,6 +57,21 @@ public struct RenderContext {
         )
     }
 
+    mutating func registerRemoteListRuntime() {
+        guard !resources.scriptIDs.contains(RemoteListRuntime.scriptID) else {
+            return
+        }
+
+        resources.scriptIDs.insert(RemoteListRuntime.scriptID)
+        resources.scripts.append(
+            ScriptResource(
+                id: RemoteListRuntime.scriptID,
+                scope: .global,
+                content: RemoteListRuntime.script
+            )
+        )
+    }
+
     func renderedResources() -> RenderedResources {
         let css = resources.styleRegistry.renderCSS()
         let styles = css.isEmpty ? [] : [
@@ -111,6 +126,10 @@ extension RenderContext {
                 default:
                     attributes.append(attribute)
                 }
+            case .bindText(let field):
+                attributes.append(.init("data-swiftwebui-bind-text", field))
+            case .bindAttribute(let name, let field):
+                attributes.append(.init("data-swiftwebui-bind-attribute-\(name)", field))
             case .display(let value):
                 cssProperties.append(Display(value))
             case .gridTemplateColumns(let value):

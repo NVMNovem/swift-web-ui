@@ -25,6 +25,16 @@ public extension View {
     func attribute(_ name: String, _ value: String) -> ModifiedView<Self> {
         modified(.attribute(SwiftHTML.Attribute(name, value)))
     }
+
+    /// Marks the rendered element's text content as bound to a JSON field.
+    func bindText(_ fieldName: String) -> ModifiedView<Self> {
+        modified(.bindText(fieldName))
+    }
+
+    /// Marks a rendered HTML attribute as bound to a JSON field.
+    func bindAttribute(_ name: String, _ fieldName: String) -> ModifiedView<Self> {
+        modified(.bindAttribute(name: name, field: fieldName))
+    }
     
     /// Applies a CSS display value.
     func display(_ value: DisplayValue) -> ModifiedView<Self> {
@@ -327,6 +337,14 @@ public extension ModifiedView {
     
     func attribute(_ name: String, _ value: String) -> ModifiedView<Content> {
         appending(.attribute(SwiftHTML.Attribute(name, value)))
+    }
+
+    func bindText(_ fieldName: String) -> ModifiedView<Content> {
+        appending(.bindText(fieldName))
+    }
+
+    func bindAttribute(_ name: String, _ fieldName: String) -> ModifiedView<Content> {
+        appending(.bindAttribute(name: name, field: fieldName))
     }
     
     func display(_ value: DisplayValue) -> ModifiedView<Content> {

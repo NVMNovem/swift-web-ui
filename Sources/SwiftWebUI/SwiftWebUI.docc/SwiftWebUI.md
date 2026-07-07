@@ -57,6 +57,7 @@ The package is intentionally layered. SwiftWebUI owns the web view DSL, modifier
 - ``Article``
 - ``Section``
 - ``Footer``
+- ``Template``
 
 ### Layout Views
 
@@ -86,6 +87,7 @@ The package is intentionally layered. SwiftWebUI owns the web view DSL, modifier
 - <doc:Navigation>
 - <doc:Tabs>
 - <doc:Forms>
+- <doc:DynamicContent>
 - ``State``
 - ``Binding``
 - ``ClientStateValue``
@@ -96,6 +98,8 @@ The package is intentionally layered. SwiftWebUI owns the web view DSL, modifier
 - ``Label``
 - ``Input``
 - ``TextArea``
+- ``RemoteList``
+- ``RemoteSource``
 
 ### Resources and Extensibility
 

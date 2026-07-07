@@ -299,6 +299,55 @@ extension TabView: SwiftHTMLRenderable {
     }
 }
 
+extension Template: SwiftHTMLRenderable {
+    func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        let attributes = context.elementAttributes([
+            .init("data-swiftwebui-template", name)
+        ])
+        var childContext = context.clearingModifiers()
+        return [
+            SwiftHTML.Template(attributes.attributes) {
+                content.renderSwiftHTML(context: &childContext)
+            }
+        ]
+    }
+}
+
+extension RemoteList: SwiftHTMLRenderable {
+    func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
+        context.registerRemoteListRuntime()
+
+        let attributes = context.elementAttributes([
+            .init("data-swiftwebui-remote-list", "true"),
+            .init("data-swiftwebui-source", source.url),
+            .init("data-swiftwebui-method", source.method),
+            .init("data-swiftwebui-template", template)
+        ])
+        var childContext = context.clearingModifiers()
+
+        return [
+            SwiftHTML.Div(attributes.attributes) {
+                SwiftHTML.Div([.init("data-swiftwebui-remote-loading", "true")]) {
+                    loadingContent.renderSwiftHTML(context: &childContext)
+                }
+                SwiftHTML.Div([
+                    .init("data-swiftwebui-remote-empty", "true"),
+                    .init("hidden", "hidden")
+                ]) {
+                    emptyContent.renderSwiftHTML(context: &childContext)
+                }
+                SwiftHTML.Div([
+                    .init("data-swiftwebui-remote-error", "true"),
+                    .init("hidden", "hidden")
+                ]) {
+                    errorContent.renderSwiftHTML(context: &childContext)
+                }
+                SwiftHTML.Div([.init("data-swiftwebui-remote-content", "true")]) {}
+            }
+        ]
+    }
+}
+
 extension TabBar: SwiftHTMLRenderable {
     func renderSwiftHTML(context: inout RenderContext) -> [any SwiftHTML.HTMLNode] {
         var wrapperAttributes: [SwiftHTML.Attribute] = [

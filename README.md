@@ -96,6 +96,38 @@ let css = rendered.cssString(prettyPrinted: false)
 let js = rendered.jsString(prettyPrinted: false)
 ```
 
+Use `Template`, binding modifiers, and `RemoteList` when static Swift markup should be cloned for API-driven content:
+
+```swift
+Template("product-card") {
+    Article {
+        Text("")
+            .bindText("name")
+
+        Text("")
+            .bindText("description")
+
+        Link(destination: "#") {
+            Text("View")
+        }
+        .bindAttribute("href", "url")
+    }
+}
+
+RemoteList(source: .get("/api/products"), template: "product-card")
+    .loading {
+        Text("Producten laden...")
+    }
+    .empty {
+        Text("Geen producten gevonden.")
+    }
+    .error {
+        Text("Kon producten niet laden.")
+    }
+```
+
+`RemoteList` emits a small generic JavaScript resource that fetches a JSON array, clones the named browser template, and fills bound fields with `textContent` or `setAttribute`. It is intentionally not a full Swift-to-JavaScript or reactive runtime.
+
 `TabBar` and `TabView` cover different tab-like controls. Use `TabBar` for selection-only controls such as navigation tabs, segmented controls, filters, and timeline selectors:
 
 ```swift

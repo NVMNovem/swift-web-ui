@@ -10,8 +10,8 @@ let package = Package(
         .library(name: "SwiftWebUI", targets: ["SwiftWebUI"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/NVMNovem/swift-css", from: "0.0.1"),
-        .package(url: "https://github.com/NVMNovem/swift-html", from: "0.0.1")
+        .package(url: "https://github.com/NVMNovem/swift-css", from: "0.2.0"),
+        .package(url: "https://github.com/NVMNovem/swift-html", from: "0.2.0")
     ],
     targets: [
         .target(

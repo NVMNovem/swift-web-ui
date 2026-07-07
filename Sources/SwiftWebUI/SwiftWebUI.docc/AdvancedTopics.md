@@ -52,3 +52,5 @@ let document = WebDocument(
 SwiftWebUI is not a site generator. It renders view trees and resources. Routing, file watching, asset pipelines, deployment, and server behavior should live in application code or separate packages.
 
 When extending the framework, keep the architecture boundary clear: view intent belongs in SwiftWebUI, CSS primitives belong in SwiftCSS, and HTML primitives belong in SwiftHTML.
+
+SwiftWebUI may emit small generated JavaScript resources for declared behaviors such as client-state controls and ``RemoteList``. Keep these runtimes generic and data-attribute driven. App-specific JavaScript and broad client frameworks should live outside SwiftWebUI unless repeated runtime patterns justify a new package boundary.

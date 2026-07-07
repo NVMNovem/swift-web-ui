@@ -1830,6 +1830,110 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(rendered.resources.scripts.isEmpty)
 }
 
+@Test func templateRendersRealTemplateElementWithName() {
+    let html = HTMLRenderer().render(
+        Template("product-card") {
+            Article {
+                Text("")
+                    .bindText("name")
+            }
+        }
+    )
+
+    #expect(html.contains("<template data-swiftwebui-template=\"product-card\">"))
+    #expect(html.contains("<article>"))
+}
+
+@Test func bindTextRendersBindingDataAttribute() {
+    let html = HTMLRenderer().render(
+        Text("")
+            .bindText("name")
+    )
+
+    #expect(html.contains("<span data-swiftwebui-bind-text=\"name\"></span>"))
+}
+
+@Test func bindAttributeRendersBindingDataAttribute() {
+    let html = HTMLRenderer().render(
+        Link(destination: "#") {
+            Text("View")
+        }
+        .bindAttribute("href", "url")
+    )
+
+    #expect(html.contains("href=\"#\""))
+    #expect(html.contains("data-swiftwebui-bind-attribute-href=\"url\""))
+}
+
+@Test func remoteListRendersContainerAttributes() {
+    let html = HTMLRenderer().render(
+        RemoteList(source: .get("/api/products"), template: "product-card")
+    )
+
+    #expect(html.contains("data-swiftwebui-remote-list=\"true\""))
+    #expect(html.contains("data-swiftwebui-source=\"/api/products\""))
+    #expect(html.contains("data-swiftwebui-method=\"GET\""))
+    #expect(html.contains("data-swiftwebui-template=\"product-card\""))
+    #expect(html.contains("data-swiftwebui-remote-content=\"true\""))
+}
+
+@Test func remoteListRendersLoadingEmptyAndErrorStates() {
+    let html = HTMLRenderer().render(
+        RemoteList(source: .get("/api/products"), template: "product-card")
+            .loading {
+                Text("Producten laden...")
+            }
+            .empty {
+                Text("Geen producten gevonden.")
+            }
+            .error {
+                Text("Kon producten niet laden.")
+            }
+    )
+
+    #expect(html.contains("data-swiftwebui-remote-loading=\"true\""))
+    #expect(html.contains("Producten laden..."))
+    #expect(html.contains("data-swiftwebui-remote-empty=\"true\" hidden=\"hidden\""))
+    #expect(html.contains("Geen producten gevonden."))
+    #expect(html.contains("data-swiftwebui-remote-error=\"true\" hidden=\"hidden\""))
+    #expect(html.contains("Kon producten niet laden."))
+}
+
+@Test func remoteListRegistersScriptResource() {
+    let rendered = HTMLRenderer().renderView(
+        RemoteList(source: .get("/api/products"), template: "product-card")
+    )
+
+    #expect(rendered.resources.scripts.count == 1)
+    #expect(rendered.resources.scripts.first?.id == "swiftwebui-remote-list")
+    #expect(rendered.jsString().contains("data-swiftwebui-remote-list"))
+}
+
+@Test func multipleRemoteListsRegisterRuntimeOnlyOnce() {
+    let rendered = HTMLRenderer().renderView(
+        VStack {
+            RemoteList(source: .get("/api/products"), template: "product-card")
+            RemoteList(source: .get("/api/articles"), template: "article-card")
+        }
+    )
+
+    #expect(rendered.resources.scripts.count == 1)
+    #expect(rendered.resources.scripts.map(\.id) == ["swiftwebui-remote-list"])
+}
+
+@Test func remoteListRuntimeAvoidsUnsafeStringEvaluation() {
+    let rendered = HTMLRenderer().renderView(
+        RemoteList(source: .get("/api/products"), template: "product-card")
+    )
+    let js = rendered.jsString()
+
+    #expect(!js.contains("innerHTML"))
+    #expect(!js.contains("eval"))
+    #expect(js.contains("textContent"))
+    #expect(js.contains("cloneNode(true)"))
+    #expect(js.contains("setAttribute"))
+}
+
 @Test func proofOfConceptPageRendersStableHTML() {
     let rendered = HTMLRenderer().renderView(PortfolioPreview())
     let html = rendered.htmlString()
