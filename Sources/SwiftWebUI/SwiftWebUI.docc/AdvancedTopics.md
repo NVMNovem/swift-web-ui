@@ -4,7 +4,9 @@ Work with rendered resources, document export, and extension boundaries.
 
 ## Overview
 
-``HTMLRenderer`` returns a ``RenderedView`` that separates HTML content from resources:
+SwiftWebUI renderers conform to ``ViewRendererProtocol``. ``HTMLRenderer``
+returns compact HTML from `render(_:)` and can also return a ``RenderedView``
+that separates HTML content from resources:
 
 ```swift
 let rendered = HTMLRenderer().renderView(MyPage())
@@ -29,6 +31,8 @@ let document = WebDocument(
 
 ### Rendered Output
 
+- ``ViewRendererProtocol``
+- ``HTMLRenderer``
 - ``RenderedView``
 - ``RenderedContent``
 - ``RenderedResources``

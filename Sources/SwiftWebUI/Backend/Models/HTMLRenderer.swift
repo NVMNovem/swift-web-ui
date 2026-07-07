@@ -11,7 +11,8 @@ import SwiftHTML
 ///
 /// `HTMLRenderer` is the primary bridge from the SwiftWebUI view DSL to
 /// SwiftHTML nodes and SwiftCSS resource output.
-public struct HTMLRenderer {
+public struct HTMLRenderer: ViewRendererProtocol {
+    public typealias Output = String
     
     public init() {}
 

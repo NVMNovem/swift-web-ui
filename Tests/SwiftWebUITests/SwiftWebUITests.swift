@@ -1331,6 +1331,19 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(!html.contains("color: var(--primary)"))
 }
 
+@Test func htmlRendererConformsToViewRendererProtocol() {
+    func render<R: ViewRendererProtocol>(
+        _ renderer: R,
+        view: Text
+    ) -> R.Output where R.Output == String {
+        renderer.render(view)
+    }
+
+    let html = render(HTMLRenderer(), view: Text("Hello"))
+
+    #expect(html == "<span>Hello</span>")
+}
+
 @Test func preservesUserClassesWhenAddingGeneratedClass() {
     let rendered = HTMLRenderer().renderView(
         Link("Work", destination: "#work")
