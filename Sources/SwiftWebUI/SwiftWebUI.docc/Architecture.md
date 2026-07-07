@@ -34,6 +34,7 @@ User View
 - ``View``
 - ``ViewBuilder``
 - ``ModifiedView``
+- ``ViewRendererProtocol``
 - ``HTMLRenderer``
 - ``RenderedView``
 - ``WebDocument``
@@ -71,3 +72,17 @@ client-state controls and ``RemoteList``. These runtimes should stay generic,
 data-attribute driven, and tied to explicit SwiftWebUI declarations. Do not add
 broad hand-written app-specific JavaScript to SwiftWebUI. A future SwiftJS
 package should only be extracted after repeated runtime patterns emerge.
+
+## Renderer Boundary
+
+``ViewRendererProtocol`` is the public renderer boundary. It lets renderers own
+their output type while preserving the existing user-facing ``View`` API.
+``HTMLRenderer`` conforms with `Output == String` for direct HTML strings and
+continues to expose `renderView(_:)` for separated ``RenderedView`` output and
+`renderNodes(_:)` for SwiftHTML node output.
+
+The current HTML renderer lowers views through an internal SwiftHTML bridge and
+``RenderContext``. That bridge is an implementation detail of the browser HTML
+renderer, not a second public view system. Future renderers, such as a DOM/WASM
+renderer, should add their own renderer-owned output and lowering boundary
+without requiring changes to application `View` declarations.

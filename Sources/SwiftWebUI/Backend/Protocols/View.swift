@@ -8,8 +8,7 @@
 /// A declarative SwiftWebUI component that renders to browser HTML and resources.
 ///
 /// Conform to `View` by returning other SwiftWebUI views from ``body``. SwiftWebUI
-/// renders the resulting tree through ``HTMLRenderer`` into SwiftHTML nodes and
-/// SwiftCSS-backed resources.
+/// renderers lower the resulting tree into renderer-owned output.
 public protocol View {
     associatedtype Body: View
 

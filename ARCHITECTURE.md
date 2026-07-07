@@ -22,6 +22,10 @@ flowchart TD
 
     SwiftWebUI["SwiftWebUI<br/>View DSL, Modifiers, State, WebDocument"]
 
+    ViewRendererProtocol["ViewRendererProtocol<br/>Renderer-Owned Output"]
+
+    HTMLRenderer["HTMLRenderer<br/>Browser HTML Renderer"]
+
     SwiftHTML["SwiftHTML<br/>HTML Nodes, Attributes, Escaping, Rendering"]
 
     SwiftCSS["SwiftCSS<br/>CSS Properties, Values, Declarations, Rendering"]
@@ -38,6 +42,8 @@ flowchart TD
 
     UserView --> SwiftWebUI
 
+    SwiftWebUI --> ViewRendererProtocol
+    ViewRendererProtocol --> HTMLRenderer
     SwiftWebUI --> SwiftHTML
     SwiftWebUI --> SwiftCSS
     SwiftWebUI -. future .-> SwiftJS
@@ -112,6 +118,7 @@ Responsibilities:
 - `ButtonStyle` and semantic UI styling.
 - `@State` and `Binding` architecture placeholders.
 - Client-state and action intent.
+- `ViewRendererProtocol` as the public boundary for renderer-owned output.
 - Style and resource collection through `RenderContext`.
 - Converting `SwiftWebUI` views into `SwiftHTML` nodes and `SwiftCSS` resources.
 - Rendering views into neutral `RenderedView` output with content and resources.
@@ -246,10 +253,13 @@ If duplication between `SwiftWebUI` and a future `SwiftMailUI` becomes painful l
 
 ## Render Pipeline
 
-The current browser web render pipeline is intentionally layered:
+The current browser web render pipeline is intentionally layered. Public
+renderers conform to `ViewRendererProtocol`, which lets each renderer own its
+output type without changing user-facing `View` declarations.
 
 ```text
 SwiftWebUI View
+    -> ViewRendererProtocol implementation
     -> RenderContext
     -> SwiftHTML nodes
     -> SwiftCSS style resources
@@ -267,6 +277,18 @@ SwiftWebUI View
 - Future script resources.
 
 That separation matters because rendering a component is not the same thing as deciding final document output. `SwiftWebUI` can produce content and collect resources, while `WebDocument` can wrap that output for browser preview/testing without replacing the renderer.
+
+`HTMLRenderer` is the current concrete browser HTML renderer. Its public
+`render(_:)` method returns a compact HTML `String` and satisfies
+`ViewRendererProtocol` with `Output == String`. Its `renderView(_:)` method
+remains the preferred API when callers need separated HTML, CSS, and JavaScript
+resources, and `renderNodes(_:)` remains available for SwiftHTML-node output.
+
+The internal `SwiftHTMLRenderable` protocol and `SwiftHTMLBridge.swift` file are
+the current lowering implementation from SwiftWebUI views to SwiftHTML nodes.
+They should be treated as HTML-renderer internals. A future DOM/WASM renderer
+should not be forced to produce SwiftHTML nodes first; it should add a
+renderer-owned output model and lowering path behind `ViewRendererProtocol`.
 
 ## Modifiers Are Data
 
@@ -430,6 +452,8 @@ Recent cleanup example:
 | CSS border property | `SwiftCSS` | CSS property |
 | `.border(...)` modifier | `SwiftWebUI` | View API that stores CSS intent |
 | `ButtonStyle` | `SwiftWebUI` | UI/component concept |
+| `ViewRendererProtocol` | `SwiftWebUI` | Renderer boundary for view output |
+| `HTMLRenderer` | `SwiftWebUI` | Browser HTML renderer |
 | `RenderedView` | `SwiftWebUI` | Neutral output from web UI rendering |
 | `WebDocument` | `SwiftWebUI` | Browser document wrapper around rendered web UI |
 | `MailDocument` | Future `SwiftMailUI` | Email document wrapper, not implemented now |
