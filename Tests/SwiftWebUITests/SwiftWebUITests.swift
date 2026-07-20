@@ -1,5 +1,6 @@
 import Testing
 @testable import SwiftWebUI
+import SwiftWebUIStatic
 import Foundation
 import SwiftHTML
 
@@ -78,20 +79,21 @@ private func cssRuleCount(in css: String, for className: String) -> Int {
     css.components(separatedBy: ".\(className) {").count - 1
 }
 
-struct PrimaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding(.horizontal, .px(15))
-            .padding(.vertical, .px(5))
-            .bold()
-            .foregroundStyle(Color("#fff"))
-            .background(Color("var(--accent)"))
-            .clipShape(.capsule)
+extension ButtonStyleToken {
+    static var myAppPrimaryButton: ButtonStyleToken {
+        ButtonStyleToken(
+            declarations: [
+                RawProperty("padding-left", "15px").cssDeclaration,
+                RawProperty("padding-right", "15px").cssDeclaration,
+                RawProperty("padding-top", "5px").cssDeclaration,
+                RawProperty("padding-bottom", "5px").cssDeclaration,
+                FontWeight(.bold).cssDeclaration,
+                Color("#fff").cssDeclaration,
+                BackgroundColor(Color("var(--accent)")).cssDeclaration,
+                BorderRadius(.px(999)).cssDeclaration,
+            ]
+        )
     }
-}
-
-extension ButtonStyle where Self == PrimaryButtonStyle {
-    static var myAppPrimaryButton: PrimaryButtonStyle { .init() }
 }
 
 @Test func rendersSimpleText() {
@@ -99,7 +101,11 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let nodes = renderer.renderNodes(Text("Hello <Swift>"))
     let html = nodes.map { $0.render(prettyPrinted: false) }.joined()
     
-    #expect(nodes.first is Span)
+    guard case .element(let element)? = nodes.first else {
+        Issue.record("Expected concrete element node")
+        return
+    }
+    #expect(element.tag == "span")
     #expect(html == "<span>Hello &lt;Swift&gt;</span>")
 }
 
@@ -108,7 +114,11 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     let nodes = renderer.renderNodes(Text("Title").semanticRole(.h1))
     let html = nodes.map { $0.render(prettyPrinted: false) }.joined()
 
-    #expect(nodes.first is H1)
+    guard case .element(let element)? = nodes.first else {
+        Issue.record("Expected concrete element node")
+        return
+    }
+    #expect(element.tag == "h1")
     #expect(html == "<h1>Title</h1>")
 }
 
@@ -1439,7 +1449,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(rendered.cssString().contains(".\(className)"))
 }
 
-@Test func protocolButtonStyleCompilesAndRendersOnButton() {
+@Test func concreteButtonStyleTokenCompilesAndRendersOnButton() {
     let rendered = HTMLRenderer().renderView(
         Button("Funico")
             .buttonStyle(.myAppPrimaryButton)
@@ -1461,7 +1471,7 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(css.contains("border-radius: 999px"))
 }
 
-@Test func protocolButtonStyleRendersOnLinkAndKeepsAnchorElement() {
+@Test func concreteButtonStyleTokenRendersOnLinkAndKeepsAnchorElement() {
     let rendered = HTMLRenderer().renderView(
         Link("Bekijk mijn werk", destination: "#work")
             .buttonStyle(.myAppPrimaryButton)
@@ -1522,12 +1532,11 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
     #expect(binding.wrappedValue == 1)
     binding.wrappedValue = 3
     #expect(binding.wrappedValue == 3)
-    #expect(binding.clientState?.key.isEmpty == false)
-    #expect(binding.clientState?.initialValue == "1")
+    #expect(binding.stateIdentity != nil)
     #expect(HTMLRenderer().render(view).contains("data-swiftwebui-state-value=\"4\""))
 }
 
-@Test func stateProjectedValueExposesClientStateMetadata() {
+@Test func stateProjectedValueExposesStableIdentity() {
     struct BoundTabs: View {
         @State var selection = PortfolioTab.contact
         
@@ -1540,10 +1549,9 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
         }
     }
     
-    let metadata = BoundTabs().binding.clientState
+    let identity = BoundTabs().binding.stateIdentity
     
-    #expect(metadata?.key.isEmpty == false)
-    #expect(metadata?.initialValue == "contact")
+    #expect(identity != nil)
 }
 
 @Test func tabViewStaticSelectionCompilesAndRendersAccessibleTabsAndPanels() {
@@ -2147,22 +2155,33 @@ extension ButtonStyle where Self == PrimaryButtonStyle {
 }
 
 @Test func publicTabBarSymbolExistsAsSelectionOnlyPrimitive() throws {
-    let sourceRoot = URL(fileURLWithPath: #filePath)
+    let repositoryRoot = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
-        .appending(path: "Sources/SwiftWebUI")
+    let coreRoot = repositoryRoot.appending(path: "Sources/SwiftWebUI")
+    let staticRoot = repositoryRoot.appending(path: "Sources/SwiftWebUIStatic")
 
-    let sourceFiles = try FileManager.default
-        .subpathsOfDirectory(atPath: sourceRoot.path())
+    let coreFiles = try FileManager.default
+        .subpathsOfDirectory(atPath: coreRoot.path())
+        .filter { $0.hasSuffix(".swift") }
+    let staticFiles = try FileManager.default
+        .subpathsOfDirectory(atPath: staticRoot.path())
         .filter { $0.hasSuffix(".swift") }
 
-    let combinedSource = try sourceFiles
-        .map { try String(contentsOf: sourceRoot.appending(path: $0), encoding: .utf8) }
+    let coreSource = try coreFiles
+        .map { try String(contentsOf: coreRoot.appending(path: $0), encoding: .utf8) }
+        .joined(separator: "\n")
+    let staticSource = try staticFiles
+        .map { try String(contentsOf: staticRoot.appending(path: $0), encoding: .utf8) }
         .joined(separator: "\n")
 
-    #expect(combinedSource.contains("public struct TabBar"))
-    #expect(combinedSource.contains("extension TabBar: SwiftHTMLRenderable"))
+    #expect(coreSource.contains("public struct TabBar"))
+    #expect(coreSource.contains("makeViewNode() -> ViewNode { .tabControl"))
+    #expect(coreSource.contains("case .tabControl(let control)"))
+    #expect(!staticSource.contains("case .tabControl(let control)"))
+    #expect(staticSource.contains("WebNodeStaticLowerer"))
+    #expect(!coreSource.contains("SwiftHTMLRenderable"))
 }
 
 @Test func exportPortfolioSpikeToFiles() throws {

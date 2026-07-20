@@ -9,7 +9,7 @@ This tutorial builds a small static page with text, a button, extracted CSS, and
 ## Create the View
 
 ```swift
-import SwiftWebUI
+import SwiftWebUIStatic
 
 struct FirstPage: View {
     var body: some View {
@@ -41,4 +41,4 @@ let css = rendered.cssString(prettyPrinted: true)
 
 ## Discussion
 
-The view tree renders to body content. ``WebDocument`` wraps that content in `html`, `head`, and `body` markup and links a stylesheet path only when CSS resources exist.
+The shared view first lowers to a concrete ``ViewNode``. The static module then produces body content and uses `WebDocument` to wrap it in `html`, `head`, and `body` markup, linking a stylesheet only when CSS resources exist.

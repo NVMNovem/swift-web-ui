@@ -1,5 +1,5 @@
 import Testing
-import SwiftWebUI
+import SwiftWebUIStatic
 
 @Test func swiftCSSValuesAreAvailableThroughSwiftWebUIImport() {
     let rendered = HTMLRenderer().renderView(
@@ -23,4 +23,3 @@ import SwiftWebUI
     #expect(css.contains("letter-spacing: 0.1em"))
     #expect(css.contains("line-height: 1.5em"))
 }
-

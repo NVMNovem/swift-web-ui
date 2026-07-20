@@ -4,7 +4,7 @@ Apply visual styling through SwiftWebUI modifiers backed by SwiftCSS values and 
 
 ## Overview
 
-Styling modifiers attach styling intent to a view. During rendering, SwiftWebUI converts that intent into SwiftCSS declarations, registers generated CSS classes, and keeps the HTML output focused on structure.
+Styling modifiers attach concrete intent to a view node. `SwiftWebUIStatic` lowers that intent into SwiftCSS declarations, registers generated CSS classes, and keeps HTML output focused on structure.
 
 ```swift
 Text("Hello")
@@ -75,8 +75,6 @@ strings because the corresponding SwiftCSS property value is intentionally broad
 
 ### Buttons
 
-- ``ButtonStyle``
-- ``ButtonStyleConfiguration``
 - ``ButtonStyleToken``
 
 ## Examples
@@ -100,6 +98,8 @@ extension Color {
 Text("Muted copy")
     .foregroundStyle(.muted)
 ```
+
+Define button tokens with a stable class name and concrete SwiftCSS declarations. Protocol-erased custom button styles are not supported by the Embedded core.
 
 Use raw CSS overloads only as escape hatches:
 

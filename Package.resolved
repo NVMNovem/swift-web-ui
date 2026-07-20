@@ -1,22 +1,22 @@
 {
-  "originHash" : "dd255535037a0f55e05a0355f39230595572a954da739e33567269528f89c7d8",
+  "originHash" : "714b2633c65fc7a0ac4043172909302eabd6821edcf4ef0de9378532e3333d10",
   "pins" : [
     {
-      "identity" : "swift-css",
+      "identity" : "javascriptkit",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/NVMNovem/swift-css",
+      "location" : "https://github.com/swiftwasm/JavaScriptKit.git",
       "state" : {
-        "revision" : "d1b3c5e358a8235958d3646767a4b935d95d26a1",
-        "version" : "0.2.0"
+        "revision" : "22905075f8b61834810babe5fb9a2f613f22f398",
+        "version" : "0.56.1"
       }
     },
     {
-      "identity" : "swift-html",
+      "identity" : "swift-syntax",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/NVMNovem/swift-html",
+      "location" : "https://github.com/swiftlang/swift-syntax",
       "state" : {
-        "revision" : "b87880937fdf085b29073eef7cd74323e807598e",
-        "version" : "0.2.0"
+        "revision" : "79e4b74a295b6eb74a8b585e3a39d29e70c1dbd1",
+        "version" : "603.0.2"
       }
     }
   ],

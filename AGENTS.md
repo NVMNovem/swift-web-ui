@@ -2,7 +2,20 @@
 
 - SwiftHTML owns HTML nodes, attributes, escaping, and rendering.
 - SwiftCSS owns CSS properties, values, declarations, and rendering.
-- SwiftWebUI owns the web View DSL, modifiers, semantic UI styling, state placeholders, rendered web resources, and WebDocument.
+- SwiftWebUI owns the Embedded-compatible shared View DSL, concrete ViewNode, WebNode, ViewNodeToWebNodeLowerer, modifiers, semantic UI styling, state, binding, and action intent.
+- SwiftWebUIStatic owns mechanical WebNode-to-SwiftHTML/SwiftCSS lowering, rendered resources, generated JavaScript, WebDocument, and preview/export helpers.
+- SwiftWebUIRuntime owns mechanical WebNode-to-DOM lowering, event registration, invalidation, and the browser bridge.
+- Runtime updates must go through the SwiftWebUIRuntime reconciliation pipeline.
+- WebNode must never contain DOM handles, mounted state, dirty flags, or browser objects.
+- New patch behavior requires focused WebNodeDiffer and DOMPatchApplier tests.
+- Content hashes are not identity.
+- Keyed lists require explicit user or domain identity; child position is not permanent semantic identity.
+- New view and modifier semantics must be implemented in ViewNodeToWebNodeLowerer.
+- Static and runtime renderers may not duplicate container, modifier, font-token, or control semantics.
+- Shared semantic changes require shared-lowerer tests and static/runtime backend tests where applicable.
+- Keep the SwiftWebUI core Embedded-compatible: do not add Foundation, filesystem access, HTML strings, generated JavaScript, or static resource registries.
+- Do not use dynamic casts for view traversal, state serialization, or style discovery.
+- Normal composition must not use AnyView, view existential storage, or type-erased rendering closures.
 - Do not create custom HTML node systems in SwiftWebUI.
 - Do not implement CSS rendering directly in SwiftWebUI.
 - Do not reintroduce SwiftWebUI.Border or SwiftWebUI.Shadow thin wrappers.
@@ -45,6 +58,12 @@ A pull request or Codex task is considered incomplete if documentation is not up
 
 Documentation is part of the Definition of Done.
 
+Core changes must also pass:
+
+```sh
+swift build --target SwiftWebUI --swift-sdk swift-6.3.3-RELEASE_wasm-embedded
+```
+
 ## DocC Validation
 
 Before running direct DocC conversion, generate SwiftWebUI symbol graphs:
@@ -64,4 +83,4 @@ xcrun docc convert Sources/SwiftWebUI/SwiftWebUI.docc \
   --output-path /tmp/SwiftWebUI.doccarchive
 ```
 
-Without `--additional-symbol-graph-dir`, DocC cannot resolve SwiftWebUI symbols such as `View`, `TabView`, `Font`, or `WebDocument`.
+Without `--additional-symbol-graph-dir`, DocC cannot resolve SwiftWebUI core symbols such as `View`, `TabView`, or `Font`. Static-only APIs such as `WebDocument` belong to SwiftWebUIStatic.

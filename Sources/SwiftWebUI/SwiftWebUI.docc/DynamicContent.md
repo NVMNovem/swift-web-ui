@@ -18,7 +18,7 @@ Template("product-card") {
 }
 ```
 
-``RemoteList`` fetches a JSON array from a GET endpoint, finds the named template, clones it once per item, and fills bound fields:
+The static-only `RemoteList` type fetches a JSON array from a GET endpoint, finds the named template, clones it once per item, and fills bound fields. Import `SwiftWebUIStatic` to use it:
 
 ```swift
 RemoteList(source: .get("/api/products"), template: "product-card")
@@ -42,7 +42,7 @@ Link(destination: "#") {
 .bindAttribute("href", "url")
 ```
 
-RemoteList is intentionally not a JavaScript framework. It does not run Swift in the browser, compile Swift closures to JavaScript, evaluate arbitrary expressions, or provide a reactive runtime. The generated runtime uses `textContent` for text, avoids `eval`, expects a JSON array, and supports simple field names plus dot paths such as `category.name`.
+`RemoteList` belongs to `SwiftWebUIStatic`, not the Embedded core. It is intentionally not a JavaScript framework. It does not run Swift in the browser, compile Swift closures to JavaScript, evaluate arbitrary expressions, or provide a reactive runtime. The generated runtime uses `textContent` for text, avoids `eval`, expects a JSON array, and supports simple field names plus dot paths such as `category.name`.
 
 ## Topics
 
@@ -50,7 +50,6 @@ RemoteList is intentionally not a JavaScript framework. It does not run Swift in
 
 - ``Template``
 
-### Remote Lists
+### Architecture
 
-- ``RemoteList``
-- ``RemoteSource``
+- <doc:Architecture>
