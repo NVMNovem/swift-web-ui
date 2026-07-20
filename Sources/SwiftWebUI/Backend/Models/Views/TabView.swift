@@ -5,36 +5,27 @@
 //  Created by Damian Van de Kauter on 25/06/2026.
 //
 
-/// A tabbed interface that renders tab controls and matching panels.
-///
-/// Binding-backed tab views emit generated client-state metadata and a small
-/// JavaScript runtime resource for switching panels in the browser.
 public struct TabView<Value: Hashable>: View {
-    public typealias Body = AnyView
+    public typealias Body = Never
+    public let selection: ClientValue
+    public let state: ClientStateBinding?
+    public let tabs: [Tab<Value>]
+    private init(selection: ClientValue, state: ClientStateBinding?, tabs: [Tab<Value>]) { self.selection = selection; self.state = state; self.tabs = tabs }
+    public var body: Never { fatalError("TabView primitive body unavailable") }
+    public func makeViewNode() -> ViewNode { .tabControl(.init(kind: .view, selection: selection, state: state, tabs: tabs.map(\.node))) }
+}
 
-    var selection: Value
-    var clientState: ClientStateBinding?
-    var tabs: [Tab<Value>]
+public extension TabView where Value: ClientStateValue {
+    init(selection: Value, @TabBuilder<Value> tabs: () -> [Tab<Value>]) { self.init(selection: selection.clientValue, state: nil, tabs: tabs()) }
+    init(selection: Binding<Value>, @TabBuilder<Value> tabs: () -> [Tab<Value>]) { let value = selection.wrappedValue.clientValue; self.init(selection: value, state: selection.binding(value), tabs: tabs()) }
+}
 
-    public init(
-        selection: Value,
-        @TabBuilder<Value> tabs: () -> [Tab<Value>]
-    ) {
-        self.selection = selection
-        self.clientState = nil
-        self.tabs = tabs()
-    }
+public extension TabView where Value: RawRepresentable, Value.RawValue == String {
+    init(selection: Value, @TabBuilder<Value> tabs: () -> [Tab<Value>]) { self.init(selection: .string(selection.rawValue), state: nil, tabs: tabs()) }
+    init(selection: Binding<Value>, @TabBuilder<Value> tabs: () -> [Tab<Value>]) { let value = ClientValue.string(selection.wrappedValue.rawValue); self.init(selection: value, state: selection.binding(value), tabs: tabs()) }
+}
 
-    public init(
-        selection: Binding<Value>,
-        @TabBuilder<Value> tabs: () -> [Tab<Value>]
-    ) {
-        self.selection = selection.wrappedValue
-        self.clientState = selection.clientState
-        self.tabs = tabs()
-    }
-
-    public var body: AnyView {
-        AnyView(EmptyView())
-    }
+public extension TabView where Value: RawRepresentable, Value.RawValue == Int {
+    init(selection: Value, @TabBuilder<Value> tabs: () -> [Tab<Value>]) { self.init(selection: .integer(selection.rawValue), state: nil, tabs: tabs()) }
+    init(selection: Binding<Value>, @TabBuilder<Value> tabs: () -> [Tab<Value>]) { let value = ClientValue.integer(selection.wrappedValue.rawValue); self.init(selection: value, state: selection.binding(value), tabs: tabs()) }
 }

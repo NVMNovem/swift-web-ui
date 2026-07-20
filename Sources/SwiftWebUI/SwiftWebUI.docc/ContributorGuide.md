@@ -11,6 +11,8 @@ Every feature starts with ownership:
 3. If the feature is renderer-neutral web UI intent, a view, a modifier, state, binding, or action behavior, add it to SwiftWebUI.
 4. If the feature is static lowering, a rendered resource, generated JavaScript, a browser document, or filesystem export, add it to SwiftWebUIStatic.
 
+Inside the SwiftWebUI module, organize shared source under `Backend` by responsibility. Keep views, modifiers, styles, rendering models, protocols, language attributes, and lightweight types in their established categories. The `Backend` folder is the physical home of the renderer-neutral core; it is not an additional rendering stage. Avoid consolidating unrelated declarations into a catch-all `Core` file or directory.
+
 ## Required Steps
 
 For SwiftWebUI changes:

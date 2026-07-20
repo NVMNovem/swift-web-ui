@@ -6,9 +6,13 @@
 //
 
 extension Never: View {
-    public typealias Body = AnyView
+    public typealias Body = Never
 
-    public var body: AnyView {
-        AnyView(EmptyView())
+    public var body: Never {
+        fatalError("Never has no body")
+    }
+
+    public func makeViewNode() -> ViewNode {
+        fatalError("Never cannot be lowered")
     }
 }

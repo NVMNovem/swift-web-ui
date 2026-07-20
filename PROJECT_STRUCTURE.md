@@ -474,6 +474,31 @@ Frontend
 
 If `Rendering`, `Styles`, or `Documents` become central concepts, they may deserve direct folders instead of being buried under generic `Models`.
 
+## SwiftWebUI Package Structure
+
+SwiftWebUI keeps its Embedded-compatible shared module under `Sources/SwiftWebUI/Backend`. The folder name is organizational; it does not introduce another rendering backend or alter the shared semantic pipeline.
+
+```text
+Sources/SwiftWebUI
+├── Backend
+│   ├── Attributes
+│   │   ├── PropertyWrappers
+│   │   └── ResultBuilders
+│   ├── Extensions
+│   ├── Models
+│   │   ├── Modifiers
+│   │   ├── Rendering
+│   │   ├── Styles
+│   │   └── Views
+│   ├── Protocols
+│   └── Types
+└── SwiftWebUI.docc
+```
+
+Views and modifiers use focused files so public declarations remain discoverable. Renderer-neutral semantic and presentation models are grouped under `Models/Rendering`; this includes `ViewNode`, `WebNode`, and the single semantic lowerer between them. Static document/resource work belongs to `SwiftWebUIStatic`, and browser mounting/reconciliation belongs to `SwiftWebUIRuntime`.
+
+The logical architecture remains `View` → `ViewNode` → `WebNode` → static/runtime consumers. Do not infer an ownership change from the physical `Backend` organization, and do not recreate a catch-all `Core` folder for shared-module source files.
+
 ## AI Contributor Rules
 
 When using Codex or another AI agent:

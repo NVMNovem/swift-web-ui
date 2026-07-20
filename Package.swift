@@ -25,7 +25,7 @@ let package = Package(
                 .product(name: "SwiftCSS", package: "swift-css"),
             ],
             path: "Sources/SwiftWebUI",
-            sources: ["Core", "SwiftWebUI.swift"]
+            sources: ["Backend", "SwiftWebUI.swift"]
         ),
         .target(
             name: "SwiftWebUIStatic",

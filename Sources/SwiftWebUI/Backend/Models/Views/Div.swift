@@ -1,16 +1,14 @@
-/// A low-level generic container that renders an HTML `div` element.
-///
-/// Prefer semantic containers or layout views when they express intent.
+//
+//  Div.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 25/06/2026.
+//
+
 public struct Div<Content: View>: View {
-    public typealias Body = AnyView
-
-    var content: Content
-
-    public init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-
-    public var body: AnyView {
-        AnyView(EmptyView())
-    }
+    public typealias Body = Never
+    public let content: Content
+    public init(@ViewBuilder content: () -> Content) { self.content = content() }
+    public var body: Never { fatalError("Div primitive body unavailable") }
+    public func makeViewNode() -> ViewNode { .container(.init(kind: .div, children: content.makeViewNode().groupChildren)) }
 }

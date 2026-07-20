@@ -5,14 +5,12 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
-/// A generated browser-side state mutation emitted as data attributes.
-public struct ClientStateMutation: Equatable, Sendable {
-    
-    public var key: String
-    public var value: String
+public struct ClientStateMutation: Hashable, Sendable {
+    public let target: ClientStateTarget
+    public let value: ClientValue
 
-    public init(key: String, value: String) {
-        self.key = key
+    public init(target: ClientStateTarget, value: ClientValue) {
+        self.target = target
         self.value = value
     }
 }

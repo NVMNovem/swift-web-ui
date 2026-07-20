@@ -1,3 +1,10 @@
+//
+//  MountedRootTests.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 20/07/2026.
+//
+
 import Testing
 @_spi(Runtime) @_spi(Rendering) import SwiftWebUI
 @testable import SwiftWebUIRuntime

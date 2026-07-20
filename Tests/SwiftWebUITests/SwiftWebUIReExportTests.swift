@@ -1,3 +1,10 @@
+//
+//  SwiftWebUIReExportTests.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 30/06/2026.
+//
+
 import Testing
 import SwiftWebUIStatic
 

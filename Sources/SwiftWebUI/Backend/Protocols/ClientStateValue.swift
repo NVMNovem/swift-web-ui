@@ -5,49 +5,38 @@
 //  Created by Damian Van de Kauter on 28/06/2026.
 //
 
-/// A value that can be represented as a browser client-state string.
+public enum ClientValue: Hashable, Sendable {
+    case string(String)
+    case integer(Int)
+    case boolean(Bool)
+}
+
 public protocol ClientStateValue {
-    
-    var clientStateValue: String { get }
+    var clientValue: ClientValue { get }
 }
 
 extension String: ClientStateValue {
-    
-    public var clientStateValue: String { self }
+    public var clientValue: ClientValue { .string(self) }
 }
 
 extension Int: ClientStateValue {
-    
-    public var clientStateValue: String { String(self) }
+    public var clientValue: ClientValue { .integer(self) }
 }
 
 extension Bool: ClientStateValue {
-    
-    public var clientStateValue: String { self ? "true" : "false" }
+    public var clientValue: ClientValue { .boolean(self) }
 }
 
-public extension ClientStateValue where Self: RawRepresentable, RawValue == String {
-    
-    var clientStateValue: String { rawValue }
+func clientValue<Value: ClientStateValue>(_ value: Value) -> ClientValue {
+    value.clientValue
 }
 
-public extension ClientStateValue where Self: RawRepresentable, RawValue == Int {
-    
-    var clientStateValue: String { String(rawValue) }
+func clientValue<Value: RawRepresentable>(_ value: Value) -> ClientValue
+where Value.RawValue == String {
+    .string(value.rawValue)
 }
 
-func clientStateValueString<Value>(_ value: Value) -> String {
-    if let clientStateValue = value as? any ClientStateValue {
-        return clientStateValue.clientStateValue
-    }
-    
-    return String(describing: value)
-}
-
-func clientStateValueString<Value: RawRepresentable>(_ value: Value) -> String where Value.RawValue == String {
-    value.rawValue
-}
-
-func clientStateValueString<Value: RawRepresentable>(_ value: Value) -> String where Value.RawValue == Int {
-    String(value.rawValue)
+func clientValue<Value: RawRepresentable>(_ value: Value) -> ClientValue
+where Value.RawValue == Int {
+    .integer(value.rawValue)
 }

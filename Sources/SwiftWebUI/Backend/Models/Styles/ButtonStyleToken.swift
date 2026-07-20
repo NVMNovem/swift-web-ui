@@ -7,58 +7,50 @@
 
 import SwiftCSS
 
-/// A reusable button style token made from class names and SwiftCSS properties.
-public struct ButtonStyleToken: Equatable, Sendable {
-    
-    public var className: String?
-    public var cssProperties: [any CSSProperty]
+public struct ButtonStyleToken: Sendable {
+    public let className: String?
+    public let declarations: [SwiftCSS.CSSDeclaration]
 
-    public init(className: String? = nil, cssProperties: [any CSSProperty]) {
+    public init(
+        className: String? = nil,
+        declarations: [SwiftCSS.CSSDeclaration]
+    ) {
         self.className = className
-        self.cssProperties = cssProperties
+        self.declarations = declarations
     }
 
-    public static func == (lhs: ButtonStyleToken, rhs: ButtonStyleToken) -> Bool {
-        lhs.className == rhs.className
-            && lhs.cssProperties.map(\.name) == rhs.cssProperties.map(\.name)
-            && lhs.cssProperties.map(\.value) == rhs.cssProperties.map(\.value)
-    }
-}
-
-public extension ButtonStyleToken {
-    
-    static let primary = ButtonStyleToken(
+    public static let primary = ButtonStyleToken(
         className: "button primary",
-        cssProperties: [
-            Display(.inlineFlex),
-            AlignItems(.center),
-            JustifyContent(.center),
-            Gap(.px(8)),
-            Padding("10px 16px"),
-            BackgroundColor(SwiftCSS.Color("#000")),
-            SwiftCSS.Color("#fff"),
-            BorderRadius(.px(999)),
-            Border("1px solid transparent"),
-            BoxShadow("0 12px 30px rgba(0, 0, 0, 0.18)"),
-            SwiftCSS.TextDecoration(TextDecorationValue.none),
-            RawProperty("font-weight", "700")
+        declarations: [
+            Display(.inlineFlex).cssDeclaration,
+            AlignItems(.center).cssDeclaration,
+            JustifyContent(.center).cssDeclaration,
+            Gap(.px(8)).cssDeclaration,
+            Padding("10px 16px").cssDeclaration,
+            BackgroundColor(SwiftCSS.Color("#000")).cssDeclaration,
+            SwiftCSS.Color("#fff").cssDeclaration,
+            BorderRadius(.px(999)).cssDeclaration,
+            Border("1px solid transparent").cssDeclaration,
+            BoxShadow("0 12px 30px rgba(0, 0, 0, 0.18)").cssDeclaration,
+            SwiftCSS.TextDecoration(TextDecorationValue.none).cssDeclaration,
+            RawProperty("font-weight", "700").cssDeclaration,
         ]
     )
 
-    static let secondary = ButtonStyleToken(
+    public static let secondary = ButtonStyleToken(
         className: "button secondary",
-        cssProperties: [
-            Display(.inlineFlex),
-            AlignItems(.center),
-            JustifyContent(.center),
-            Gap(.px(8)),
-            Padding("10px 16px"),
-            BackgroundColor(SwiftCSS.Color("#fff")),
-            SwiftCSS.Color("#000"),
-            BorderRadius(.px(999)),
-            Border("1px solid #000"),
-            SwiftCSS.TextDecoration(TextDecorationValue.none),
-            RawProperty("font-weight", "700")
+        declarations: [
+            Display(.inlineFlex).cssDeclaration,
+            AlignItems(.center).cssDeclaration,
+            JustifyContent(.center).cssDeclaration,
+            Gap(.px(8)).cssDeclaration,
+            Padding("10px 16px").cssDeclaration,
+            BackgroundColor(SwiftCSS.Color("#fff")).cssDeclaration,
+            SwiftCSS.Color("#000").cssDeclaration,
+            BorderRadius(.px(999)).cssDeclaration,
+            Border("1px solid #000").cssDeclaration,
+            SwiftCSS.TextDecoration(TextDecorationValue.none).cssDeclaration,
+            RawProperty("font-weight", "700").cssDeclaration,
         ]
     )
 }

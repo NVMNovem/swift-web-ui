@@ -1,3 +1,10 @@
+//
+//  main.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 20/07/2026.
+//
+
 import SwiftWebUI
 import SwiftWebUIRuntime
 
@@ -14,9 +21,13 @@ struct CounterView: View {
                 Button("Increment") {
                     count += 1
                 }
+                Button("Increment + 1x") {
+                    count += count
+                }
                 Button("Decrement") {
                     count -= 1
                 }
+                .background(Color.red)
             }
         }
         .padding(.px(8))

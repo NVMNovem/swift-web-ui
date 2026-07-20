@@ -7,18 +7,11 @@
 
 import SwiftCSS
 
-/// A SwiftWebUI background value lowered to SwiftCSS declarations during rendering.
-///
-/// Prefer color-backed backgrounds for design tokens. Raw CSS strings are
-/// available as escape hatches.
 public struct Background: Equatable, Sendable, ExpressibleByStringLiteral {
-    
-    public var cssValue: String {
-        color?.rawValue ?? rawCSSValue
-    }
+    public let color: SwiftCSS.Color?
+    public let rawCSSValue: String
 
-    var color: SwiftCSS.Color?
-    var rawCSSValue: String
+    public var cssValue: String { color?.rawValue ?? rawCSSValue }
 
     public init(_ cssValue: String) {
         self.color = nil
@@ -31,13 +24,10 @@ public struct Background: Equatable, Sendable, ExpressibleByStringLiteral {
     }
 
     public init(stringLiteral value: String) {
-        self.color = nil
-        self.rawCSSValue = value
+        self.init(value)
     }
-}
 
-public extension Background {
-    static func == (lhs: Background, rhs: Background) -> Bool {
+    public static func == (lhs: Background, rhs: Background) -> Bool {
         lhs.cssValue == rhs.cssValue
     }
 }

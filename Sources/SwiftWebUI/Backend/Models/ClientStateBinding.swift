@@ -5,14 +5,25 @@
 //  Created by Damian Van de Kauter on 28/06/2026.
 //
 
-/// Metadata that connects a SwiftWebUI binding to generated browser state.
-public struct ClientStateBinding: Equatable, Sendable {
-    
-    public var key: String
-    public var initialValue: String
+public struct StateIdentity: Hashable, Sendable {
+    public let objectIdentifier: ObjectIdentifier
 
-    public init(key: String, initialValue: String) {
-        self.key = key
+    public init(_ objectIdentifier: ObjectIdentifier) {
+        self.objectIdentifier = objectIdentifier
+    }
+}
+
+public enum ClientStateTarget: Hashable, Sendable {
+    case state(StateIdentity)
+    case named(String)
+}
+
+public struct ClientStateBinding: Hashable, Sendable {
+    public let target: ClientStateTarget
+    public let initialValue: ClientValue
+
+    public init(target: ClientStateTarget, initialValue: ClientValue) {
+        self.target = target
         self.initialValue = initialValue
     }
 }

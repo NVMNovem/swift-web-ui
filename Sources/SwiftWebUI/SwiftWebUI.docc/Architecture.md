@@ -23,6 +23,12 @@ SwiftWebUI owns views, semantic/layout intent, concrete modifiers, state/binding
 
 SwiftHTML owns HTML nodes, attributes, escaping, and string rendering. SwiftCSS owns CSS properties, values, declarations, nodes, and string rendering. Missing low-level capabilities must be implemented in their owning package rather than duplicated here.
 
+## Source organization
+
+The shared module is organized under `Sources/SwiftWebUI/Backend` without changing the logical core boundary. Property wrappers and result builders live under `Attributes`; protocol boundaries under `Protocols`; lightweight semantic and style values under `Types`; and views, modifiers, styles, and renderer-neutral rendering models under `Models`.
+
+The rendering model folder groups `ViewNode`, `WebNode`, their focused supporting models, and the single `ViewNodeToWebNodeLowerer` semantic pass. Individual public views and modifier concerns use focused files for discoverability. This physical organization does not introduce another backend: SwiftWebUIStatic and SwiftWebUIRuntime remain the only consumers after shared lowering.
+
 ## Renderer ownership
 
 The separate `SwiftWebUIStatic` module mechanically converts `WebNode` to SwiftHTML/SwiftCSS ASTs and owns `HTMLRenderer`, rendered output/resource models, style hashing, generated JavaScript, `WebDocument`, and `PreviewExporter`. Static applications import that module; it re-exports SwiftWebUI.

@@ -84,3 +84,11 @@ xcrun docc convert Sources/SwiftWebUI/SwiftWebUI.docc \
 ```
 
 Without `--additional-symbol-graph-dir`, DocC cannot resolve SwiftWebUI core symbols such as `View`, `TabView`, or `Font`. Static-only APIs such as `WebDocument` belong to SwiftWebUIStatic.
+
+# Source Layout Hygiene
+
+- Keep SwiftWebUI source in the established `Backend` hierarchy; do not recreate a flattened `Core` directory.
+- Do not add duplicate-safe filenames such as `* 2.swift`, `* 3.swift`, `* copy.swift`, `* new.swift`, `* old.swift`, or `* backup.swift`.
+- Keep one authoritative top-level declaration for each production type and one Swift basename per target.
+- Every maintained Swift source and test file must retain the standard project header with its actual filename; preserve historical author and creation dates when available.
+- Run `./Scripts/validate-source-layout.sh` after source moves, splits, renames, or header changes.

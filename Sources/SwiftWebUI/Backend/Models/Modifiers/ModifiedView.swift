@@ -5,14 +5,19 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
-/// A view plus modifier data collected by SwiftWebUI modifiers.
 public struct ModifiedView<Content: View>: View {
-    public typealias Body = AnyView
+    public typealias Body = Never
+    public let content: Content
+    public let modifiers: [ViewModifierNode]
 
-    var content: Content
-    var modifiers: [ViewModifierData]
+    public init(content: Content, modifiers: [ViewModifierNode]) {
+        self.content = content
+        self.modifiers = modifiers
+    }
 
-    public var body: AnyView {
-        AnyView(EmptyView())
+    public var body: Never { fatalError("ModifiedView primitive body unavailable") }
+
+    public func makeViewNode() -> ViewNode {
+        .modified(ModifiedNode(content: content.makeViewNode(), modifiers: modifiers))
     }
 }

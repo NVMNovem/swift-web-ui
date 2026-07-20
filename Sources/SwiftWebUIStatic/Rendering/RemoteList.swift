@@ -1,3 +1,10 @@
+//
+//  RemoteList.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 05/07/2026.
+//
+
 import SwiftWebUI
 
 public enum RemoteSource: Equatable {

@@ -1,3 +1,10 @@
+//
+//  SwiftWebUITests.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 25/06/2026.
+//
+
 import Testing
 @testable import SwiftWebUI
 import SwiftWebUIStatic

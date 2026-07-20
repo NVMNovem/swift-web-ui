@@ -1,3 +1,10 @@
+//
+//  WebDocument.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 23/06/2026.
+//
+
 import Foundation
 import SwiftHTML
 import SwiftWebUI

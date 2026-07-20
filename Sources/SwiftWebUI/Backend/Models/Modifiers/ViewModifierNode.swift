@@ -1,22 +1,16 @@
 //
-//  ViewModifierData.swift
+//  ViewModifierNode.swift
 //  swift-web-ui
 //
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
 import SwiftCSS
-import SwiftHTML
 
-/// Data representation of SwiftWebUI modifiers before rendering.
-///
-/// Renderers lower this intent into SwiftHTML attributes, SwiftCSS declarations,
-/// and generated client-state resources.
-public enum ViewModifierData {
-    
+public enum ViewModifierNode {
     case cssClass(String)
-    case id(String)
-    case attribute(SwiftHTML.Attribute)
+    case identifier(String)
+    case attribute(name: String, value: String)
     case bindText(String)
     case bindAttribute(name: String, field: String)
     case display(DisplayValue)
@@ -61,9 +55,9 @@ public enum ViewModifierData {
     case cornerRadius(SwiftCSS.Length)
     case clipShape(ClipShape)
     case border(SwiftCSS.Border)
+    case borderParts(width: SwiftCSS.Length, style: BorderLineStyle, color: SwiftCSS.Color)
     case shadow(BoxShadow)
     case gap(SwiftCSS.Length)
-    case buttonStyleToken(ButtonStyleToken)
-    case buttonStyle(AnyButtonStyle)
+    case buttonStyle(ButtonStyleToken)
     case setState(ClientStateMutation)
 }

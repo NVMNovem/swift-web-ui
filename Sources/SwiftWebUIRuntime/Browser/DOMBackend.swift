@@ -1,3 +1,10 @@
+//
+//  DOMBackend.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 20/07/2026.
+//
+
 protocol DOMBackend: AnyObject {
     associatedtype Node
     associatedtype ActionRegistration

@@ -5,22 +5,11 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
-/// An image view that renders an HTML `img` element.
-///
-/// SwiftWebUI emits the provided source and alternative text. Asset management
-/// and responsive image behavior belong to the application layer.
 public struct Image: View {
-    public typealias Body = AnyView
-
-    var source: String
-    var alt: String
-
-    public init(_ source: String, alt: String = "") {
-        self.source = source
-        self.alt = alt
-    }
-
-    public var body: AnyView {
-        AnyView(EmptyView())
-    }
+    public typealias Body = Never
+    public let source: String
+    public let alt: String
+    public init(_ source: String, alt: String = "") { self.source = source; self.alt = alt }
+    public var body: Never { fatalError("Image primitive body unavailable") }
+    public func makeViewNode() -> ViewNode { .image(.init(source: source, alternativeText: alt)) }
 }

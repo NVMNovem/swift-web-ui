@@ -1,17 +1,14 @@
-/// A semantic form container that renders an HTML `form` element.
-///
-/// Use `.attribute(_:_:)` for form attributes that do not have typed
-/// SwiftWebUI modifiers yet.
+//
+//  Form.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 25/06/2026.
+//
+
 public struct Form<Content: View>: View {
-    public typealias Body = AnyView
-
-    var content: Content
-
-    public init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-
-    public var body: AnyView {
-        AnyView(EmptyView())
-    }
+    public typealias Body = Never
+    public let content: Content
+    public init(@ViewBuilder content: () -> Content) { self.content = content() }
+    public var body: Never { fatalError("Form primitive body unavailable") }
+    public func makeViewNode() -> ViewNode { .container(.init(kind: .form, children: content.makeViewNode().groupChildren)) }
 }

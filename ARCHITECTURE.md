@@ -38,6 +38,14 @@ HTML/CSS/JS output      click -> State -> reconcile
 
 `SwiftWebUIRuntime` is the browser runtime slice. It depends on the core and JavaScriptKit, initially mounts `WebNode` into a runtime-only `MountedNode` tree, diffs later `WebNode` values, and mechanically applies `DOMPatch` mutations while retaining browser node identity. It supports one mounted root and positional child reconciliation; it deliberately does not yet define keyed identity, state slots, hydration, routing, or async work.
 
+## Source organization
+
+The logical shared core is physically organized under `Sources/SwiftWebUI/Backend`. `Attributes` contains property wrappers and result builders, `Protocols` contains public protocol boundaries, `Types` contains lightweight semantic/style values, and `Models` groups views, modifiers, styles, and renderer-neutral rendering models. Public views normally have one focused source file each.
+
+`Models/Rendering` keeps the shared pipeline discoverable as one responsibility: semantic `ViewNode` models, concrete `WebNode` presentation models, and `ViewNodeToWebNodeLowerer`. Splitting those model declarations across focused files does not add lowering stages or backend semantics. The static and runtime modules remain separate top-level targets and continue to consume the same `WebNode` output mechanically.
+
+The `Backend` directory is a source-organization convention, not a fourth architectural layer. There is intentionally no catch-all `Core` source folder.
+
 ## Concrete view traversal
 
 `View` keeps the SwiftUI-like associated `Body` shape and has a concrete lowering operation:

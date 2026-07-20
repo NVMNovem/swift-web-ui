@@ -5,21 +5,19 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
-/// A get-set reference to state with optional generated client-state metadata.
 public struct Binding<Value> {
-    
     private let getter: () -> Value
     private let setter: (Value) -> Void
-    public var clientState: ClientStateBinding?
+    public let stateIdentity: StateIdentity?
 
     public init(
         get: @escaping () -> Value,
         set: @escaping (Value) -> Void,
-        clientState: ClientStateBinding? = nil
+        stateIdentity: StateIdentity? = nil
     ) {
         getter = get
         setter = set
-        self.clientState = clientState
+        self.stateIdentity = stateIdentity
     }
 
     public var wrappedValue: Value {
