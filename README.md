@@ -41,7 +41,9 @@ let js = rendered.jsString(prettyPrinted: false)
 
 Use `import SwiftWebUI` when defining only shared views for Embedded or a runtime renderer. Use `import SwiftWebUIStatic` for static rendering; that module re-exports the core DSL.
 
-The experimental browser runtime can mount the deliberately small counter slice:
+## Runtime example
+
+The experimental browser DOM renderer with state-driven incremental reconciliation can mount the deliberately small counter slice:
 
 ```swift
 import SwiftWebUI
@@ -82,23 +84,28 @@ the workflow and current packaging constraints.
 
 ```text
 SwiftWebUI
-View DSL + fixed-arity generic builders + state/binding/action intent
-                              |
-                              v
-                      concrete ViewNode
-                              |
-                              v
-                  shared semantic WebNode
-                         /          \
-                        v            v
-          SwiftWebUIStatic       SwiftWebUIRuntime
-     SwiftHTML + SwiftCSS AST    browser DOM POC
+Declarative View DSL
+        |
+        v
+Concrete View Tree
+        |
+        v
+Shared Semantic Web Tree
+      /                     \
+     v                       v
+Static Renderer        Runtime Renderer
+     |                       |
+     v                       v
+HTML / CSS / JS       Mounted Browser DOM
+                             |
+                             v
+                Incremental Reconciliation
 ```
 
-Normal composition does not use `AnyView`, view existentials, or dynamic view casts. `ViewBuilder` currently supports zero through ten children with concrete generic carriers. Optional branches, `if`/`else`, homogeneous arrays, and `ForEach` use dedicated typed carriers.
+SwiftWebUI views are lowered into a concrete internal view tree. A single semantic lowering pass then produces a renderer-neutral web tree consumed by both the static and runtime renderers. The static renderer generates HTML, CSS, and JavaScript resources. The experimental runtime renderer mounts browser DOM and applies incremental updates after state changes, retaining the identity of unchanged DOM nodes during reconciliation.
 
-Parameter-pack builder carriers are deliberately deferred: Swift 6.3.3 Embedded fails while specializing that builder shape. The fixed-arity carriers are an internal compiler-compatibility choice and can later change without affecting `ViewNode` or renderer APIs.
+`SwiftWebUIStatic` lowers the shared semantic tree into SwiftHTML and SwiftCSS ASTs before generating static HTML, CSS, and JavaScript resources.
 
-`SwiftWebUIStatic` owns `HTMLRenderer`, `RenderedView`, style/resource registries, generated client-state and `RemoteList` JavaScript, `WebDocument`, and `PreviewExporter`. `SwiftWebUIRuntime` retains a runtime-only mounted tree and positionally reconciles observed `State` updates without replacing unchanged DOM nodes. See [Runtime reconciliation](Documentation/Reconciliation.md) for its current limits and keyed-identity design note.
+`SwiftWebUIRuntime` remains experimental and currently uses positional reconciliation; keyed list moves are not supported yet.
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) and [Embedded compatibility](Documentation/EmbeddedCompatibility.md) for the detailed boundaries and validation commands.
+For detailed boundaries, compatibility constraints, reconciliation design, and runtime status, see [Architecture](ARCHITECTURE.md), [Embedded compatibility](Documentation/EmbeddedCompatibility.md), [Reconciliation](Documentation/Reconciliation.md), and [Runtime renderer](Documentation/RuntimePOC.md).
