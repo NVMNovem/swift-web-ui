@@ -20,6 +20,12 @@ SwiftWebUIStatic -> SwiftHTML/CSS   SwiftWebUIRuntime -> DOM
 
 Both `WebNode` and `ViewNodeToWebNodeLowerer` are in the Embedded-compatible core. `SwiftWebUIRuntime` is a separate JavaScriptKit backend and is not part of the core Embedded build.
 
+Runtime stylesheet declarations and browser-head installation also remain in the
+separate `SwiftWebUIRuntime` target. They contain browser URLs or inline CSS text but
+no filesystem paths or JavaScriptKit objects. Static asset discovery and copying are
+owned by application build scripts, so no resource or filesystem state enters the
+Embedded core, `ViewNode`, or `WebNode`.
+
 ## Core boundary
 
 The core contains `View`, `ViewBuilder`, primitive and container views, modifiers, `State`, `Binding`, action/state intent, a concrete recursive `ViewNode`, renderer-neutral `WebNode`, and the single `ViewNodeToWebNodeLowerer` semantic pass.

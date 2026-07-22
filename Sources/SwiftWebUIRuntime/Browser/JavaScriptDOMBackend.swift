@@ -8,7 +8,7 @@
 #if arch(wasm32)
 import JavaScriptKit
 
-final class JavaScriptDOMBackend: DOMBackend {
+final class JavaScriptDOMBackend: BrowserHeadBackend {
     typealias Node = JSObject
     typealias ActionRegistration = JSClosure
 
@@ -25,6 +25,13 @@ final class JavaScriptDOMBackend: DOMBackend {
         document.getElementById!(identifier).object
     }
 
+    func documentHead() throws -> JSObject {
+        guard let head = document.head.object else {
+            throw BrowserHeadBackendError.documentHeadUnavailable
+        }
+        return head
+    }
+
     func createElement(_ tagName: String) -> JSObject {
         document.createElement!(tagName).object!
     }
@@ -35,6 +42,10 @@ final class JavaScriptDOMBackend: DOMBackend {
 
     func setText(_ content: String, on node: JSObject) {
         node.nodeValue = .string(content)
+    }
+
+    func setResourceText(_ content: String, on node: JSObject) throws {
+        node.textContent = .string(content)
     }
 
     func setAttribute(name: String, value: String, on node: JSObject) {

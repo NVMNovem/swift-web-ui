@@ -14,6 +14,13 @@ supports one mounted root and positional reconciliation. Text, attributes, style
 children, node replacements, and closure-action registrations update mechanically;
 runtime client-state mutation actions and keyed child moves remain future work.
 
+Use ``mount(_:in:resources:configuration:)`` with ``RuntimeResources`` to install
+application stylesheets before the initial DOM tree. External URLs are resolved by
+the browser relative to the served document; inline CSS is preserved in a `style`
+element. Stylesheets are retained by the current single mounted application root and
+are not recreated by reconciliation. Asset files remain an application packaging
+concern and must be copied beneath the served output root by the build workflow.
+
 Use ``SwiftWebUIRuntimeConfiguration`` to opt in to patch logging. Paths in that
 output describe the current mounted-tree location and are not stable identity.
 
@@ -22,4 +29,11 @@ output describe the current mounted-tree location and are not stable identity.
 ### Mounting
 
 - ``mount(_:in:configuration:)``
+- ``mount(_:in:resources:configuration:)``
 - ``SwiftWebUIRuntimeConfiguration``
+
+### Application resources
+
+- <doc:RuntimeApplicationResources>
+- ``RuntimeResources``
+- ``RuntimeStylesheet``

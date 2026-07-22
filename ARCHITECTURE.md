@@ -36,7 +36,7 @@ HTML/CSS/JS output      click -> State -> reconcile
 
 `SwiftWebUIStatic` depends on the core, SwiftHTML, and SwiftCSS. It may use Foundation where document export needs URLs or filesystem access. It re-exports `SwiftWebUI` so static applications normally need one import.
 
-`SwiftWebUIRuntime` is the browser runtime slice. It depends on the core and JavaScriptKit, initially mounts `WebNode` into a runtime-only `MountedNode` tree, diffs later `WebNode` values, and mechanically applies `DOMPatch` mutations while retaining browser node identity. It supports one mounted root and positional child reconciliation; it deliberately does not yet define keyed identity, state slots, hydration, routing, or async work.
+`SwiftWebUIRuntime` is the browser runtime slice. It depends on the core and JavaScriptKit, installs application-declared external or inline stylesheets into the browser document head, initially mounts `WebNode` into a runtime-only `MountedNode` tree, diffs later `WebNode` values, and mechanically applies `DOMPatch` mutations while retaining browser node identity. It supports one mounted root and positional child reconciliation; it deliberately does not yet define keyed identity, state slots, hydration, routing, or async work.
 
 ## Source organization
 
@@ -92,12 +92,21 @@ The static module owns:
 
 The runtime proof-of-concept module owns:
 
+- browser-facing `RuntimeResources` and ordered stylesheet installation;
+- installed stylesheet handles retained by the single application root, outside reconciliation;
 - browser element lookup and mounting;
 - runtime-only mounted nodes and positional paths;
 - pure `WebNodeDiffer` patch production;
 - mechanical `DOMPatchApplier` DOM mutation and mounted-metadata updates;
 - JavaScriptKit DOM materialization and per-element click-handler retention/release;
 - incremental reconciliation after renderer-neutral state invalidation.
+
+Runtime element declarations stay inline. Named selectors, CSS custom properties,
+pseudo-classes, media queries, transitions, and animations belong to app stylesheets.
+Application build tooling—not the runtime or `WebNode`—owns filesystem discovery and
+recursive copying of CSS and assets into deployable output. Typed SwiftCSS runtime
+stylesheet input is deferred because the string/external resource boundary is the
+straightforward public API under the selected Wasm SDK.
 
 `RemoteList` remains static-only because its behavior is currently defined by generated fetch/template JavaScript. Binding-backed tabs and `.set` retain core state/action intent; the shared lowerer owns their presentation and the static backend alone serializes client-state metadata and registers JavaScript resources. Runtime client-state mutation actions remain intentionally unsupported, while closure actions drive the current Wasm runtime.
 
@@ -109,6 +118,8 @@ The runtime proof-of-concept module owns:
 - Static and runtime renderers consume only `WebNode` and may not reinterpret container kinds, modifiers, font tokens, or other view semantics.
 - Shared semantic changes require focused lowerer tests and backend tests where applicable.
 - Runtime update behavior must pass through reconciliation and include differ and fake-backend applier tests.
+- Runtime stylesheet resources must use `RuntimeResources`; reconciliation must not recreate document-head resources.
+- Runtime assets remain application/build resources and must not enter `WebNode` or runtime filesystem logic.
 - `WebNode` cannot carry DOM state, and content hashes or child position are not stable semantic identity.
 - Keyed reconciliation requires explicit user or domain identity.
 - Missing HTML primitives belong in SwiftHTML; missing CSS primitives belong in SwiftCSS.

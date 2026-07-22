@@ -47,7 +47,28 @@ The POC uses JavaScriptKit `JSObject` and `JSClosure` directly. JavaScriptKit 0.
 - one mounted root
 - positional reconciliation for text, attributes, styles, actions, children, and ordinary node replacement
 
-The runtime applies concrete declarations inline. It does not know whether a declaration came from a stack, font token, padding modifier, or another DSL feature, and it does not create a stylesheet/CSSOM system. Static client-state mutation actions and generated-resource features remain backend-specific; closure actions are the interactive runtime path.
+The runtime applies concrete element declarations inline. It does not know whether a
+declaration came from a stack, font token, padding modifier, or another DSL feature.
+Separately, `RuntimeResources` installs ordered external stylesheet links or inline
+`style` elements before the initial view mount. This app stylesheet supplies named
+selectors, CSS variables, pseudo-classes, media queries, transitions, and animations;
+it is retained by the single mounted root and is not part of reconciliation. The
+runtime does not generate CSS classes or reuse the static `StyleRegistry`.
+
+```swift
+SwiftWebUIRuntime.mount(
+    CounterView(),
+    in: "app",
+    resources: RuntimeResources(
+        stylesheets: [.external("style.css")]
+    )
+)
+```
+
+The browser resolves `style.css` relative to the served document. `.inline(css)` is
+available for authored CSS text. Typed SwiftCSS stylesheet trees are deferred: the
+current public SwiftCSS APIs do not improve this focused ownership boundary enough to
+justify another traversal/rendering path in the runtime.
 
 ## Development workflow
 
@@ -65,7 +86,7 @@ the page to reload without a manual refresh. Stop the workflow with Control-C.
 The application developer edits only:
 
 ```text
-Examples/RuntimeCounter/Sources/main.swift
+Examples/RuntimeCounter/Sources/RuntimeCounter.swift
 ```
 
 `Resources/index.html`, the vendored WASI shim, PackageToJS, import maps, generated
@@ -86,9 +107,13 @@ The developer-facing layout is:
 ```text
 Examples/RuntimeCounter/
 ├── Sources/
-│   └── main.swift
+│   ├── RuntimeCounter.swift
+│   └── AboutView.swift
 ├── Resources/
-│   └── index.html
+│   ├── index.html
+│   ├── style.css
+│   └── assets/
+│       └── runtime-fixture.svg
 ├── Vendor/
 │   └── browser_wasi_shim/
 └── dist/                       generated and ignored
@@ -112,9 +137,14 @@ because exhaustive SwiftCSS value support includes Unicode-aware String operatio
 repository, while PackageToJS writes into a fresh temporary package directory for
 each invocation. The script copies the complete `Resources` directory and required
 files from `Vendor`, validates `.dist-staging`, and then replaces the complete `dist`
-directory. It never asks PackageToJS to write into an existing `dist` and never
+directory recursively, preserving every relative file path. It rejects resource and
+output symlinks rather than following browser-facing paths outside the resource root.
+It never asks PackageToJS to write into an existing `dist` and never
 merges a build with stale output. Repeated builds are therefore idempotent and
-produce the same canonical file list.
+produce the same content-hashed resource manifest. Validation compares every regular
+file under `Resources` byte-for-byte with the same relative path under `dist` and
+reports a precise missing path. Atomic replacement preserves the last validated
+bundle when rebuilding or staging validation fails.
 
 `dist` is fully generated. Manual changes inside it are discarded by the next build;
 maintained HTML, Swift, vendored dependencies, and scripts all live outside it. The
@@ -162,7 +192,7 @@ source HTML import map resolves that name to the locally vendored version 0.3.0 
 
 Maintained workflow files:
 
-- `Examples/RuntimeCounter/Sources/main.swift`
+- `Examples/RuntimeCounter/Sources/RuntimeCounter.swift`
 - `Examples/RuntimeCounter/Resources/index.html`
 - `Examples/RuntimeCounter/Vendor/browser_wasi_shim/`
 - `Scripts/build-runtime-counter.sh`
@@ -179,6 +209,7 @@ Generated files include:
 - `Examples/RuntimeCounter/dist/platforms/`
 - `Examples/RuntimeCounter/dist/SwiftWebUIRuntimeCounter.wasm`
 - the copied HTML and vendored shim under `Examples/RuntimeCounter/dist/`
+- copied `style.css` and `assets/runtime-fixture.svg`
 
 ## Why this is not `swift run` yet
 
@@ -216,7 +247,7 @@ node Examples/RuntimeCounter/smoke-test.mjs
 ```
 
 The counter action remains entirely in
-`Examples/RuntimeCounter/Sources/main.swift`; no application-specific JavaScript
+`Examples/RuntimeCounter/Sources/RuntimeCounter.swift`; no application-specific JavaScript
 implements increment behavior.
 
 ## What this proves
@@ -230,6 +261,9 @@ implements increment behavior.
 - the root, both buttons, and count span remain the same browser objects;
 - removed or replaced subtrees recursively release their action registrations;
 - no handwritten app-specific JavaScript performs counter logic.
+- an external stylesheet is installed once and survives repeated invalidation;
+- named rules, CSS variables, hover and media rules affect runtime DOM;
+- recursively packaged relative assets load from the served root.
 
 ## Intentionally unsupported
 
@@ -242,7 +276,7 @@ implements increment behavior.
 - routing
 - hydration
 - static client-state mutation actions
-- CSSOM or stylesheet generation
+- CSSOM or stylesheet generation from typed SwiftCSS trees
 - async API calls
 
 The next reconciliation step is explicit `ForEach` element IDs flowing into a stable `WebIdentity`, followed by a keyed mounted-child map and insert/remove/move patches that preserve state across reordering. Position, tag names, text, and rendered/content hashes are not valid substitutes for that user or domain identity. See [Runtime DOM reconciliation](Reconciliation.md).

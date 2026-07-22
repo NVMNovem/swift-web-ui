@@ -1,5 +1,5 @@
 //
-//  main.swift
+//  RuntimeCounter.swift
 //  swift-web-ui
 //
 //  Created by Damian Van de Kauter on 20/07/2026.
@@ -17,6 +17,7 @@ struct CounterView: View {
                 .font(.title)
             Text(String(count))
                 .font(.caption)
+                .id("runtime-count")
             HStack {
                 Button("Increment") {
                     count += 1
@@ -29,6 +30,7 @@ struct CounterView: View {
                 }
                 .background(Color.red)
             }
+            AboutView()
         }
         .padding(.px(8))
     }
@@ -39,7 +41,12 @@ struct RuntimeCounterApp {
     static func main() {
         SwiftWebUIRuntime.mount(
             CounterView(),
-            in: "app"
+            in: "app",
+            resources: RuntimeResources(
+                stylesheets: [
+                    .external("style.css"),
+                ]
+            )
         )
     }
 }

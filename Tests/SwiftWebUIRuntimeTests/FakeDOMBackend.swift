@@ -24,16 +24,27 @@ final class FakeDOMNode {
     }
 }
 
-final class FakeDOMBackend: DOMBackend {
+enum FakeDOMBackendError: Error {
+    case resourceInstallationFailed
+}
+
+final class FakeDOMBackend: BrowserHeadBackend {
     typealias Node = FakeDOMNode
     typealias ActionRegistration = Int
 
     private var nextNodeID = 1
     private var nextRegistration = 1
     let root = FakeDOMNode(id: 0, tagName: "root")
+    let head = FakeDOMNode(id: -1, tagName: "head")
     var operations: [String] = []
     var releasedRegistrations: [Int] = []
     var buildCount = 0
+    var failResourceTextInstallation = false
+
+    func documentHead() throws -> FakeDOMNode {
+        operations.append("documentHead")
+        return head
+    }
 
     func createElement(_ tagName: String) -> FakeDOMNode {
         defer { nextNodeID += 1 }
@@ -49,6 +60,14 @@ final class FakeDOMBackend: DOMBackend {
 
     func setText(_ content: String, on node: FakeDOMNode) {
         operations.append("setText \(node.id) \(content)")
+        node.text = content
+    }
+
+    func setResourceText(_ content: String, on node: FakeDOMNode) throws {
+        if failResourceTextInstallation {
+            throw FakeDOMBackendError.resourceInstallationFailed
+        }
+        operations.append("setResourceText \(node.id) \(content)")
         node.text = content
     }
 

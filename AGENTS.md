@@ -6,6 +6,12 @@
 - SwiftWebUIStatic owns mechanical WebNode-to-SwiftHTML/SwiftCSS lowering, rendered resources, generated JavaScript, WebDocument, and preview/export helpers.
 - SwiftWebUIRuntime owns mechanical WebNode-to-DOM lowering, event registration, invalidation, and the browser bridge.
 - Runtime updates must go through the SwiftWebUIRuntime reconciliation pipeline.
+- Named CSS rules belong to application stylesheets; element declarations remain inline in runtime rendering.
+- Runtime stylesheet resources must use the SwiftWebUIRuntime resource API.
+- Static assets remain application/build resources and must be copied by application tooling.
+- WebNode must not contain document-head resource or filesystem state.
+- Reconciliation must not recreate stylesheet resources.
+- New runtime resource support requires unit, packaging, and browser validation.
 - WebNode must never contain DOM handles, mounted state, dirty flags, or browser objects.
 - New patch behavior requires focused WebNodeDiffer and DOMPatchApplier tests.
 - Content hashes are not identity.

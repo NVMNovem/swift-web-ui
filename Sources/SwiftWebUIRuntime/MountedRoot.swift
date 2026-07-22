@@ -15,6 +15,7 @@ final class MountedRoot<Backend: DOMBackend> {
     private let backend: Backend
     private let differ = WebNodeDiffer()
     private let configuration: SwiftWebUIRuntimeConfiguration
+    let installedResources: InstalledRuntimeResources<Backend.Node>
     private var previousWebNode: WebNode?
     private var mountedNode: Node?
 
@@ -22,11 +23,13 @@ final class MountedRoot<Backend: DOMBackend> {
         container: Backend.Node,
         backend: Backend,
         configuration: SwiftWebUIRuntimeConfiguration = .init(),
+        installedResources: InstalledRuntimeResources<Backend.Node> = .init(),
         build: @escaping () -> WebNode
     ) {
         self.container = container
         self.backend = backend
         self.configuration = configuration
+        self.installedResources = installedResources
         self.build = build
     }
 

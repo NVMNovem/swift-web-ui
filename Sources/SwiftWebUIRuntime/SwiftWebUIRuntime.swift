@@ -19,6 +19,20 @@ public func mount<Content: View>(
     in elementID: String,
     configuration: SwiftWebUIRuntimeConfiguration = .init()
 ) {
+    mount(view, in: elementID, resources: .init(), configuration: configuration)
+}
+
+/// Mounts a SwiftWebUI view after installing application stylesheet resources.
+///
+/// External stylesheet URLs are preserved for browser-relative resolution. Inline
+/// stylesheets are inserted as authored. The runtime currently owns resources at
+/// its single mounted application root, independently of DOM reconciliation.
+public func mount<Content: View>(
+    _ view: Content,
+    in elementID: String,
+    resources: RuntimeResources,
+    configuration: SwiftWebUIRuntimeConfiguration = .init()
+) {
     guard let backend = JavaScriptDOMBackend() else {
         preconditionFailure("SwiftWebUIRuntime requires a browser document")
     }
@@ -26,10 +40,20 @@ public func mount<Content: View>(
         preconditionFailure("SwiftWebUIRuntime could not find #\(elementID)")
     }
 
+    let installedResources: InstalledRuntimeResources<JavaScriptDOMBackend.Node>
+    do {
+        installedResources = try RuntimeStylesheetInstaller(backend: backend)
+            .install(resources)
+    } catch {
+        print("[SwiftWebUIRuntime] resource installation failed: \(error)")
+        return
+    }
+
     let root = MountedRoot(
         container: container,
         backend: backend,
         configuration: configuration,
+        installedResources: installedResources,
         build: { ViewNodeToWebNodeLowerer().lower(view.makeViewNode()) }
     )
     mountedRoot = root
@@ -42,6 +66,18 @@ public func mount<Content: View>(
 public func mount<Content: View>(
     _ view: Content,
     in elementID: String,
+    configuration: SwiftWebUIRuntimeConfiguration = .init()
+) {
+    preconditionFailure("SwiftWebUIRuntime.mount requires a WebAssembly browser build")
+}
+
+/// Mounts a SwiftWebUI view with application stylesheet resources.
+///
+/// This API is only executable when compiled for WebAssembly.
+public func mount<Content: View>(
+    _ view: Content,
+    in elementID: String,
+    resources: RuntimeResources,
     configuration: SwiftWebUIRuntimeConfiguration = .init()
 ) {
     preconditionFailure("SwiftWebUIRuntime.mount requires a WebAssembly browser build")

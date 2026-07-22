@@ -58,7 +58,7 @@ if [[ $ready -ne 1 ]]; then
     exit 1
 fi
 
-echo "Edit Examples/RuntimeCounter/Sources/main.swift; successful rebuilds reload the browser."
+echo "Edit Examples/RuntimeCounter/Sources/RuntimeCounter.swift; successful rebuilds reload the browser."
 echo "Browser URL: $url"
 
 open_browser=${SWIFTWEBUI_OPEN_BROWSER:-auto}

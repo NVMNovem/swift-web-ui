@@ -23,3 +23,19 @@ protocol DOMBackend: AnyObject {
     func remove(_ child: Node, from parent: Node)
     func removeAllChildren(from parent: Node)
 }
+
+enum BrowserHeadBackendError: Error, CustomStringConvertible {
+    case documentHeadUnavailable
+
+    var description: String {
+        switch self {
+        case .documentHeadUnavailable:
+            "the browser document has no head element"
+        }
+    }
+}
+
+protocol BrowserHeadBackend: DOMBackend {
+    func documentHead() throws -> Node
+    func setResourceText(_ content: String, on node: Node) throws
+}
