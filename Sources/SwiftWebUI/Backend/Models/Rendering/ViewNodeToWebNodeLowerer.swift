@@ -293,7 +293,7 @@ public struct ViewNodeToWebNodeLowerer {
             case .font(let value): styles.append(contentsOf: fontStyles(value))
             case .letterSpacing(let value): styles.append(style(LetterSpacing(value).cssDeclaration))
             case .textTransform(let value): styles.append(.init(name: "text-transform", value: textTransformValue(value)))
-            case .lineHeight(let value): styles.append(style(LineHeight(value).cssDeclaration))
+            case .lineHeight(let value): styles.append(.init(name: "line-height", value: value.rawValue))
             case .textAlign(let value): styles.append(.init(name: "text-align", value: textAlignmentValue(value)))
             case .textDecoration(let value): styles.append(.init(name: "text-decoration", value: textDecorationValue(value)))
             case .opacity(let value): styles.append(style(Opacity(value).cssDeclaration))

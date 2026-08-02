@@ -72,14 +72,6 @@ The stack identified the heterogeneous `ViewBuilder.buildBlock(_:)` specializati
 
 Optional, if/else, homogeneous array, and `ForEach` carriers compile in the production Embedded target. `ForEach` stores `[Content]`, so every iteration must produce the same concrete content type. These carriers do not fall back to `AnyView` or protocol existential storage.
 
-The production Embedded demo covers:
-
-- `State` and projected `Binding`;
-- an `if`/`else` body;
-- a button action closure;
-- a modified stack;
-- homogeneous `ForEach` content.
-
 ## Static-only boundary
 
 `SwiftWebUIStatic` mechanically consumes `WebNode` to build SwiftHTML and SwiftCSS ASTs. It owns HTML/CSS string rendering, style hashing, resources, generated client-state and `RemoteList` JavaScript, `WebDocument`, `MetaTag`, and `PreviewExporter`. It re-exports the core module.
@@ -104,8 +96,6 @@ $SWIFT package resolve
 $SWIFT build
 $SWIFT test
 $SWIFT build --target SwiftWebUI \
-  --swift-sdk swift-6.3.3-RELEASE_wasm-embedded
-$SWIFT build --target SwiftWebUIEmbeddedDemo \
   --swift-sdk swift-6.3.3-RELEASE_wasm-embedded
 ```
 

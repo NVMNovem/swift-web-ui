@@ -36,7 +36,7 @@ public extension View {
     func font(_ font: Font) -> ModifiedView<Self> { modified(.font(font)) }
     func letterSpacing(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.letterSpacing(value)) }
     func textTransform(_ value: TextTransform) -> ModifiedView<Self> { modified(.textTransform(value)) }
-    func lineHeight(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.lineHeight(value)) }
+    func lineHeight(_ value: SwiftCSS.LineHeightValue) -> ModifiedView<Self> { modified(.lineHeight(value)) }
     func textAlign(_ value: TextAlignment) -> ModifiedView<Self> { modified(.textAlign(value)) }
     func textDecoration(_ value: TextDecoration) -> ModifiedView<Self> { modified(.textDecoration(value)) }
     func opacity(_ value: Double) -> ModifiedView<Self> { modified(.opacity(value)) }

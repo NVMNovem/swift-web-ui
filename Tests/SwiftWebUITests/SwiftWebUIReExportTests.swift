@@ -17,7 +17,7 @@ import SwiftWebUIStatic
             .foregroundStyle(Color("var(--muted)"))
             .border(width: .px(1), color: Color("var(--border)"))
             .letterSpacing(.em(0.1))
-            .lineHeight(.em(1.5))
+            .lineHeight(.multiple(1.5))
     )
     let css = rendered.cssString()
 
@@ -28,5 +28,5 @@ import SwiftWebUIStatic
     #expect(css.contains("color: var(--muted)"))
     #expect(css.contains("border: 1px solid var(--border)"))
     #expect(css.contains("letter-spacing: 0.1em"))
-    #expect(css.contains("line-height: 1.5em"))
+    #expect(css.contains("line-height: 1.5"))
 }

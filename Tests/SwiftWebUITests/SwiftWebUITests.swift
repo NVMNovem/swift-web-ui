@@ -281,17 +281,20 @@ extension ButtonStyleToken {
 }
 
 @Test func lineHeightModifierRendersSwiftCSSLineHeightProperty() {
-    let em = HTMLRenderer().renderView(
-        Text("Paragraph")
-            .lineHeight(.em(1.5))
-    )
-    let px = HTMLRenderer().renderView(
-        Text("Paragraph")
-            .lineHeight(.px(28))
-    )
+    let values: [(LineHeightValue, String)] = [
+        (.normal, "normal"),
+        (.multiple(1.7), "1.7"),
+        (.length(.px(28)), "28px"),
+        (.percent(170), "170%"),
+    ]
 
-    #expect(em.cssString().contains("line-height: 1.5em"))
-    #expect(px.cssString().contains("line-height: 28px"))
+    for (value, expected) in values {
+        let rendered = HTMLRenderer().renderView(Text("Paragraph").lineHeight(value))
+        #expect(rendered.cssString().contains("line-height: \(expected)"))
+    }
+
+    let unitless = HTMLRenderer().renderView(Text("Paragraph").lineHeight(.multiple(1.7)))
+    #expect(!unitless.cssString().contains("line-height: 1.7px"))
 }
 
 @Test func textAlignModifierRendersSwiftCSSTextAlignProperty() {
@@ -329,7 +332,7 @@ extension ButtonStyleToken {
         Group {
             Text("Paragraph")
         }
-        .lineHeight(.em(1.5))
+        .lineHeight(.multiple(1.5))
         .textAlign(.center)
     )
 
@@ -337,7 +340,7 @@ extension ButtonStyleToken {
     #expect(text.cssString().contains("letter-spacing: 0.1em"))
     #expect(text.cssString().contains("text-transform: uppercase"))
     #expect(link.cssString().contains("text-decoration: underline"))
-    #expect(group.cssString().contains("line-height: 1.5em"))
+    #expect(group.cssString().contains("line-height: 1.5"))
     #expect(group.cssString().contains("text-align: center"))
 }
 

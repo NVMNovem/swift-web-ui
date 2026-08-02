@@ -37,6 +37,23 @@ import Testing
         #expect(root.styles == ["gap": "8px"])
     }
 
+    @Test func unitlessLineHeightMountsAndReconcilesWithoutAppendingPixels() throws {
+        let backend = FakeDOMBackend()
+        let differ = WebNodeDiffer()
+        let lowerer = ViewNodeToWebNodeLowerer()
+        let old = lowerer.lower(Text("Paragraph").lineHeight(.normal).makeViewNode())
+        let new = lowerer.lower(Text("Paragraph").lineHeight(.multiple(1.7)).makeViewNode())
+        var tree = mounted(old, backend: backend)
+        let root = backend.root.children[0]
+        backend.operations.removeAll()
+
+        try applier(backend).apply(differ.diff(old: old, new: new), to: &tree)
+
+        #expect(backend.operations == ["setStyle \(root.id) line-height=1.7"])
+        #expect(root.styles["line-height"] == "1.7")
+        #expect(root.styles["line-height"] != "1.7px")
+    }
+
     @Test func attributeChangesCallOnlyAttributeOperations() throws {
         let backend = FakeDOMBackend()
         var tree = mounted(element(attributes: [.init(name: "old", value: "x")]), backend: backend)

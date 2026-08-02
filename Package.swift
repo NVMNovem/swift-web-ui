@@ -10,12 +10,10 @@ let package = Package(
         .library(name: "SwiftWebUI", targets: ["SwiftWebUI"]),
         .library(name: "SwiftWebUIStatic", targets: ["SwiftWebUIStatic"]),
         .library(name: "SwiftWebUIRuntime", targets: ["SwiftWebUIRuntime"]),
-        .executable(name: "SwiftWebUIEmbeddedDemo", targets: ["SwiftWebUIEmbeddedDemo"]),
-        .executable(name: "SwiftWebUIRuntimeCounter", targets: ["SwiftWebUIRuntimeCounter"]),
     ],
     dependencies: [
-        .package(path: "../../SwiftCSS/swift-css"),
-        .package(path: "../../SwiftHTML/swift-html"),
+        .package(url: "https://github.com/NVMNovem/swift-css", from: "1.0.0"),
+        .package(url: "https://github.com/NVMNovem/swift-html", from: "1.0.0"),
         .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.56.1"),
     ],
     targets: [
@@ -24,8 +22,7 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftCSS", package: "swift-css"),
             ],
-            path: "Sources/SwiftWebUI",
-            sources: ["Backend", "SwiftWebUI.swift"]
+            exclude: ["SwiftWebUI.docc"]
         ),
         .target(
             name: "SwiftWebUIStatic",
@@ -41,33 +38,9 @@ let package = Package(
                 "SwiftWebUI",
                 .product(name: "JavaScriptKit", package: "JavaScriptKit"),
             ],
+            exclude: ["SwiftWebUIRuntime.docc"],
             swiftSettings: [
                 .enableExperimentalFeature("Extern"),
-            ]
-        ),
-        .executableTarget(
-            name: "SwiftWebUIEmbeddedDemo",
-            dependencies: ["SwiftWebUI"]
-        ),
-        .executableTarget(
-            name: "SwiftWebUIRuntimeCounter",
-            dependencies: [
-                "SwiftWebUI",
-                "SwiftWebUIRuntime",
-                .product(name: "JavaScriptKit", package: "JavaScriptKit"),
-            ],
-            path: "Examples/RuntimeCounter/Sources",
-            swiftSettings: [
-                .enableExperimentalFeature("Extern"),
-            ],
-            linkerSettings: [
-                .unsafeFlags(
-                    [
-                        "-Xclang-linker", "-mexec-model=reactor",
-                        "-Xlinker", "--export-if-defined=__main_argc_argv",
-                    ],
-                    .when(platforms: [.wasi])
-                ),
             ]
         ),
         .testTarget(

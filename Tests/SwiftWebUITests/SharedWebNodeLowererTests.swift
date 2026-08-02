@@ -105,6 +105,20 @@ import Testing
     ])
 }
 
+@Test func sharedLowererPreservesCanonicalLineHeightValues() {
+    let values: [(LineHeightValue, String)] = [
+        (.normal, "normal"),
+        (.multiple(1.7), "1.7"),
+        (.length(.px(28)), "28px"),
+        (.percent(170), "170%"),
+    ]
+
+    for (value, expected) in values {
+        let text = requireElement(lower(Text("Paragraph").lineHeight(value)))
+        #expect(text?.styles == [.init(name: "line-height", value: expected)])
+    }
+}
+
 @Test func sharedLowererPreservesModifierAndChildOrderAndCanonicalAttributes() {
     let node = requireElement(lower(
         VStack {

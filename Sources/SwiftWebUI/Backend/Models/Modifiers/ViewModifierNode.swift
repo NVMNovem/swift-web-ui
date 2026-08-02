@@ -32,7 +32,7 @@ public enum ViewModifierNode {
     case font(Font)
     case letterSpacing(SwiftCSS.Length)
     case textTransform(TextTransform)
-    case lineHeight(SwiftCSS.Length)
+    case lineHeight(SwiftCSS.LineHeightValue)
     case textAlign(TextAlignment)
     case textDecoration(TextDecoration)
     case opacity(Double)
