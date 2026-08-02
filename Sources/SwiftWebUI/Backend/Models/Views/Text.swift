@@ -5,29 +5,20 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
-/// A text view that renders escaped text with optional semantic HTML role.
-///
-/// Plain text renders as a `span`. Use ``semanticRole(_:)`` to render paragraph
-/// or heading elements without changing visual styling.
 public struct Text: View {
-    public typealias Body = AnyView
+    public typealias Body = Never
+    public let content: String
+    public let semanticRole: SemanticRole
 
-    var content: String
-    var semanticRole: SemanticRole
-
-    public init(_ content: String) {
+    public init(_ content: String, semanticRole: SemanticRole = .span) {
         self.content = content
-        self.semanticRole = .span
+        self.semanticRole = semanticRole
     }
 
-    public var body: AnyView {
-        AnyView(EmptyView())
-    }
-
-    /// Returns a copy of the text view that renders with the given HTML semantic role.
     public func semanticRole(_ role: SemanticRole) -> Text {
-        var text = self
-        text.semanticRole = role
-        return text
+        Text(content, semanticRole: role)
     }
+
+    public var body: Never { fatalError("Text primitive body unavailable") }
+    public func makeViewNode() -> ViewNode { .text(.init(content: content, semanticRole: semanticRole)) }
 }

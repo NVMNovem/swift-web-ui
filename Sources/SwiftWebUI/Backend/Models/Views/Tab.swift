@@ -5,55 +5,45 @@
 //  Created by Damian Van de Kauter on 25/06/2026.
 //
 
-/// A tab item used by ``TabBar`` and ``TabView``.
-///
-/// A tab has a selection value, label content, and optional panel content.
 public struct Tab<Value: Hashable>: View {
-    public typealias Body = AnyView
+    public typealias Body = Never
+    public let value: Value
+    public let valueNode: ClientValue
+    public let label: ViewNode
+    public let content: ViewNode
 
-    var value: Value
-    var label: AnyView
-    var content: AnyView
-
-    public init(
-        _ title: String,
-        value: Value
-    ) {
+    private init(value: Value, valueNode: ClientValue, label: ViewNode, content: ViewNode) {
         self.value = value
-        self.label = AnyView(Text(title))
-        self.content = AnyView(EmptyView())
+        self.valueNode = valueNode
+        self.label = label
+        self.content = content
     }
 
-    public init<Content: View>(
-        _ title: String,
-        value: Value,
-        @ViewBuilder content: () -> Content
-    ) {
-        self.value = value
-        self.label = AnyView(Text(title))
-        self.content = AnyView(content())
-    }
+    public var body: Never { fatalError("Tab primitive body unavailable") }
+    public func makeViewNode() -> ViewNode { .button(.init(label: label, action: nil)) }
+}
 
-    public init<Label: View, Content: View>(
-        value: Value,
-        @ViewBuilder label: () -> Label,
-        @ViewBuilder content: () -> Content
-    ) {
-        self.value = value
-        self.label = AnyView(label())
-        self.content = AnyView(content())
-    }
+public extension Tab where Value: ClientStateValue {
+    init(_ title: String, value: Value) { self.init(value: value, valueNode: value.clientValue, label: Text(title).makeViewNode(), content: .empty) }
+    init<Content: View>(_ title: String, value: Value, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: value.clientValue, label: Text(title).makeViewNode(), content: content().makeViewNode()) }
+    init<LabelContent: View, Content: View>(value: Value, @ViewBuilder label: () -> LabelContent, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: value.clientValue, label: label().makeViewNode(), content: content().makeViewNode()) }
+    init<LabelContent: View>(value: Value, @ViewBuilder label: () -> LabelContent) { self.init(value: value, valueNode: value.clientValue, label: label().makeViewNode(), content: .empty) }
+}
 
-    public init<Label: View>(
-        value: Value,
-        @ViewBuilder label: () -> Label
-    ) {
-        self.value = value
-        self.label = AnyView(label())
-        self.content = AnyView(EmptyView())
-    }
+public extension Tab where Value: RawRepresentable, Value.RawValue == String {
+    init(_ title: String, value: Value) { self.init(value: value, valueNode: .string(value.rawValue), label: Text(title).makeViewNode(), content: .empty) }
+    init<Content: View>(_ title: String, value: Value, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: .string(value.rawValue), label: Text(title).makeViewNode(), content: content().makeViewNode()) }
+    init<LabelContent: View, Content: View>(value: Value, @ViewBuilder label: () -> LabelContent, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: .string(value.rawValue), label: label().makeViewNode(), content: content().makeViewNode()) }
+    init<LabelContent: View>(value: Value, @ViewBuilder label: () -> LabelContent) { self.init(value: value, valueNode: .string(value.rawValue), label: label().makeViewNode(), content: .empty) }
+}
 
-    public var body: AnyView {
-        AnyView(EmptyView())
-    }
+public extension Tab where Value: RawRepresentable, Value.RawValue == Int {
+    init(_ title: String, value: Value) { self.init(value: value, valueNode: .integer(value.rawValue), label: Text(title).makeViewNode(), content: .empty) }
+    init<Content: View>(_ title: String, value: Value, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: .integer(value.rawValue), label: Text(title).makeViewNode(), content: content().makeViewNode()) }
+    init<LabelContent: View, Content: View>(value: Value, @ViewBuilder label: () -> LabelContent, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: .integer(value.rawValue), label: label().makeViewNode(), content: content().makeViewNode()) }
+    init<LabelContent: View>(value: Value, @ViewBuilder label: () -> LabelContent) { self.init(value: value, valueNode: .integer(value.rawValue), label: label().makeViewNode(), content: .empty) }
+}
+
+extension Tab {
+    var node: TabItemNode { .init(value: valueNode, label: label, content: content) }
 }

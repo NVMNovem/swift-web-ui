@@ -1,13 +1,22 @@
 {
-  "originHash" : "dd255535037a0f55e05a0355f39230595572a954da739e33567269528f89c7d8",
+  "originHash" : "a17fce296e465e0bddd65c6f9efe4dcbf5a2fd52a9f57e96aa8d5861929e7b0f",
   "pins" : [
+    {
+      "identity" : "javascriptkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftwasm/JavaScriptKit.git",
+      "state" : {
+        "revision" : "22905075f8b61834810babe5fb9a2f613f22f398",
+        "version" : "0.56.1"
+      }
+    },
     {
       "identity" : "swift-css",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/NVMNovem/swift-css",
       "state" : {
-        "revision" : "d1b3c5e358a8235958d3646767a4b935d95d26a1",
-        "version" : "0.2.0"
+        "revision" : "c646afd52111018ff71cfe9167b8fc37d2c30fcd",
+        "version" : "1.0.0"
       }
     },
     {
@@ -15,8 +24,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/NVMNovem/swift-html",
       "state" : {
-        "revision" : "b87880937fdf085b29073eef7cd74323e807598e",
-        "version" : "0.2.0"
+        "revision" : "999401352d61dd92dd5ec769dc1de0d09abd2957",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax",
+      "state" : {
+        "revision" : "79e4b74a295b6eb74a8b585e3a39d29e70c1dbd1",
+        "version" : "603.0.2"
       }
     }
   ],

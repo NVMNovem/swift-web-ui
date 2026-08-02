@@ -5,22 +5,7 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
-import SwiftCSS
-
-private struct FontDeclaration: Hashable, Sendable {
-    
-    var name: String
-    var value: String
-
-    var cssProperty: any CSSProperty {
-        RawProperty(name, value)
-    }
-}
-
-/// A SwiftWebUI font token lowered to SwiftCSS font declarations.
 public struct Font: Hashable, Sendable {
-
-    /// Font weight values supported by ``Font/system(size:weight:design:)``.
     public enum Weight: Hashable, Sendable {
         case ultraLight
         case thin
@@ -32,9 +17,23 @@ public struct Font: Hashable, Sendable {
         case heavy
         case black
         case weight(Int)
+
+        public var numericValue: Int {
+            switch self {
+            case .ultraLight: 100
+            case .thin: 200
+            case .light: 300
+            case .regular: 400
+            case .medium: 500
+            case .semibold: 600
+            case .bold: 700
+            case .heavy: 800
+            case .black: 900
+            case .weight(let value): value
+            }
+        }
     }
 
-    /// Generic font family designs supported by ``Font/system(size:weight:design:)``.
     public enum Design: Hashable, Sendable {
         case `default`
         case serif
@@ -42,33 +41,16 @@ public struct Font: Hashable, Sendable {
         case monospaced
     }
 
-    private var declarations: [FontDeclaration]
+    public let size: Double
+    public let weight: Weight?
+    public let design: Design?
 
-    private init(_ cssProperties: [any CSSProperty]) {
-        self.declarations = cssProperties.map {
-            FontDeclaration(name: $0.name, value: $0.value)
-        }
-    }
-
-    /// Creates a system font token with size, optional weight, and optional design.
     public static func system(
         size: Double,
         weight: Weight? = nil,
         design: Design? = nil
     ) -> Font {
-        var cssProperties: [any CSSProperty] = [
-            FontSize(Length("\(formatFontNumber(size))px"))
-        ]
-
-        if let weight {
-            cssProperties.append(FontWeight(weight.cssValue))
-        }
-
-        if let fontFamily = design?.fontFamily {
-            cssProperties.append(fontFamily)
-        }
-
-        return Font(cssProperties)
+        Font(size: size, weight: weight, design: design)
     }
 
     public static let largeTitle = system(size: 34, weight: .regular)
@@ -82,62 +64,6 @@ public struct Font: Hashable, Sendable {
     public static let footnote = system(size: 13, weight: .regular)
     public static let caption = system(size: 12, weight: .regular)
     public static let caption2 = system(size: 11, weight: .regular)
-
-    var cssProperties: [any CSSProperty] {
-        declarations.map(\.cssProperty)
-    }
 }
 
 public typealias FontToken = Font
-
-private extension Font.Weight {
-
-    var cssValue: FontWeight.Value {
-        switch self {
-        case .ultraLight:
-            .weight(100)
-        case .thin:
-            .weight(200)
-        case .light:
-            .weight(300)
-        case .regular:
-            .weight(400)
-        case .medium:
-            .weight(500)
-        case .semibold:
-            .weight(600)
-        case .bold:
-            .weight(700)
-        case .heavy:
-            .weight(800)
-        case .black:
-            .weight(900)
-        case .weight(let value):
-            .weight(value)
-        }
-    }
-}
-
-private extension Font.Design {
-
-    var fontFamily: FontFamily? {
-        switch self {
-        case .default:
-            nil
-        case .serif:
-            FontFamily("ui-serif, Georgia, Cambria, \"Times New Roman\", Times, serif")
-        case .rounded:
-            FontFamily("ui-rounded, \"SF Pro Rounded\", \"Nunito Sans\", system-ui, sans-serif")
-        case .monospaced:
-            FontFamily("ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace")
-        }
-    }
-}
-
-private func formatFontNumber(_ value: Double) -> String {
-    if value.rounded() == value {
-        return "\(Int(value))"
-    }
-
-    return "\(value)"
-}

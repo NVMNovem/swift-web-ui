@@ -5,21 +5,32 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
-/// Stores a value for a rendered SwiftWebUI view and projects a client-state binding.
+/// The renderer-neutral invalidation hook used by the first browser runtime.
 ///
-/// `State` provides initial values and generated binding metadata. It is not a
-/// browser-side Swift runtime.
+/// This deliberately supports one installed callback. A future mounted state-slot
+/// system will replace this proof-of-concept mechanism.
+@_spi(Runtime)
+public enum ViewInvalidation {
+    nonisolated(unsafe) private static var callback: (() -> Void)?
+
+    public static func install(_ callback: @escaping () -> Void) {
+        self.callback = callback
+    }
+
+    public static func clear() {
+        callback = nil
+    }
+
+    static func invalidate() {
+        callback?()
+    }
+}
+
 @propertyWrapper
 public struct State<Value> {
     private final class Storage {
         var value: Value
-        var clientStateKey: String {
-            "state-\(String(UInt(bitPattern: ObjectIdentifier(self)), radix: 16))"
-        }
-
-        init(_ value: Value) {
-            self.value = value
-        }
+        init(_ value: Value) { self.value = value }
     }
 
     private let storage: Storage
@@ -30,17 +41,20 @@ public struct State<Value> {
 
     public var wrappedValue: Value {
         get { storage.value }
-        nonmutating set { storage.value = newValue }
+        nonmutating set {
+            storage.value = newValue
+            ViewInvalidation.invalidate()
+        }
     }
 
     public var projectedValue: Binding<Value> {
         Binding(
             get: { storage.value },
-            set: { storage.value = $0 },
-            clientState: ClientStateBinding(
-                key: storage.clientStateKey,
-                initialValue: clientStateValueString(storage.value)
-            )
+            set: {
+                storage.value = $0
+                ViewInvalidation.invalidate()
+            },
+            stateIdentity: StateIdentity(ObjectIdentifier(storage))
         )
     }
 }

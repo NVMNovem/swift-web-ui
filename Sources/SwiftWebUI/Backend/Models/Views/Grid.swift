@@ -7,19 +7,18 @@
 
 import SwiftCSS
 
-/// A grid layout container backed by SwiftCSS layout declarations.
 public struct Grid<Content: View>: View {
-    public typealias Body = AnyView
-
-    var spacing: SwiftCSS.Length?
-    var content: Content
+    public typealias Body = Never
+    public let spacing: SwiftCSS.Length?
+    public let content: Content
 
     public init(spacing: SwiftCSS.Length? = nil, @ViewBuilder content: () -> Content) {
         self.spacing = spacing
         self.content = content()
     }
 
-    public var body: AnyView {
-        AnyView(EmptyView())
+    public var body: Never { fatalError("Grid primitive body unavailable") }
+    public func makeViewNode() -> ViewNode {
+        .container(.init(kind: .grid(spacing: spacing), children: content.makeViewNode().groupChildren))
     }
 }

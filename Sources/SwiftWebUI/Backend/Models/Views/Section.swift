@@ -5,17 +5,10 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
-/// A semantic sectioning container that renders an HTML `section` element.
 public struct Section<Content: View>: View {
-    public typealias Body = AnyView
-
-    var content: Content
-
-    public init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-
-    public var body: AnyView {
-        AnyView(EmptyView())
-    }
+    public typealias Body = Never
+    public let content: Content
+    public init(@ViewBuilder content: () -> Content) { self.content = content() }
+    public var body: Never { fatalError("Section primitive body unavailable") }
+    public func makeViewNode() -> ViewNode { .container(.init(kind: .section, children: content.makeViewNode().groupChildren)) }
 }

@@ -1,12 +1,14 @@
-/// A form label that renders an HTML `label` element.
-///
-/// Use the string initializer for plain labels and the content initializer for
-/// custom label content.
-public struct Label<Content: View>: View {
-    public typealias Body = AnyView
+//
+//  Label.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 01/07/2026.
+//
 
-    var textLabel: String?
-    var content: Content
+public struct Label<Content: View>: View {
+    public typealias Body = Never
+    public let textLabel: String?
+    public let content: Content
 
     public init(_ textLabel: String) where Content == EmptyView {
         self.textLabel = textLabel
@@ -18,7 +20,8 @@ public struct Label<Content: View>: View {
         self.content = content()
     }
 
-    public var body: AnyView {
-        AnyView(EmptyView())
+    public var body: Never { fatalError("Label primitive body unavailable") }
+    public func makeViewNode() -> ViewNode {
+        .container(.init(kind: .label(text: textLabel), children: content.makeViewNode().groupChildren))
     }
 }

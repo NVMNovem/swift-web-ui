@@ -1,0 +1,125 @@
+//
+//  WebNodeDifferTests.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 20/07/2026.
+//
+
+import Testing
+@_spi(Rendering) import SwiftWebUI
+@testable import SwiftWebUIRuntime
+
+@Suite struct WebNodeDifferTests {
+    private let differ = WebNodeDiffer()
+
+    @Test func identicalTreesProduceNoPatches() {
+        let tree = element(attributes: [.init(name: "id", value: "a")], children: [.text("same")])
+        #expect(differ.diff(old: tree, new: tree) == [])
+    }
+
+    @Test func changedTextProducesExactlySetText() {
+        #expect(differ.diff(old: .text("0"), new: .text("1")) == [
+            .setText(path: NodePath(), value: "1")
+        ])
+    }
+
+    @Test func unchangedTextProducesNoPatches() {
+        #expect(differ.diff(old: .text("same"), new: .text("same")) == [])
+    }
+
+    @Test(arguments: [
+        ([], [WebAttribute(name: "role", value: "button")], [DOMPatch.setAttribute(path: NodePath(), name: "role", value: "button")]),
+        ([WebAttribute(name: "role", value: "link")], [WebAttribute(name: "role", value: "button")], [DOMPatch.setAttribute(path: NodePath(), name: "role", value: "button")]),
+        ([WebAttribute(name: "role", value: "button")], [], [DOMPatch.removeAttribute(path: NodePath(), name: "role")]),
+    ])
+    func attributeChanges(old: [WebAttribute], new: [WebAttribute], expected: [DOMPatch]) {
+        #expect(differ.diff(old: element(attributes: old), new: element(attributes: new)) == expected)
+    }
+
+    @Test(arguments: [
+        ([], [WebStyleDeclaration(name: "gap", value: "8px")], [DOMPatch.setStyle(path: NodePath(), name: "gap", value: "8px")]),
+        ([WebStyleDeclaration(name: "gap", value: "4px")], [WebStyleDeclaration(name: "gap", value: "8px")], [DOMPatch.setStyle(path: NodePath(), name: "gap", value: "8px")]),
+        ([WebStyleDeclaration(name: "gap", value: "8px")], [], [DOMPatch.removeStyle(path: NodePath(), name: "gap")]),
+    ])
+    func styleChanges(old: [WebStyleDeclaration], new: [WebStyleDeclaration], expected: [DOMPatch]) {
+        #expect(differ.diff(old: element(styles: old), new: element(styles: new)) == expected)
+    }
+
+    @Test func tagChangeReplacesNode() {
+        let replacement = element("button")
+        #expect(differ.diff(old: element("div"), new: replacement) == [
+            .replaceNode(path: NodePath(), node: replacement)
+        ])
+    }
+
+    @Test func nodeKindChangeReplacesNode() {
+        #expect(differ.diff(old: .empty, new: .text("value")) == [
+            .replaceNode(path: NodePath(), node: .text("value"))
+        ])
+    }
+
+    @Test func appendTrailingChild() {
+        #expect(differ.diff(
+            old: element(children: [.text("a")]),
+            new: element(children: [.text("a"), .text("b")])
+        ) == [.insertChild(parent: NodePath(), index: 1, node: .text("b"))])
+    }
+
+    @Test func removeTrailingChildrenUsesDescendingIndices() {
+        #expect(differ.diff(
+            old: element(children: [.text("a"), .text("b"), .text("c")]),
+            new: element(children: [.text("a")])
+        ) == [
+            .removeChild(parent: NodePath(), index: 2),
+            .removeChild(parent: NodePath(), index: 1),
+        ])
+    }
+
+    @Test func nestedTextChangeUsesMountedTreePath() {
+        #expect(differ.diff(
+            old: element(children: [element("span", children: [.text("0")])]),
+            new: element(children: [element("span", children: [.text("1")])])
+        ) == [.setText(path: NodePath([0, 0]), value: "1")])
+    }
+
+    @Test func fragmentChangesUsePositionalChildren() {
+        #expect(differ.diff(
+            old: .fragment([.text("0"), .text("tail")]),
+            new: .fragment([.text("1"), .text("tail"), .empty])
+        ) == [
+            .setText(path: NodePath([0]), value: "1"),
+            .insertChild(parent: NodePath(), index: 2, node: .empty),
+        ])
+    }
+
+    @Test func patchOrderIsDeterministic() {
+        let old = element(
+            attributes: [.init(name: "removed", value: "x"), .init(name: "changed", value: "a")],
+            styles: [.init(name: "old", value: "x"), .init(name: "gap", value: "4px")],
+            children: [.text("0"), .text("remove")]
+        )
+        let new = element(
+            attributes: [.init(name: "changed", value: "b"), .init(name: "added", value: "y")],
+            styles: [.init(name: "gap", value: "8px"), .init(name: "new", value: "y")],
+            children: [.text("1")]
+        )
+        #expect(differ.diff(old: old, new: new) == [
+            .removeAttribute(path: NodePath(), name: "removed"),
+            .setAttribute(path: NodePath(), name: "changed", value: "b"),
+            .setAttribute(path: NodePath(), name: "added", value: "y"),
+            .removeStyle(path: NodePath(), name: "old"),
+            .setStyle(path: NodePath(), name: "gap", value: "8px"),
+            .setStyle(path: NodePath(), name: "new", value: "y"),
+            .setText(path: NodePath([0]), value: "1"),
+            .removeChild(parent: NodePath(), index: 1),
+        ])
+    }
+
+    @Test func closureActionIsConservativelyReplaced() {
+        let old = element("button", action: .closure {})
+        let newAction = ActionIntent.closure {}
+        #expect(differ.diff(old: old, new: element("button", action: newAction)) == [
+            .replaceAction(path: NodePath(), action: newAction)
+        ])
+    }
+}

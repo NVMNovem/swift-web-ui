@@ -4,11 +4,12 @@ Apply visual styling through SwiftWebUI modifiers backed by SwiftCSS values and 
 
 ## Overview
 
-Styling modifiers attach styling intent to a view. During rendering, SwiftWebUI converts that intent into SwiftCSS declarations, registers generated CSS classes, and keeps the HTML output focused on structure.
+Styling modifiers attach concrete intent to a view node. `SwiftWebUIStatic` lowers that intent into SwiftCSS declarations, registers generated CSS classes, and keeps HTML output focused on structure.
 
 ```swift
 Text("Hello")
     .font(.headline)
+    .lineHeight(.multiple(1.7))
     .padding(.px(12))
     .background(Color("var(--panel)"))
     .foregroundStyle(Color("var(--text)"))
@@ -18,6 +19,20 @@ Text("Hello")
 ## Topics
 
 ### Typography
+
+Use `LineHeightValue` to distinguish unitless multipliers from explicit lengths
+and percentages. A unitless multiplier remains unitless in static CSS and the
+runtime DOM:
+
+```swift
+Text("Readable body copy")
+    .lineHeight(.multiple(1.7))
+```
+
+Use `.normal`, `.length(.px(28))`, or `.percent(170)` when those CSS semantics
+are intended. Code that previously passed a `Length` should wrap it with
+`.length(...)`; use `.multiple(...)` when the old value represented a unitless
+line-height.
 
 - ``Font``
 - ``TextTransform``
@@ -75,8 +90,6 @@ strings because the corresponding SwiftCSS property value is intentionally broad
 
 ### Buttons
 
-- ``ButtonStyle``
-- ``ButtonStyleConfiguration``
 - ``ButtonStyleToken``
 
 ## Examples
@@ -100,6 +113,8 @@ extension Color {
 Text("Muted copy")
     .foregroundStyle(.muted)
 ```
+
+Define button tokens with a stable class name and concrete SwiftCSS declarations. Protocol-erased custom button styles are not supported by the Embedded core.
 
 Use raw CSS overloads only as escape hatches:
 

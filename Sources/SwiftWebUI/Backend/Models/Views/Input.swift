@@ -1,13 +1,13 @@
-/// A void form input that renders an HTML `input` element.
-///
-/// Configure type, name, autocomplete, and related attributes with
-/// `.attribute(_:_:)`.
+//
+//  Input.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 25/06/2026.
+//
+
 public struct Input: View {
-    public typealias Body = AnyView
-
+    public typealias Body = Never
     public init() {}
-
-    public var body: AnyView {
-        AnyView(EmptyView())
-    }
+    public var body: Never { fatalError("Input primitive body unavailable") }
+    public func makeViewNode() -> ViewNode { .input(.init()) }
 }

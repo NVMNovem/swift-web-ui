@@ -8,24 +8,54 @@ let package = Package(
     platforms: [.macOS(.v26)],
     products: [
         .library(name: "SwiftWebUI", targets: ["SwiftWebUI"]),
+        .library(name: "SwiftWebUIStatic", targets: ["SwiftWebUIStatic"]),
+        .library(name: "SwiftWebUIRuntime", targets: ["SwiftWebUIRuntime"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/NVMNovem/swift-css", from: "0.2.0"),
-        .package(url: "https://github.com/NVMNovem/swift-html", from: "0.2.0")
+        .package(url: "https://github.com/NVMNovem/swift-css", from: "1.0.0"),
+        .package(url: "https://github.com/NVMNovem/swift-html", from: "1.0.0"),
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.56.1"),
     ],
     targets: [
         .target(
             name: "SwiftWebUI",
             dependencies: [
                 .product(name: "SwiftCSS", package: "swift-css"),
-                .product(name: "SwiftHTML", package: "swift-html")
+            ],
+            exclude: ["SwiftWebUI.docc"]
+        ),
+        .target(
+            name: "SwiftWebUIStatic",
+            dependencies: [
+                "SwiftWebUI",
+                .product(name: "SwiftCSS", package: "swift-css"),
+                .product(name: "SwiftHTML", package: "swift-html"),
+            ]
+        ),
+        .target(
+            name: "SwiftWebUIRuntime",
+            dependencies: [
+                "SwiftWebUI",
+                .product(name: "JavaScriptKit", package: "JavaScriptKit"),
+            ],
+            exclude: ["SwiftWebUIRuntime.docc"],
+            swiftSettings: [
+                .enableExperimentalFeature("Extern"),
             ]
         ),
         .testTarget(
             name: "SwiftWebUITests",
             dependencies: [
                 "SwiftWebUI",
+                "SwiftWebUIStatic",
                 .product(name: "SwiftHTML", package: "swift-html")
+            ]
+        ),
+        .testTarget(
+            name: "SwiftWebUIRuntimeTests",
+            dependencies: [
+                "SwiftWebUI",
+                "SwiftWebUIRuntime",
             ]
         ),
     ],

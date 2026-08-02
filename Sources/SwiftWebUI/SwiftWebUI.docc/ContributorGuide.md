@@ -8,7 +8,10 @@ Every feature starts with ownership:
 
 1. If the feature is an HTML node, HTML attribute rendering behavior, or escaping behavior, add it to SwiftHTML first.
 2. If the feature is a CSS property, CSS value, declaration, or stylesheet rendering behavior, add it to SwiftCSS first.
-3. If the feature is web UI intent, a view, a modifier, state behavior, rendered resources, or document behavior, add it to SwiftWebUI.
+3. If the feature is renderer-neutral web UI intent, a view, a modifier, state, binding, or action behavior, add it to SwiftWebUI.
+4. If the feature is static lowering, a rendered resource, generated JavaScript, a browser document, or filesystem export, add it to SwiftWebUIStatic.
+
+Inside the SwiftWebUI module, organize shared source under `Backend` by responsibility. Keep views, modifiers, styles, rendering models, protocols, language attributes, and lightweight types in their established categories. The `Backend` folder is the physical home of the renderer-neutral core; it is not an additional rendering stage. Avoid consolidating unrelated declarations into a catch-all `Core` file or directory.
 
 ## Required Steps
 
@@ -19,6 +22,7 @@ For SwiftWebUI changes:
 3. Update DocC documentation.
 4. Update README examples when the recommended public API changes.
 5. Update `ARCHITECTURE.md` when ownership boundaries or architecture change.
+6. Build the SwiftWebUI target with the Swift 6.3.3 Embedded Wasm SDK.
 
 ## DocC Validation
 
@@ -40,13 +44,15 @@ xcrun docc convert Sources/SwiftWebUI/SwiftWebUI.docc \
 ```
 
 The `--additional-symbol-graph-dir` path is required for DocC to resolve
-SwiftWebUI symbols such as ``View``, ``TabView``, ``Font``, and
-``WebDocument``. Running `xcrun docc convert` without that path only sees the
+SwiftWebUI core symbols such as ``View``, ``TabView``, and ``Font``. Static-only
+symbols such as `WebDocument` belong to SwiftWebUIStatic. Running `xcrun docc convert` without that path only sees the
 article catalog, so symbol links are reported as unresolved even when the
 public APIs exist.
 
 ## Discussion
 
 Documentation is part of the Definition of Done. A change that adds public API, changes behavior, adds a modifier, adds a view, or changes architecture is incomplete until the relevant DocC articles and symbol comments are updated.
+
+Core code must not add Foundation, filesystem access, generated JavaScript, static resources, erased view traversal, or dynamic view casts.
 
 This rule is especially important for AI agents and future packages such as SwiftMailUI. The documentation should describe current behavior honestly, including static-only limitations and deferred browser-runtime behavior.

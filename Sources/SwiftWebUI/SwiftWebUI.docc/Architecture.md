@@ -1,88 +1,51 @@
 # Architecture
 
-Understand the ownership boundaries between SwiftWebUI, SwiftCSS, and SwiftHTML.
+Understand the renderer-neutral core and static-renderer boundary.
 
 ## Overview
 
-SwiftWebUI is the browser UI layer in a layered Swift web ecosystem.
-
 ```text
-SwiftWebUI
-    View DSL, modifiers, semantic UI styling, state placeholders,
-    rendered web resources, WebDocument
-
-SwiftCSS
-    CSS properties, values, declarations, stylesheet rendering
-
-SwiftHTML
-    HTML nodes, attributes, escaping, HTML rendering
+SwiftWebUI DSL
+    -> concrete ViewNode
+        -> ViewNodeToWebNodeLowerer
+            -> concrete WebNode
+        -> SwiftWebUIStatic -> SwiftHTML.HTMLNode + SwiftCSS AST
+        -> SwiftWebUIRuntime -> browser DOM proof of concept
 ```
 
-The dependency direction is:
+``View`` keeps an associated ``View/Body`` and lowers through `makeViewNode()`. Primitive views produce ``ViewNode`` directly; composed views lower their concrete body. The internal Rendering SPI then lowers view semantics exactly once into `WebNode`. Renderers consume only concrete tags, attributes, styles, children, and action intent and do not rediscover view types.
 
-```text
-User View
-    -> SwiftWebUI
-        -> SwiftCSS
-        -> SwiftHTML
-```
+``ViewBuilder`` uses concrete `TupleView2` through `TupleView10`, plus ``OptionalView``, ``ConditionalView``, ``ArrayView``, and ``ForEach``. These carriers preserve heterogeneous static types without `AnyView`, existential storage, parameter packs, or dynamic casts.
+
+## Core ownership
+
+SwiftWebUI owns views, semantic/layout intent, concrete modifiers, state/binding/action intent, `ViewNode`, `WebNode`, and `ViewNodeToWebNodeLowerer`. It depends on Embedded-compatible SwiftCSS values during semantic lowering. `WebNode` carries concrete tag names and property/value declarations, but no serialized HTML/CSS, generated resources, class hashes, files, or browser objects.
+
+SwiftHTML owns HTML nodes, attributes, escaping, and string rendering. SwiftCSS owns CSS properties, values, declarations, nodes, and string rendering. Missing low-level capabilities must be implemented in their owning package rather than duplicated here.
+
+## Source organization
+
+The shared module is organized under `Sources/SwiftWebUI/Backend` without changing the logical core boundary. Property wrappers and result builders live under `Attributes`; protocol boundaries under `Protocols`; lightweight semantic and style values under `Types`; and views, modifiers, styles, and renderer-neutral rendering models under `Models`.
+
+The rendering model folder groups `ViewNode`, `WebNode`, their focused supporting models, and the single `ViewNodeToWebNodeLowerer` semantic pass. Individual public views and modifier concerns use focused files for discoverability. This physical organization does not introduce another backend: SwiftWebUIStatic and SwiftWebUIRuntime remain the only consumers after shared lowering.
+
+## Renderer ownership
+
+The separate `SwiftWebUIStatic` module mechanically converts `WebNode` to SwiftHTML/SwiftCSS ASTs and owns `HTMLRenderer`, rendered output/resource models, style hashing, generated JavaScript, `WebDocument`, and `PreviewExporter`. Static applications import that module; it re-exports SwiftWebUI.
+
+The separate `SwiftWebUIRuntime` module owns browser mounting, a runtime-only mounted tree, positional `WebNode` diffing, mechanical DOM patch application, and JavaScriptKit event handlers. It applies lowered tags, attributes, styles, children, and closure actions for one mounted root without replacing unchanged DOM nodes. JavaScriptKit and mounted state do not enter the core.
+
+`RemoteList` remains static-only because it is currently defined by generated fetch/template JavaScript. Static client-state mutation actions remain a static resource feature. The runtime uses child position only as a traversal location; it does not yet define keyed identity, state slots, moves, or hydration. Removed subtrees recursively release retained handlers, while closure-bearing elements conservatively replace their handler registration after rerender because closures have no stable token.
+
+## Embedded builder choice
+
+Swift 6.3.3 Embedded crashes or diagnoses unsupported specialization for the parameter-pack result-builder design tested by the project spike. Fixed-arity carriers are an internal compatibility choice; replacing them later does not require a change to ``ViewNode`` or renderer APIs.
 
 ## Topics
 
-### SwiftWebUI Ownership
-
 - ``View``
 - ``ViewBuilder``
+- ``ViewNode``
 - ``ModifiedView``
+- ``ViewModifierNode``
 - ``ViewRendererProtocol``
-- ``HTMLRenderer``
-- ``RenderedView``
-- ``WebDocument``
-
-### Rendering Resources
-
-- ``RenderContext``
-- ``RenderedResources``
-- ``StyleResource``
-- ``ScriptResource``
-- ``ResourceScope``
-
-## Discussion
-
-SwiftWebUI must not duplicate low-level HTML or CSS systems. If a feature is a new HTML element, attribute rendering rule, escaping rule, CSS property, CSS value, declaration, or stylesheet rendering behavior, it belongs in SwiftHTML or SwiftCSS first.
-
-SwiftWebUI owns the higher-level web UI intent: primitive view types such as
-``Text``, ``VStack``, ``Grid``, ``Button``, ``Link``, ``Image``, ``Article``,
-``Section``, ``Form``, ``Label``, ``Input``, ``TextArea``, ``Footer``, and
-``Template``;
-view modifiers stored as data; semantic UI styling such as ``ButtonStyle`` and
-``ButtonStyleToken``; state placeholders such as ``State`` and ``Binding``;
-rendered resource collection; and ``WebDocument`` as a browser document target.
-
-SwiftWebUI must not reimplement CSS properties, CSS values, CSS rendering,
-HTML elements, HTML attributes, or HTML escaping. Those concerns belong to
-SwiftCSS and SwiftHTML.
-
-> Important: Do not reintroduce `SwiftWebUI.Border` or `SwiftWebUI.Shadow` as thin wrappers. Use SwiftCSS `Border` and `BoxShadow`, or add missing capabilities to SwiftCSS first.
-
-Future packages such as SwiftMailUI should follow the same rule. A future SwiftMailUI package may depend on SwiftHTML and SwiftCSS, but it must not depend on SwiftWebUI.
-
-SwiftWebUI may generate small JavaScript runtimes for declared behavior such as
-client-state controls and ``RemoteList``. These runtimes should stay generic,
-data-attribute driven, and tied to explicit SwiftWebUI declarations. Do not add
-broad hand-written app-specific JavaScript to SwiftWebUI. A future SwiftJS
-package should only be extracted after repeated runtime patterns emerge.
-
-## Renderer Boundary
-
-``ViewRendererProtocol`` is the public renderer boundary. It lets renderers own
-their output type while preserving the existing user-facing ``View`` API.
-``HTMLRenderer`` conforms with `Output == String` for direct HTML strings and
-continues to expose `renderView(_:)` for separated ``RenderedView`` output and
-`renderNodes(_:)` for SwiftHTML node output.
-
-The current HTML renderer lowers views through an internal SwiftHTML bridge and
-``RenderContext``. That bridge is an implementation detail of the browser HTML
-renderer, not a second public view system. Future renderers, such as a DOM/WASM
-renderer, should add their own renderer-owned output and lowering boundary
-without requiring changes to application `View` declarations.

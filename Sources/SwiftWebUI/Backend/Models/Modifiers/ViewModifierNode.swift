@@ -1,0 +1,63 @@
+//
+//  ViewModifierNode.swift
+//  swift-web-ui
+//
+//  Created by Damian Van de Kauter on 23/06/2026.
+//
+
+import SwiftCSS
+
+public enum ViewModifierNode {
+    case cssClass(String)
+    case identifier(String)
+    case attribute(name: String, value: String)
+    case bindText(String)
+    case bindAttribute(name: String, field: String)
+    case display(DisplayValue)
+    case gridTemplateColumns(String)
+    case justifyContent(JustifyContentValue)
+    case flexWrap(FlexWrapValue)
+    case margin(Edge.Set, SwiftCSS.Length)
+    case padding(Edge.Set, SwiftCSS.Length)
+    case frame(width: SwiftCSS.Length?, height: SwiftCSS.Length?, maxWidth: SwiftCSS.Length?)
+    case width(SwiftCSS.Length)
+    case minWidth(SwiftCSS.Length)
+    case maxWidth(SwiftCSS.Length)
+    case height(SwiftCSS.Length)
+    case minHeight(SwiftCSS.Length)
+    case maxHeight(SwiftCSS.Length)
+    case background(Background)
+    case foregroundStyle(SwiftCSS.Color)
+    case fontWeight(FontWeight.Value)
+    case font(Font)
+    case letterSpacing(SwiftCSS.Length)
+    case textTransform(TextTransform)
+    case lineHeight(SwiftCSS.LineHeightValue)
+    case textAlign(TextAlignment)
+    case textDecoration(TextDecoration)
+    case opacity(Double)
+    case transform(String)
+    case transition(String)
+    case backdropFilter(String)
+    case overflow(OverflowValue)
+    case objectFit(ObjectFitValue)
+    case pointerEvents(PointerEventsValue)
+    case cursor(CursorValue)
+    case position(PositionValue)
+    case top(SwiftCSS.Length)
+    case right(SwiftCSS.Length)
+    case bottom(SwiftCSS.Length)
+    case left(SwiftCSS.Length)
+    case zIndex(Int)
+    case resize(ResizeValue)
+    case outline(OutlineValue)
+    case scrollMarginTop(SwiftCSS.Length)
+    case cornerRadius(SwiftCSS.Length)
+    case clipShape(ClipShape)
+    case border(SwiftCSS.Border)
+    case borderParts(width: SwiftCSS.Length, style: BorderLineStyle, color: SwiftCSS.Color)
+    case shadow(BoxShadow)
+    case gap(SwiftCSS.Length)
+    case buttonStyle(ButtonStyleToken)
+    case setState(ClientStateMutation)
+}

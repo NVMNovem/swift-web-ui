@@ -1,38 +1,39 @@
 # ``SwiftWebUI``
 
-Build browser UI with a SwiftUI-like view DSL that renders to semantic HTML and extracted CSS resources.
+Build renderer-neutral web UI with an Embedded-compatible SwiftUI-like DSL.
 
 ## Overview
 
-SwiftWebUI lets you describe static browser interfaces in Swift:
+Views preserve concrete composition and lower to ``ViewNode``:
 
 ```swift
 import SwiftWebUI
 
-struct HelloPage: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: .px(12)) {
-            Text("Hello")
-                .semanticRole(.h1)
-                .font(.headline)
+struct CounterView: View {
+    @State private var count = 0
 
-            Button("Continue")
-                .buttonStyle(.primary)
+    var body: some View {
+        VStack(alignment: .leading, spacing: .px(8)) {
+            Text("Count").semanticRole(.h1)
+
+            if count == 0 {
+                Text("Zero")
+            } else {
+                Text("Non-zero")
+            }
+
+            Button("Increment") { count += 1 }
         }
-        .padding(.px(24))
+        .padding(.px(8))
     }
 }
 
-let rendered = HTMLRenderer().renderView(HelloPage())
-let document = WebDocument(title: "Hello", renderedView: rendered)
-
-let html = document.htmlString()
-let css = rendered.cssString()
+let node = CounterView().makeViewNode()
 ```
 
-The package is intentionally layered. SwiftWebUI owns the web view DSL, modifiers, semantic UI styling, state placeholders, rendered resources, and ``WebDocument``. It delegates HTML nodes and escaping to SwiftHTML, and CSS properties, values, declarations, and rendering to SwiftCSS.
+The shared module contains no HTML strings, generated JavaScript, filesystem code, or DOM objects. Import `SwiftWebUIStatic` in an application that needs `HTMLRenderer`, `WebDocument`, static resources, or preview export; that module re-exports this DSL. Import `SwiftWebUIRuntime` in a browser Wasm application to use the deliberately limited first mounting and rerender proof of concept.
 
-> Important: SwiftWebUI does not run Swift in the browser. Components such as ``TabBar`` and ``TabView`` can emit a small JavaScript resource for generated client-state changes, but arbitrary Swift closures are not translated to JavaScript.
+Normal composition uses fixed-arity generic carriers rather than `AnyView` or view existentials. Swift 6.3.3 Embedded currently requires this compatibility design for result-builder specialization.
 
 ## Topics
 
@@ -41,45 +42,40 @@ The package is intentionally layered. SwiftWebUI owns the web view DSL, modifier
 - <doc:GettingStarted>
 - <doc:Architecture>
 - ``View``
-- ``HTMLRenderer``
-- ``WebDocument``
-- ``RenderedView``
+- ``ViewBuilder``
+- ``ViewNode``
+- ``ViewRendererProtocol``
 
 ### Building Views
 
 - <doc:Components>
+- <doc:Layout>
 - ``Text``
 - ``Image``
 - ``Link``
 - ``Button``
 - ``Group``
-- ``Div``
-- ``Article``
-- ``Section``
-- ``Footer``
-- ``Template``
-
-### Layout Views
-
-- <doc:Layout>
 - ``VStack``
 - ``HStack``
 - ``Grid``
-- ``Spacer``
-- ``Alignment``
+- ``Article``
+- ``Section``
+- ``Form``
+- ``Label``
+- ``Input``
+- ``TextArea``
+- ``Footer``
+- ``Template``
 
-### Style APIs
+### Composition and Modifiers
 
+- ``ModifiedView``
+- ``OptionalView``
+- ``ConditionalView``
+- ``ArrayView``
+- ``ForEach``
+- ``ViewModifierNode``
 - <doc:Styling>
-- ``Font``
-- ``Background``
-- ``ButtonStyle``
-- ``ButtonStyleToken``
-- ``Edge``
-- ``BorderLineStyle``
-- ``TextTransform``
-- ``TextAlignment``
-- ``TextDecoration``
 
 ### State and Controls
 
@@ -87,35 +83,17 @@ The package is intentionally layered. SwiftWebUI owns the web view DSL, modifier
 - <doc:Navigation>
 - <doc:Tabs>
 - <doc:Forms>
-- <doc:DynamicContent>
 - ``State``
 - ``Binding``
-- ``ClientStateValue``
+- ``ActionIntent``
 - ``Tab``
 - ``TabBar``
 - ``TabView``
-- ``Form``
-- ``Label``
-- ``Input``
-- ``TextArea``
-- ``RemoteList``
-- ``RemoteSource``
 
-### Resources and Extensibility
+### More
 
-- <doc:Images>
 - <doc:AdvancedTopics>
 - <doc:ContributorGuide>
-- ``RenderedResources``
-- ``RenderedContent``
-- ``StyleResource``
-- ``ScriptResource``
-- ``ResourceScope``
-- ``MetaTag``
-- ``PreviewExporter``
-
-### Tutorials
-
 - <doc:BuildingYourFirstPage>
 - <doc:BuildingNavigation>
 - <doc:BuildingAContactForm>

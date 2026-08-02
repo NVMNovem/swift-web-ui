@@ -1,60 +1,27 @@
 # Advanced Topics
 
-Work with rendered resources, document export, and extension boundaries.
+Work with renderer boundaries and future runtime infrastructure.
 
-## Overview
+## Renderer boundary
 
-SwiftWebUI renderers conform to ``ViewRendererProtocol``. ``HTMLRenderer``
-returns compact HTML from `render(_:)` and can also return a ``RenderedView``
-that separates HTML content from resources:
+``ViewRendererProtocol`` has a generic render method and an associated output. Its generic requirement is compatible with Swift 6.3.3 Embedded. A renderer receives a concrete ``View``, obtains ``ViewNode``, and uses the internal Rendering SPI to produce `WebNode`; visitor dispatch does not flow back through the view protocol.
 
-```swift
-let rendered = HTMLRenderer().renderView(MyPage())
+`ViewNodeToWebNodeLowerer` is the only semantic pass. It resolves containers, semantic tags, modifiers, font tokens, controls, canonical attributes/styles, and action intent. The separate static and runtime modules are mechanical `WebNode` consumers.
 
-let html = rendered.htmlString()
-let css = rendered.cssString()
-let js = rendered.jsString()
-```
+## State and actions
 
-This separation lets applications write HTML, CSS, and JavaScript as distinct files:
+``State`` uses reference-backed storage, while ``Binding`` retains closure-backed get/set access and optional stable state identity. ``ActionIntent`` carries a closure or concrete state mutation. The shared core does not decide DOM event registration or serialize arbitrary values.
 
-```swift
-let document = WebDocument(
-    title: "Preview",
-    renderedView: rendered,
-    stylesheetPath: "styles.css",
-    scriptPath: "app.js"
-)
-```
+## Runtime work
+
+`SwiftWebUIRuntime` consumes the same `WebNode` as static rendering, attaches closure actions, and positionally reconciles a runtime-only mounted tree. Its next architectural work is explicit keyed `ForEach` identity and state-slot ownership; moves and hydration remain out of scope. Generated JavaScript in the static module is not the runtime renderer.
 
 ## Topics
 
-### Rendered Output
-
 - ``ViewRendererProtocol``
-- ``HTMLRenderer``
-- ``RenderedView``
-- ``RenderedContent``
-- ``RenderedResources``
-- ``StyleResource``
-- ``ScriptResource``
-- ``ResourceScope``
-
-### Documents
-
-- ``WebDocument``
-- ``MetaTag``
-- ``PreviewExporter``
-
-### Architecture
-
+- ``ViewNode``
+- ``State``
+- ``Binding``
+- ``ActionIntent``
 - <doc:Architecture>
 - <doc:ContributorGuide>
-
-## Discussion
-
-SwiftWebUI is not a site generator. It renders view trees and resources. Routing, file watching, asset pipelines, deployment, and server behavior should live in application code or separate packages.
-
-When extending the framework, keep the architecture boundary clear: view intent belongs in SwiftWebUI, CSS primitives belong in SwiftCSS, and HTML primitives belong in SwiftHTML.
-
-SwiftWebUI may emit small generated JavaScript resources for declared behaviors such as client-state controls and ``RemoteList``. Keep these runtimes generic and data-attribute driven. App-specific JavaScript and broad client frameworks should live outside SwiftWebUI unless repeated runtime patterns justify a new package boundary.

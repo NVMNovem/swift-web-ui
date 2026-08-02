@@ -5,13 +5,9 @@
 //  Created by Damian Van de Kauter on 23/06/2026.
 //
 
-/// A view that renders no HTML.
 public struct EmptyView: View {
-    public typealias Body = AnyView
-
+    public typealias Body = Never
     public init() {}
-
-    public var body: AnyView {
-        AnyView(EmptyView())
-    }
+    public var body: Never { fatalError("EmptyView primitive body unavailable") }
+    public func makeViewNode() -> ViewNode { .empty }
 }
