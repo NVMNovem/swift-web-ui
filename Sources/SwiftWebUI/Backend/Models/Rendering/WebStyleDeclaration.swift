@@ -28,6 +28,6 @@ public struct WebStyleVariant: Equatable, Sendable {
 
     public init(classAttributeName: String, styles: [WebStyleDeclaration]) {
         self.classAttributeName = classAttributeName
-        self.styles = styles
+        self.styles = styles.lastDeclarationPerName()
     }
 }

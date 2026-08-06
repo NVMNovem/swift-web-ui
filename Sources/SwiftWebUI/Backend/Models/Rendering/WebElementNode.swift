@@ -6,6 +6,9 @@
 //
 
 /// A concrete web element whose SwiftWebUI semantics have already been lowered.
+///
+/// `attributes` and `styles` are normalized on construction so that each name appears once,
+/// carrying the last declared value. Every backend therefore renders the same element.
 @_spi(Rendering)
 public struct WebElementNode: @unchecked Sendable {
     public let tagName: String
@@ -24,8 +27,8 @@ public struct WebElementNode: @unchecked Sendable {
         action: ActionIntent? = nil
     ) {
         self.tagName = tagName
-        self.attributes = attributes
-        self.styles = styles
+        self.attributes = attributes.lastDeclarationPerName()
+        self.styles = styles.lastDeclarationPerName()
         self.styleVariants = styleVariants
         self.children = children
         self.action = action

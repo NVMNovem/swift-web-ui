@@ -767,8 +767,9 @@ extension ButtonStyleToken {
     )
     let css = rendered.cssString()
     
-    #expect(css.contains("display: grid"))
+    // The modifier redeclares the grid's own `display`, so only the override is emitted.
     #expect(css.contains("display: inline-grid"))
+    #expect(!css.contains("display: grid"))
     #expect(css.contains("margin-left: 12px"))
     #expect(css.contains("margin-right: 12px"))
     #expect(css.contains("gap: 16px"))
