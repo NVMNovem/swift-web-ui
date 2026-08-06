@@ -132,16 +132,37 @@ import Testing
         .attribute("data-kind", "sample")
     ))
 
-    #expect(node?.styles.suffix(2) == [
-        .init(name: "padding", value: "4px"),
-        .init(name: "padding", value: "8px"),
-    ])
+    #expect(node?.styles.suffix(1) == [.init(name: "padding", value: "8px")])
     #expect(node?.attributes == [
         .init(name: "data-kind", value: "sample"),
         .init(name: "class", value: "panel"),
         .init(name: "id", value: "main"),
     ])
     #expect(node?.children.count == 2)
+}
+
+@Test func sharedLowererCollapsesRedeclaredPropertiesToTheLastDeclaration() {
+    let button = requireElement(lower(
+        Button("Go") {}
+            .buttonStyle(.primary)
+            .background(Color("var(--accent)"))
+    ))
+    #expect(button?.styles.filter { $0.name == "background-color" } == [
+        .init(name: "background-color", value: "var(--accent)")
+    ])
+    // Declarations the override does not touch keep their token order.
+    #expect(button?.styles.first == .init(name: "display", value: "inline-flex"))
+
+    let text = requireElement(lower(Text("Bold").font(.callout).bold()))
+    #expect(text?.styles == [
+        .init(name: "font-size", value: "16px"),
+        .init(name: "font-weight", value: "bold"),
+    ])
+
+    let overridden = requireElement(lower(
+        Text("Attr").attribute("data-kind", "first").attribute("data-kind", "last")
+    ))
+    #expect(overridden?.attributes == [.init(name: "data-kind", value: "last")])
 }
 
 @Test func sharedLowererPreservesButtonClosureAction() {

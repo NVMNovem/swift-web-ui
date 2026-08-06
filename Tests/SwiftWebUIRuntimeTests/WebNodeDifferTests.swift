@@ -45,6 +45,35 @@ import Testing
         #expect(differ.diff(old: element(styles: old), new: element(styles: new)) == expected)
     }
 
+    /// `.buttonStyle(.primary).background(...)` declares `background-color` twice; the element
+    /// normalizes to the last declaration, so a rerender must not revive the first one.
+    @Test func redeclaredStylesAndAttributesProduceNoPatches() {
+        let tree = element(
+            attributes: [.init(name: "role", value: "link"), .init(name: "role", value: "button")],
+            styles: [
+                .init(name: "background-color", value: "#000"),
+                .init(name: "font-weight", value: "600"),
+                .init(name: "background-color", value: "var(--accent)"),
+            ]
+        )
+        #expect(differ.diff(old: tree, new: tree) == [])
+    }
+
+    /// Only the surviving declaration participates in the diff, from either side.
+    @Test func redeclaredStylePatchesOnlyTheSurvivingDeclaration() {
+        let old = element(styles: [
+            .init(name: "background-color", value: "#000"),
+            .init(name: "background-color", value: "var(--accent)"),
+        ])
+        #expect(differ.diff(
+            old: old,
+            new: element(styles: [.init(name: "background-color", value: "#fff")])
+        ) == [.setStyle(path: NodePath(), name: "background-color", value: "#fff")])
+        #expect(differ.diff(old: old, new: element()) == [
+            .removeStyle(path: NodePath(), name: "background-color")
+        ])
+    }
+
     @Test func tagChangeReplacesNode() {
         let replacement = element("button")
         #expect(differ.diff(old: element("div"), new: replacement) == [
