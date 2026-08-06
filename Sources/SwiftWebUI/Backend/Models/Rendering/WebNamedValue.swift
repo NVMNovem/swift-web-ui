@@ -26,6 +26,13 @@ extension Array where Element: WebNamedValue {
         var lastIndexByName: [String: Int] = [:]
         for (index, element) in enumerated() { lastIndexByName[element.name] = index }
         guard lastIndexByName.count < count else { return self }
-        return enumerated().filter { lastIndexByName[$0.element.name] == $0.offset }.map(\.element)
+        // A key-path projection is unavailable in Embedded Swift, so the surviving
+        // elements are collected with an explicit loop instead.
+        var result: [Element] = []
+        result.reserveCapacity(lastIndexByName.count)
+        for (index, element) in enumerated() where lastIndexByName[element.name] == index {
+            result.append(element)
+        }
+        return result
     }
 }
