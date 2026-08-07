@@ -11,5 +11,5 @@ public struct Image: View {
     public let alt: String
     public init(_ source: String, alt: String = "") { self.source = source; self.alt = alt }
     public var body: Never { fatalError("Image primitive body unavailable") }
-    public func makeViewNode() -> ViewNode { .image(.init(source: source, alternativeText: alt)) }
+    public func makeViewNode(in context: ViewContext) -> ViewNode { .image(.init(source: source, alternativeText: alt)) }
 }

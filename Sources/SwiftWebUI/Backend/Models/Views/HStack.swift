@@ -24,7 +24,7 @@ public struct HStack<Content: View>: View {
     }
 
     public var body: Never { fatalError("HStack primitive body unavailable") }
-    public func makeViewNode() -> ViewNode {
-        .container(.init(kind: .horizontal(alignment: alignment, spacing: spacing), children: content.makeViewNode().groupChildren))
+    public func makeViewNode(in context: ViewContext) -> ViewNode {
+        .container(.init(kind: .horizontal(alignment: alignment, spacing: spacing), children: content.makeViewNode(in: context.content).groupChildren))
     }
 }

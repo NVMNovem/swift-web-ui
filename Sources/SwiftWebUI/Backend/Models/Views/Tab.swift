@@ -20,28 +20,28 @@ public struct Tab<Value: Hashable>: View {
     }
 
     public var body: Never { fatalError("Tab primitive body unavailable") }
-    public func makeViewNode() -> ViewNode { .button(.init(label: label, action: nil)) }
+    public func makeViewNode(in context: ViewContext) -> ViewNode { .button(.init(label: label, action: nil)) }
 }
 
 public extension Tab where Value: ClientStateValue {
-    init(_ title: String, value: Value) { self.init(value: value, valueNode: value.clientValue, label: Text(title).makeViewNode(), content: .empty) }
-    init<Content: View>(_ title: String, value: Value, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: value.clientValue, label: Text(title).makeViewNode(), content: content().makeViewNode()) }
-    init<LabelContent: View, Content: View>(value: Value, @ViewBuilder label: () -> LabelContent, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: value.clientValue, label: label().makeViewNode(), content: content().makeViewNode()) }
-    init<LabelContent: View>(value: Value, @ViewBuilder label: () -> LabelContent) { self.init(value: value, valueNode: value.clientValue, label: label().makeViewNode(), content: .empty) }
+    init(_ title: String, value: Value) { self.init(value: value, valueNode: value.clientValue, label: Text(title).makeViewNode(in: .detached), content: .empty) }
+    init<Content: View>(_ title: String, value: Value, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: value.clientValue, label: Text(title).makeViewNode(in: .detached), content: content().makeViewNode(in: .detached)) }
+    init<LabelContent: View, Content: View>(value: Value, @ViewBuilder label: () -> LabelContent, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: value.clientValue, label: label().makeViewNode(in: .detached), content: content().makeViewNode(in: .detached)) }
+    init<LabelContent: View>(value: Value, @ViewBuilder label: () -> LabelContent) { self.init(value: value, valueNode: value.clientValue, label: label().makeViewNode(in: .detached), content: .empty) }
 }
 
 public extension Tab where Value: RawRepresentable, Value.RawValue == String {
-    init(_ title: String, value: Value) { self.init(value: value, valueNode: .string(value.rawValue), label: Text(title).makeViewNode(), content: .empty) }
-    init<Content: View>(_ title: String, value: Value, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: .string(value.rawValue), label: Text(title).makeViewNode(), content: content().makeViewNode()) }
-    init<LabelContent: View, Content: View>(value: Value, @ViewBuilder label: () -> LabelContent, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: .string(value.rawValue), label: label().makeViewNode(), content: content().makeViewNode()) }
-    init<LabelContent: View>(value: Value, @ViewBuilder label: () -> LabelContent) { self.init(value: value, valueNode: .string(value.rawValue), label: label().makeViewNode(), content: .empty) }
+    init(_ title: String, value: Value) { self.init(value: value, valueNode: .string(value.rawValue), label: Text(title).makeViewNode(in: .detached), content: .empty) }
+    init<Content: View>(_ title: String, value: Value, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: .string(value.rawValue), label: Text(title).makeViewNode(in: .detached), content: content().makeViewNode(in: .detached)) }
+    init<LabelContent: View, Content: View>(value: Value, @ViewBuilder label: () -> LabelContent, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: .string(value.rawValue), label: label().makeViewNode(in: .detached), content: content().makeViewNode(in: .detached)) }
+    init<LabelContent: View>(value: Value, @ViewBuilder label: () -> LabelContent) { self.init(value: value, valueNode: .string(value.rawValue), label: label().makeViewNode(in: .detached), content: .empty) }
 }
 
 public extension Tab where Value: RawRepresentable, Value.RawValue == Int {
-    init(_ title: String, value: Value) { self.init(value: value, valueNode: .integer(value.rawValue), label: Text(title).makeViewNode(), content: .empty) }
-    init<Content: View>(_ title: String, value: Value, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: .integer(value.rawValue), label: Text(title).makeViewNode(), content: content().makeViewNode()) }
-    init<LabelContent: View, Content: View>(value: Value, @ViewBuilder label: () -> LabelContent, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: .integer(value.rawValue), label: label().makeViewNode(), content: content().makeViewNode()) }
-    init<LabelContent: View>(value: Value, @ViewBuilder label: () -> LabelContent) { self.init(value: value, valueNode: .integer(value.rawValue), label: label().makeViewNode(), content: .empty) }
+    init(_ title: String, value: Value) { self.init(value: value, valueNode: .integer(value.rawValue), label: Text(title).makeViewNode(in: .detached), content: .empty) }
+    init<Content: View>(_ title: String, value: Value, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: .integer(value.rawValue), label: Text(title).makeViewNode(in: .detached), content: content().makeViewNode(in: .detached)) }
+    init<LabelContent: View, Content: View>(value: Value, @ViewBuilder label: () -> LabelContent, @ViewBuilder content: () -> Content) { self.init(value: value, valueNode: .integer(value.rawValue), label: label().makeViewNode(in: .detached), content: content().makeViewNode(in: .detached)) }
+    init<LabelContent: View>(value: Value, @ViewBuilder label: () -> LabelContent) { self.init(value: value, valueNode: .integer(value.rawValue), label: label().makeViewNode(in: .detached), content: .empty) }
 }
 
 extension Tab {

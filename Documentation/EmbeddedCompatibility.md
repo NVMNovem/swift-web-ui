@@ -80,9 +80,11 @@ Optional, if/else, homogeneous array, and `ForEach` carriers compile in the prod
 
 ## State and future runtime work
 
-`State` uses reference-backed storage. `Binding` keeps closure-backed get/set operations and can carry a stable `StateIdentity`. Actions remain concrete closure or state-mutation intent. The core does not serialize arbitrary values with `String(describing:)` and does not dynamically cast state values.
+`State` storage is owned by the mounted root's `StateSlotStore` and keyed by a structural `ViewIdentityPath` plus the declaration's source location, which `State.init` captures through `#fileID`/`#line`/`#column` default arguments. `Binding` keeps closure-backed get/set operations and can carry a stable `StateIdentity`. Actions remain concrete closure or state-mutation intent. The core does not serialize arbitrary values with `String(describing:)` and does not dynamically cast state values.
 
-The runtime mounts the shared presentation tree into runtime-only mounted nodes, retains closure actions, invalidates on state mutation, and positionally reconciles changed `WebNode` values. The core remains free of DOM handles and reconciliation state. The next runtime identity step is explicit keyed `ForEach` identity and state-slot ownership; content hashes and child position cannot provide that semantic identity.
+Slots hold their boxes as retained opaque pointers recovered with `Unmanaged.fromOpaque`, which is a static reinterpretation rather than a runtime cast, so no dynamic cast enters the core. A slot key implies the declaration and a declaration implies the value type; stored size and alignment guard the one case that could break that invariant. Keyed `ForEach` identity reduces to a concrete `ViewIdentityToken` because the Embedded core cannot store `AnyHashable`.
+
+The runtime mounts the shared presentation tree into runtime-only mounted nodes, retains closure actions, invalidates on state mutation, and positionally reconciles changed `WebNode` values. The core remains free of DOM handles and reconciliation state. Keyed `ForEach` identity and state-slot ownership are now in place; the next runtime identity step is carrying that same element identity into the DOM differ so reordering preserves browser node identity. Content hashes and child position cannot provide that semantic identity.
 
 ## Validation
 

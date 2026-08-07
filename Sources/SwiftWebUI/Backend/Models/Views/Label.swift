@@ -21,7 +21,7 @@ public struct Label<Content: View>: View {
     }
 
     public var body: Never { fatalError("Label primitive body unavailable") }
-    public func makeViewNode() -> ViewNode {
-        .container(.init(kind: .label(text: textLabel), children: content.makeViewNode().groupChildren))
+    public func makeViewNode(in context: ViewContext) -> ViewNode {
+        .container(.init(kind: .label(text: textLabel), children: content.makeViewNode(in: context.content).groupChildren))
     }
 }

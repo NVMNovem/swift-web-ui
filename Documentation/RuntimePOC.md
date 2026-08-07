@@ -42,7 +42,8 @@ The POC uses JavaScriptKit `JSObject` and `JSClosure` directly. JavaScriptKit 0.
 
 - all tags, attributes, styles, fragments, and child order represented by shared `WebNode`;
 - stack/grid/semantic-container and modifier meanings supplied by the shared lowerer;
-- `State`
+- `State`, including in subviews at any depth, backed by mounted state slots
+- keyed `ForEach` identity through `id:` or `Identifiable`
 - Button closure actions
 - one mounted root
 - positional reconciliation for text, attributes, styles, actions, children, and ordinary node replacement
@@ -86,11 +87,11 @@ justify another traversal/rendering path in the runtime.
 
 ## Intentionally unsupported
 
-- keyed semantic identity or child moves
+- child moves in the DOM differ
 - middle insertion with preserved sibling identity
-- state slots
+- coalescing several state writes into one rebuild
+- fine-grained state dependency tracking
 - multiple mounted roots
-- `ForEach`
 - `RemoteList`
 - routing
 - hydration
@@ -98,4 +99,4 @@ justify another traversal/rendering path in the runtime.
 - CSSOM or stylesheet generation from typed SwiftCSS trees
 - async API calls
 
-The next reconciliation step is explicit `ForEach` element IDs flowing into a stable `WebIdentity`, followed by a keyed mounted-child map and insert/remove/move patches that preserve state across reordering. Position, tag names, text, and rendered/content hashes are not valid substitutes for that user or domain identity. See [Runtime DOM reconciliation](Reconciliation.md).
+`ForEach` element IDs now key state slots, so row state follows its element. The next reconciliation step is flowing those IDs into a stable `WebIdentity`, followed by a keyed mounted-child map and insert/remove/move patches that preserve DOM identity across reordering. Position, tag names, text, and rendered/content hashes are not valid substitutes for that user or domain identity. See [Runtime DOM reconciliation](Reconciliation.md).

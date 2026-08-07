@@ -36,7 +36,7 @@ HTML/CSS/JS output      click -> State -> reconcile
 
 `SwiftWebUIStatic` depends on the core, SwiftHTML, and SwiftCSS. It may use Foundation where document export needs URLs or filesystem access. It re-exports `SwiftWebUI` so static applications normally need one import.
 
-`SwiftWebUIRuntime` is the browser runtime slice. It depends on the core and JavaScriptKit, installs application-declared external or inline stylesheets into the browser document head, initially mounts `WebNode` into a runtime-only `MountedNode` tree, diffs later `WebNode` values, and mechanically applies `DOMPatch` mutations while retaining browser node identity. It supports one mounted root and positional child reconciliation; it deliberately does not yet define keyed identity, state slots, hydration, routing, or async work.
+`SwiftWebUIRuntime` is the browser runtime slice. It depends on the core and JavaScriptKit, installs application-declared external or inline stylesheets into the browser document head, initially mounts `WebNode` into a runtime-only `MountedNode` tree, diffs later `WebNode` values, and mechanically applies `DOMPatch` mutations while retaining browser node identity. It supports one mounted root and positional child reconciliation, and owns the `StateSlotStore` that keeps `@State` alive across rebuilds for subviews at any depth. It deliberately does not yet define keyed DOM identity, hydration, routing, or async work.
 
 ## Source organization
 

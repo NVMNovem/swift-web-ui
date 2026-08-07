@@ -12,7 +12,7 @@ public struct TabView<Value: Hashable>: View {
     public let tabs: [Tab<Value>]
     private init(selection: ClientValue, state: ClientStateBinding?, tabs: [Tab<Value>]) { self.selection = selection; self.state = state; self.tabs = tabs }
     public var body: Never { fatalError("TabView primitive body unavailable") }
-    public func makeViewNode() -> ViewNode { .tabControl(.init(kind: .view, selection: selection, state: state, tabs: tabs.map(\.node))) }
+    public func makeViewNode(in context: ViewContext) -> ViewNode { .tabControl(.init(kind: .view, selection: selection, state: state, tabs: tabs.map(\.node))) }
 }
 
 public extension TabView where Value: ClientStateValue {

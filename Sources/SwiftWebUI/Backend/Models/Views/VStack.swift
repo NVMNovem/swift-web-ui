@@ -24,7 +24,7 @@ public struct VStack<Content: View>: View {
     }
 
     public var body: Never { fatalError("VStack primitive body unavailable") }
-    public func makeViewNode() -> ViewNode {
-        .container(.init(kind: .vertical(alignment: alignment, spacing: spacing), children: content.makeViewNode().groupChildren))
+    public func makeViewNode(in context: ViewContext) -> ViewNode {
+        .container(.init(kind: .vertical(alignment: alignment, spacing: spacing), children: content.makeViewNode(in: context.content).groupChildren))
     }
 }

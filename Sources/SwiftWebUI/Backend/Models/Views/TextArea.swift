@@ -9,5 +9,5 @@ public struct TextArea: View {
     public typealias Body = Never
     public init() {}
     public var body: Never { fatalError("TextArea primitive body unavailable") }
-    public func makeViewNode() -> ViewNode { .textArea(.init()) }
+    public func makeViewNode(in context: ViewContext) -> ViewNode { .textArea(.init()) }
 }

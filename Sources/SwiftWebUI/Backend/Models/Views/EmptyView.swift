@@ -9,5 +9,5 @@ public struct EmptyView: View {
     public typealias Body = Never
     public init() {}
     public var body: Never { fatalError("EmptyView primitive body unavailable") }
-    public func makeViewNode() -> ViewNode { .empty }
+    public func makeViewNode(in context: ViewContext) -> ViewNode { .empty }
 }

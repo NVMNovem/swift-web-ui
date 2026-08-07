@@ -61,7 +61,7 @@ public struct RemoteList: View {
         RemoteList(
             source: source,
             template: template,
-            loadingContent: content().makeViewNode(),
+            loadingContent: content().makeViewNode(in: .detached),
             emptyContent: emptyContent,
             errorContent: errorContent
         )
@@ -74,7 +74,7 @@ public struct RemoteList: View {
             source: source,
             template: template,
             loadingContent: loadingContent,
-            emptyContent: content().makeViewNode(),
+            emptyContent: content().makeViewNode(in: .detached),
             errorContent: errorContent
         )
     }
@@ -87,7 +87,7 @@ public struct RemoteList: View {
             template: template,
             loadingContent: loadingContent,
             emptyContent: emptyContent,
-            errorContent: content().makeViewNode()
+            errorContent: content().makeViewNode(in: .detached)
         )
     }
 
@@ -95,7 +95,7 @@ public struct RemoteList: View {
         fatalError("RemoteList primitive body unavailable")
     }
 
-    public func makeViewNode() -> ViewNode {
+    public func makeViewNode(in context: ViewContext) -> ViewNode {
         let loading = stateContainer(
             modifiers: [.attribute(name: "data-swiftwebui-remote-loading", value: "true")],
             content: loadingContent

@@ -12,7 +12,7 @@ extension Never: View {
         fatalError("Never has no body")
     }
 
-    public func makeViewNode() -> ViewNode {
+    public func makeViewNode(in context: ViewContext) -> ViewNode {
         fatalError("Never cannot be lowered")
     }
 }

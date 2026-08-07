@@ -20,5 +20,5 @@ public struct Text: View {
     }
 
     public var body: Never { fatalError("Text primitive body unavailable") }
-    public func makeViewNode() -> ViewNode { .text(.init(content: content, semanticRole: semanticRole)) }
+    public func makeViewNode(in context: ViewContext) -> ViewNode { .text(.init(content: content, semanticRole: semanticRole)) }
 }

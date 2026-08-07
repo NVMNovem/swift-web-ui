@@ -9,5 +9,5 @@ public struct Spacer: View {
     public typealias Body = Never
     public init() {}
     public var body: Never { fatalError("Spacer primitive body unavailable") }
-    public func makeViewNode() -> ViewNode { .spacer }
+    public func makeViewNode(in context: ViewContext) -> ViewNode { .spacer }
 }

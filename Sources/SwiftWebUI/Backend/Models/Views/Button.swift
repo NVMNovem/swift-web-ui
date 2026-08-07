@@ -16,7 +16,7 @@ public struct Button: View {
     }
 
     public var body: Never { fatalError("Button primitive body unavailable") }
-    public func makeViewNode() -> ViewNode {
-        .button(.init(label: Text(label).makeViewNode(), action: action.map(ActionIntent.closure)))
+    public func makeViewNode(in context: ViewContext) -> ViewNode {
+        .button(.init(label: Text(label).makeViewNode(in: .detached), action: action.map(ActionIntent.closure)))
     }
 }
