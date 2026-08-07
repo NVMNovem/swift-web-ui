@@ -10,5 +10,5 @@ public struct Article<Content: View>: View {
     public let content: Content
     public init(@ViewBuilder content: () -> Content) { self.content = content() }
     public var body: Never { fatalError("Article primitive body unavailable") }
-    public func makeViewNode() -> ViewNode { .container(.init(kind: .article, children: content.makeViewNode().groupChildren)) }
+    public func makeViewNode(in context: ViewContext) -> ViewNode { .container(.init(kind: .article, children: content.makeViewNode(in: context.content).groupChildren)) }
 }

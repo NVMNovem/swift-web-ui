@@ -19,6 +19,16 @@ final class MountedRoot<Backend: DOMBackend> {
     private var previousWebNode: WebNode?
     private var mountedNode: Node?
 
+    /// Owns `@State` storage for everything mounted under this root.
+    let stateSlots = StateSlotStore()
+    private var isRebuilding = false
+
+    deinit {
+        // Slots hold their boxes with a manual retain, so a discarded root must
+        // release them even if `stop()` was never called.
+        stateSlots.releaseAll()
+    }
+
     init(
         container: Backend.Node,
         backend: Backend,
@@ -34,6 +44,7 @@ final class MountedRoot<Backend: DOMBackend> {
     }
 
     func start() {
+        StateSlotStorage.install(stateSlots)
         ViewInvalidation.install { [self] in
             invalidate()
         }
@@ -42,14 +53,31 @@ final class MountedRoot<Backend: DOMBackend> {
 
     func stop() {
         ViewInvalidation.clear()
+        StateSlotStorage.clear()
+        stateSlots.releaseAll()
+    }
+
+    /// Rebuilds the presentation tree, reclaiming state for views that disappeared.
+    private func buildTrackingState() -> WebNode {
+        isRebuilding = true
+        stateSlots.beginBuild()
+        defer {
+            stateSlots.endBuild()
+            isRebuilding = false
+        }
+        return build()
     }
 
     func invalidate() {
+        // A state write while `body` is running would restart the liveness sweep
+        // mid-traversal and release slots the traversal has not reached yet. The
+        // resulting tree is built from the already-updated state either way.
+        guard !isRebuilding else { return }
         guard var mountedNode, previousWebNode != nil else {
             initialMount()
             return
         }
-        let newWebNode = build()
+        let newWebNode = buildTrackingState()
         let patches = differ.diff(old: previousWebNode!, new: newWebNode)
         let applier = DOMPatchApplier(
             backend: backend,
@@ -76,7 +104,7 @@ final class MountedRoot<Backend: DOMBackend> {
                 .recursivelyReleaseActions(in: mountedNode)
         }
         backend.removeAllChildren(from: container)
-        let webNode = build()
+        let webNode = buildTrackingState()
         let mountedNode = DOMMounter(backend: backend).mount(webNode)
         appendToContainer(mountedNode)
         previousWebNode = webNode

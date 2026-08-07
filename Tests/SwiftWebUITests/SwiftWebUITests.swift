@@ -2188,7 +2188,7 @@ extension ButtonStyleToken {
         .joined(separator: "\n")
 
     #expect(coreSource.contains("public struct TabBar"))
-    #expect(coreSource.contains("makeViewNode() -> ViewNode { .tabControl"))
+    #expect(coreSource.contains("makeViewNode(in context: ViewContext) -> ViewNode { .tabControl"))
     #expect(coreSource.contains("case .tabControl(let control)"))
     #expect(!staticSource.contains("case .tabControl(let control)"))
     #expect(staticSource.contains("WebNodeStaticLowerer"))

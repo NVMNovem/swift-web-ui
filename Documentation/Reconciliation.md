@@ -63,12 +63,16 @@ never use that fallback.
 
 ## Current limits
 
-This first slice intentionally has no keyed `ForEach`, moves, middle insertion with
-preserved sibling identity, list reordering, transitions, animations, hydration,
-multiple mounted roots, component lifecycle callbacks, or fine-grained state
-dependency tracking. Position must not be treated as permanent semantic identity,
-and identity must never be inferred from text, tags, rendered hashes, or content
-hashes.
+This slice intentionally has no DOM-level moves, middle insertion with preserved
+sibling identity, list reordering, transitions, animations, hydration, multiple mounted
+roots, component lifecycle callbacks, or fine-grained state dependency tracking. Every
+state write rebuilds and re-diffs the whole root; writes are not coalesced. Position
+must not be treated as permanent semantic identity, and identity must never be inferred
+from text, tags, rendered hashes, or content hashes.
+
+View identity for *state* is already keyed, and is a separate concern from this
+positional DOM differ: `ViewIdentityPath` is built during lowering and decides which
+`@State` box a rebuilt view resolves to. See <doc:StateAndBindings>.
 
 The next reconciliation step is explicitly keyed repeated content:
 

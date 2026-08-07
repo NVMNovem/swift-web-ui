@@ -17,7 +17,7 @@ public struct ModifiedView<Content: View>: View {
 
     public var body: Never { fatalError("ModifiedView primitive body unavailable") }
 
-    public func makeViewNode() -> ViewNode {
-        .modified(ModifiedNode(content: content.makeViewNode(), modifiers: modifiers))
+    public func makeViewNode(in context: ViewContext) -> ViewNode {
+        .modified(ModifiedNode(content: content.makeViewNode(in: context.content), modifiers: modifiers))
     }
 }

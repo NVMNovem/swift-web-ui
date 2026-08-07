@@ -68,6 +68,6 @@ SwiftWebUI views are lowered into a concrete internal view tree. A single semant
 
 `SwiftWebUIStatic` lowers the shared semantic tree into SwiftHTML and SwiftCSS ASTs before generating static HTML, CSS, and JavaScript resources.
 
-`SwiftWebUIRuntime` remains experimental and currently uses positional reconciliation; keyed list moves are not supported yet.
+`SwiftWebUIRuntime` remains experimental. `@State` works in subviews at any depth: the mounted root owns the storage and keys it on each view's structural identity, so a rebuilt view resolves to the same state. Give `ForEach` an `id:` (or `Identifiable` elements) when rows own state, otherwise rows are keyed by position. DOM reconciliation is still positional, so keyed list moves are not supported yet.
 
 For detailed boundaries, compatibility constraints, reconciliation design, and runtime status, see [Architecture](ARCHITECTURE.md), [Embedded compatibility](Documentation/EmbeddedCompatibility.md), [Reconciliation](Documentation/Reconciliation.md), and [Runtime renderer](Documentation/RuntimePOC.md).

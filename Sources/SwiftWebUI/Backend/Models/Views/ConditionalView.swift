@@ -15,10 +15,10 @@ public struct ConditionalView<TrueContent: View, FalseContent: View>: View {
     public let storage: ConditionalStorage<TrueContent, FalseContent>
     public init(storage: ConditionalStorage<TrueContent, FalseContent>) { self.storage = storage }
     public var body: Never { fatalError("ConditionalView primitive body unavailable") }
-    public func makeViewNode() -> ViewNode {
+    public func makeViewNode(in context: ViewContext) -> ViewNode {
         switch storage {
-        case .trueContent(let content): content.makeViewNode()
-        case .falseContent(let content): content.makeViewNode()
+        case .trueContent(let content): content.makeViewNode(in: context.appending(.branch(true)))
+        case .falseContent(let content): content.makeViewNode(in: context.appending(.branch(false)))
         }
     }
 }

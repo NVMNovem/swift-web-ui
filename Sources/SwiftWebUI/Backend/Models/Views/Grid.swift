@@ -18,7 +18,7 @@ public struct Grid<Content: View>: View {
     }
 
     public var body: Never { fatalError("Grid primitive body unavailable") }
-    public func makeViewNode() -> ViewNode {
-        .container(.init(kind: .grid(spacing: spacing), children: content.makeViewNode().groupChildren))
+    public func makeViewNode(in context: ViewContext) -> ViewNode {
+        .container(.init(kind: .grid(spacing: spacing), children: content.makeViewNode(in: context.content).groupChildren))
     }
 }

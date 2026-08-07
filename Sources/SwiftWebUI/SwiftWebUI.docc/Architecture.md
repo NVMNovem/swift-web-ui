@@ -13,9 +13,11 @@ SwiftWebUI DSL
         -> SwiftWebUIRuntime -> browser DOM proof of concept
 ```
 
-``View`` keeps an associated ``View/Body`` and lowers through `makeViewNode()`. Primitive views produce ``ViewNode`` directly; composed views lower their concrete body. The internal Rendering SPI then lowers view semantics exactly once into `WebNode`. Renderers consume only concrete tags, attributes, styles, children, and action intent and do not rediscover view types.
+``View`` keeps an associated ``View/Body`` and lowers through ``View/makeViewNode(in:)``. Primitive views produce ``ViewNode`` directly; composed views lower their concrete body. The internal Rendering SPI then lowers view semantics exactly once into `WebNode`. Renderers consume only concrete tags, attributes, styles, children, and action intent and do not rediscover view types.
 
 ``ViewBuilder`` uses concrete `TupleView2` through `TupleView10`, plus ``OptionalView``, ``ConditionalView``, ``ArrayView``, and ``ForEach``. These carriers preserve heterogeneous static types without `AnyView`, existential storage, parameter packs, or dynamic casts.
+
+Lowering threads a ``ViewContext`` carrying the view's structural position. Each carrier appends the component that describes how it descends -- a tuple slot, a conditional branch, an optional's unwrapped case, or a keyed collection element -- which yields the ``ViewIdentityPath`` used to key ``State`` storage. The context is traversal-only: it never reaches `WebNode` or the renderers.
 
 ## Core ownership
 

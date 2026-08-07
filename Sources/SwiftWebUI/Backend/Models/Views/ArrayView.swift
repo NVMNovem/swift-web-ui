@@ -10,5 +10,12 @@ public struct ArrayView<Content: View>: View {
     public let content: [Content]
     public init(_ content: [Content]) { self.content = content }
     public var body: Never { fatalError("ArrayView primitive body unavailable") }
-    public func makeViewNode() -> ViewNode { .group(content.map { $0.makeViewNode() }) }
+    public func makeViewNode(in context: ViewContext) -> ViewNode {
+        var nodes: [ViewNode] = []
+        nodes.reserveCapacity(content.count)
+        for (index, element) in content.enumerated() {
+            nodes.append(element.makeViewNode(in: context.child(index)))
+        }
+        return .group(nodes)
+    }
 }

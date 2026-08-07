@@ -10,5 +10,7 @@ public struct OptionalView<Content: View>: View {
     public let content: Content?
     public init(_ content: Content?) { self.content = content }
     public var body: Never { fatalError("OptionalView primitive body unavailable") }
-    public func makeViewNode() -> ViewNode { content?.makeViewNode() ?? .empty }
+    public func makeViewNode(in context: ViewContext) -> ViewNode {
+        content?.makeViewNode(in: context.appending(.unwrapped)) ?? .empty
+    }
 }

@@ -9,5 +9,5 @@ public struct Input: View {
     public typealias Body = Never
     public init() {}
     public var body: Never { fatalError("Input primitive body unavailable") }
-    public func makeViewNode() -> ViewNode { .input(.init()) }
+    public func makeViewNode(in context: ViewContext) -> ViewNode { .input(.init()) }
 }

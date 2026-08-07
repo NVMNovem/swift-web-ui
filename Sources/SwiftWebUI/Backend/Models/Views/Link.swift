@@ -13,18 +13,18 @@ public struct Link: View {
 
     public init(_ label: String, destination: String) {
         self.destination = destination
-        self.label = Text(label).makeViewNode()
+        self.label = Text(label).makeViewNode(in: .detached)
         self.usesPlainTextLabel = true
     }
 
     public init<Content: View>(destination: String, @ViewBuilder content: () -> Content) {
         self.destination = destination
-        self.label = content().makeViewNode()
+        self.label = content().makeViewNode(in: .detached)
         self.usesPlainTextLabel = false
     }
 
     public var body: Never { fatalError("Link primitive body unavailable") }
-    public func makeViewNode() -> ViewNode {
+    public func makeViewNode(in context: ViewContext) -> ViewNode {
         .link(.init(destination: destination, label: label, usesPlainTextLabel: usesPlainTextLabel))
     }
 }

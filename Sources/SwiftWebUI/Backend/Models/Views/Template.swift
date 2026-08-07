@@ -11,5 +11,5 @@ public struct Template<Content: View>: View {
     public let content: Content
     public init(_ name: String, @ViewBuilder content: () -> Content) { self.name = name; self.content = content() }
     public var body: Never { fatalError("Template primitive body unavailable") }
-    public func makeViewNode() -> ViewNode { .container(.init(kind: .template(name: name), children: content.makeViewNode().groupChildren)) }
+    public func makeViewNode(in context: ViewContext) -> ViewNode { .container(.init(kind: .template(name: name), children: content.makeViewNode(in: context.content).groupChildren)) }
 }
