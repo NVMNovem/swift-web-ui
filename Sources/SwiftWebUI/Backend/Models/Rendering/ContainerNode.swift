@@ -29,4 +29,6 @@ public enum ContainerKind {
     case label(text: String?)
     case footer
     case template(name: String)
+    /// An explicitly named element, for markup SwiftWebUI attaches no semantics to.
+    case element(tag: String)
 }

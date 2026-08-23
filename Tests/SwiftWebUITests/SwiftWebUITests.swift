@@ -2262,3 +2262,126 @@ extension ButtonStyleToken {
     #expect(js.contains("aria-selected"))
     #expect(js.contains("swiftwebui-tab-selected"))
 }
+
+@Test func elementLowersToItsOwnTagWithCasingPreserved() {
+    let rendered = HTMLRenderer().renderView(
+        Element("svg") {
+            Element("circle")
+                .class("arc")
+                .attribute("r", "32")
+        }
+        .attribute("viewBox", "0 0 80 80")
+        .attribute("aria-hidden", "true")
+    )
+    let html = rendered.htmlString()
+
+    // `viewBox` is one of the foreign-element attributes whose casing is load
+    // bearing, and `circle` is not void, so it needs its closing tag.
+    #expect(html.contains("<svg viewBox=\"0 0 80 80\" aria-hidden=\"true\">"))
+    #expect(html.contains("<circle r=\"32\" class=\"arc\"></circle>"))
+    #expect(html.contains("</svg>"))
+}
+
+@Test func webDocumentInlinesRenderedCSSInsteadOfLinkingIt() {
+    let document = WebDocument(
+        renderedView: HTMLRenderer().renderView(
+            Text("Splash").foregroundStyle(Color("var(--primary)"))
+        ),
+        stylesheetPath: "styles.css",
+        renderedStyleDelivery: .inline
+    )
+    let html = document.htmlString(prettyPrinted: false)
+
+    #expect(html.contains("<style>"))
+    #expect(html.contains("color: var(--primary)"))
+    #expect(!html.contains("<link rel=\"stylesheet\""))
+}
+
+@Test func webDocumentForcesStylesheetLinkWhenAskedTo() {
+    let document = WebDocument(
+        renderedView: HTMLRenderer().renderView(Text("Plain")),
+        stylesheetPath: "/styles.css",
+        stylesheetLinkPolicy: .always
+    )
+
+    // No CSS of its own, so `.automatic` would drop the link — but the palette
+    // this document needs is a hand-written file, not the view's output.
+    #expect(document.htmlString(prettyPrinted: false)
+        .contains("<link rel=\"stylesheet\" href=\"/styles.css\">"))
+}
+
+@Test func webDocumentWritesInlineScriptsUnescaped() {
+    let document = WebDocument(
+        renderedView: HTMLRenderer().renderView(Text("Boot")),
+        stylesheetPath: nil,
+        bodyScripts: [
+            .importMap(#"{ "imports": { "shim": "/vendor/shim.js" } }"#),
+            .module("if (a && b < c) await import(\"/index.js\");"),
+        ]
+    )
+    let html = document.htmlString(prettyPrinted: false)
+
+    #expect(html.contains("<script type=\"importmap\">"))
+    // Escaping here would break the script rather than merely uglify it.
+    #expect(html.contains("a && b < c"))
+    #expect(!html.contains("&amp;&amp;"))
+    #expect(html.contains("<script type=\"module\">"))
+}
+
+@Test func webDocumentPlacesSiblingsAroundTheRenderedView() {
+    let document = WebDocument(
+        renderedView: HTMLRenderer().renderView(Div { Text("Splash") }.id("splash")),
+        stylesheetPath: nil,
+        headNodes: [.element(.init(
+            tag: "link",
+            attributes: [.init("rel", "icon"), .init("href", "data:,")],
+            children: [],
+            isVoid: true
+        ))],
+        bodySuffixNodes: [.element(.init(
+            tag: "div",
+            attributes: [.init("id", "app")],
+            children: [],
+            isVoid: false
+        ))]
+    )
+    let html = document.htmlString(prettyPrinted: false)
+
+    #expect(html.contains("<link rel=\"icon\" href=\"data:,\">"))
+    guard let splash = html.range(of: "id=\"splash\""),
+          let app = html.range(of: "<div id=\"app\">") else {
+        Issue.record("Expected both the rendered view and the mount point")
+        return
+    }
+    // Siblings, and in that order: the mount point follows the splash.
+    #expect(splash.lowerBound < app.lowerBound)
+}
+
+@Test func webDocumentSetsDocumentLanguageWhenGiven() {
+    let document = WebDocument(
+        renderedView: HTMLRenderer().renderView(Text("Hallo")),
+        stylesheetPath: nil,
+        language: "nl"
+    )
+
+    #expect(document.htmlString(prettyPrinted: false).contains("<html lang=\"nl\">"))
+}
+
+@Test func previewExporterSkipsStylesheetFileWhenCSSIsInlined() throws {
+    let folder = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent("swiftwebui-inline-\(UUID().uuidString)")
+    defer { try? FileManager.default.removeItem(at: folder) }
+
+    try PreviewExporter.export(
+        WebDocument(
+            renderedView: HTMLRenderer().renderView(
+                Text("Splash").foregroundStyle(Color("var(--primary)"))
+            ),
+            renderedStyleDelivery: .inline
+        ),
+        to: folder
+    )
+
+    #expect(FileManager.default.fileExists(atPath: folder.appendingPathComponent("index.html").path))
+    #expect(!FileManager.default.fileExists(atPath: folder.appendingPathComponent("styles.css").path))
+}

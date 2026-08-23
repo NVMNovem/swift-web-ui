@@ -88,7 +88,20 @@ The static module owns:
 - `HTMLRenderer`, `RenderedContent`, `RenderedResources`, and `RenderedView`;
 - style hashing and resource registries;
 - client-state and `RemoteList` generated JavaScript;
-- `WebDocument`, `MetaTag`, and `PreviewExporter`.
+- `WebDocument`, `MetaTag`, `WebScript`, and `PreviewExporter`.
+
+`WebDocument` describes a whole document, not only a rendered view wrapped in
+markup. It can inline the rendered CSS as a `<style>` block instead of linking it,
+force the stylesheet link independently of whether the view produced CSS, carry
+verbatim head nodes for anything `MetaTag` cannot express, place body nodes before
+and after the rendered view, and write inline `<script>` content — including
+`type="module"` and `type="importmap"` — in the head or at the end of the body.
+
+Together those cover the document that has to boot a WebAssembly bundle: a
+build-time rendered splash and the runtime's mount point as siblings, styling that
+needs no second round trip, and a loader that necessarily runs before any Swift
+exists on the page. The loader stays the application's JavaScript; SwiftWebUIStatic
+supplies the markup around it.
 
 The runtime proof-of-concept module owns:
 
