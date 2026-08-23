@@ -41,6 +41,7 @@ struct ProjectCard: View {
 - ``Article``
 - ``Section``
 - ``Footer``
+- ``Element``
 
 ### Controls
 
@@ -56,3 +57,18 @@ struct ProjectCard: View {
 ## Discussion
 
 Prefer semantic views when they express the document structure. Use ``Article`` for self-contained content, ``Section`` for sectioning content, and ``Footer`` for footer content. Use ``Div`` as a low-level escape hatch.
+
+``Element`` goes one level lower still, for markup SwiftWebUI attaches no semantics to — most often a foreign element such as `svg`:
+
+```swift
+Element("svg") {
+    Element("circle")
+        .class("ring")
+        .attribute("cx", "40")
+        .attribute("cy", "40")
+        .attribute("r", "32")
+}
+.attribute("viewBox", "0 0 80 80")
+```
+
+It names a tag; it is not a way to write HTML strings into a view tree. The content is an ordinary view tree, attributes come from ``View/attribute(_:_:)``, and the name is written through to both backends verbatim so casing survives for the attributes that need it. Reach for it only when no semantic view fits.

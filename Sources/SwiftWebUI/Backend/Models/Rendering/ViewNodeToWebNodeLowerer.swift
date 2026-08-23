@@ -112,6 +112,10 @@ public struct ViewNodeToWebNodeLowerer {
         case .template(let name):
             tagName = "template"
             attributes.append(.init(name: "data-swiftwebui-template", value: name))
+        case .element(let tag):
+            // Verbatim, casing included: the foreign elements this exists for
+            // (`viewBox` on `svg`, `clipPath`) are the ones that care.
+            tagName = tag
         }
 
         children.append(contentsOf: container.children.flatMap { flattenedChildren(of: lower($0)) })
