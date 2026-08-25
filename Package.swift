@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "swift-web-ui",
-    platforms: [.macOS(.v26)],
+    platforms: [.macOS(.v14)],
     products: [
         .library(name: "SwiftWebUI", targets: ["SwiftWebUI"]),
         .library(name: "SwiftWebUIStatic", targets: ["SwiftWebUIStatic"]),
