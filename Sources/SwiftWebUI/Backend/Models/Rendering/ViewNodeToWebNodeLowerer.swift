@@ -277,6 +277,10 @@ public struct ViewNodeToWebNodeLowerer {
             case .gridTemplateColumns(let value): styles.append(style(GridTemplateColumns(value).cssDeclaration))
             case .justifyContent(let value): styles.append(style(JustifyContent(value).cssDeclaration))
             case .flexWrap(let value): styles.append(style(FlexWrap(value).cssDeclaration))
+            case .alignSelf(let value): styles.append(style(AlignSelf(value).cssDeclaration))
+            case .flexGrow(let value): styles.append(style(FlexGrow(value).cssDeclaration))
+            case .flexShrink(let value): styles.append(style(FlexShrink(value).cssDeclaration))
+            case .flexBasis(let value): styles.append(style(FlexBasis(value).cssDeclaration))
             case .margin(let edges, let value): styles.append(contentsOf: edgeStyles(prefix: "margin", edges: edges, value: value))
             case .padding(let edges, let value): styles.append(contentsOf: edgeStyles(prefix: "padding", edges: edges, value: value))
             case .frame(let width, let height, let maxWidth):
@@ -297,6 +301,7 @@ public struct ViewNodeToWebNodeLowerer {
             case .font(let value): styles.append(contentsOf: fontStyles(value))
             case .letterSpacing(let value): styles.append(style(LetterSpacing(value).cssDeclaration))
             case .textTransform(let value): styles.append(.init(name: "text-transform", value: textTransformValue(value)))
+            case .wordBreak(let value): styles.append(style(WordBreak(value).cssDeclaration))
             case .lineHeight(let value): styles.append(.init(name: "line-height", value: value.rawValue))
             case .textAlign(let value): styles.append(.init(name: "text-align", value: textAlignmentValue(value)))
             case .textDecoration(let value): styles.append(.init(name: "text-decoration", value: textDecorationValue(value)))
@@ -306,6 +311,8 @@ public struct ViewNodeToWebNodeLowerer {
             case .backdropFilter(let value): styles.append(style(BackdropFilter(value).cssDeclaration))
             case .overflow(let value): styles.append(style(Overflow(value).cssDeclaration))
             case .objectFit(let value): styles.append(style(ObjectFit(value).cssDeclaration))
+            case .aspectRatio(let value): styles.append(style(value.cssDeclaration))
+            case .objectPosition(let value): styles.append(style(value.cssDeclaration))
             case .pointerEvents(let value): styles.append(style(PointerEvents(value).cssDeclaration))
             case .cursor(let value): styles.append(style(Cursor(value).cssDeclaration))
             case .position(let value): styles.append(style(Position(value).cssDeclaration))
@@ -322,6 +329,7 @@ public struct ViewNodeToWebNodeLowerer {
             case .border(let value): styles.append(style(value.cssDeclaration))
             case .borderParts(let width, let lineStyle, let color):
                 styles.append(.init(name: "border", value: "\(width.rawValue) \(lineStyle.rawValue) \(color.rawValue)"))
+            case .borderEdges(let edges, let value): styles.append(contentsOf: borderEdgeStyles(edges: edges, value: value))
             case .shadow(let value): styles.append(style(value.cssDeclaration))
             case .gap(let value): styles.append(style(Gap(value).cssDeclaration))
             case .buttonStyle(let token):
@@ -366,6 +374,16 @@ public struct ViewNodeToWebNodeLowerer {
             WebStyleDeclaration(name: "align-items", value: alignmentValue(alignment)),
         ]
         if let spacing { styles.append(style(Gap(spacing).cssDeclaration)) }
+        return styles
+    }
+
+    private func borderEdgeStyles(edges: Edge.Set, value: String) -> [WebStyleDeclaration] {
+        if edges == .all { return [style(SwiftCSS.Border(value).cssDeclaration)] }
+        var styles: [WebStyleDeclaration] = []
+        if edges.contains(.top) { styles.append(style(BorderTop(value).cssDeclaration)) }
+        if edges.contains(.leading) { styles.append(style(BorderLeft(value).cssDeclaration)) }
+        if edges.contains(.bottom) { styles.append(style(BorderBottom(value).cssDeclaration)) }
+        if edges.contains(.trailing) { styles.append(style(BorderRight(value).cssDeclaration)) }
         return styles
     }
 
