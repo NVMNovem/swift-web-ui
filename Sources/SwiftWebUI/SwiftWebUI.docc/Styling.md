@@ -68,6 +68,12 @@ Div {
 .transition("opacity 220ms ease, transform 280ms ease")
 .overflow(.hidden)
 .objectFit(.cover)
+.aspectRatio(3, 2)
+.objectPosition("center")
+.alignSelf(.center)
+.flexGrow(0)
+.wordBreak(.breakWord)
+.border(.bottom, "1px solid #eee")
 .backdropFilter("blur(18px)")
 .pointerEvents(.none)
 .cursor(.pointer)
@@ -82,9 +88,13 @@ Div {
 SwiftWebUI stores these calls as modifier data and lowers them through SwiftCSS
 properties and values such as `GridTemplateColumns`, `JustifyContentValue`,
 `FlexWrapValue`, `Opacity`, `Transform`, `Transition`, `BackdropFilter`,
-`OverflowValue`, `ObjectFitValue`, `PointerEventsValue`, `CursorValue`,
-`PositionValue`, `Top`, `ZIndex`, `ResizeValue`, `OutlineValue`, and
-`ScrollMarginTop`. String-accepting modifiers such as `.gridTemplateColumns(...)`,
+`OverflowValue`, `ObjectFitValue`, `AspectRatio`, `ObjectPosition`,
+`AlignSelfValue`, `FlexGrow`, `FlexShrink`, `FlexBasis`, `WordBreakValue`,
+`PointerEventsValue`, `CursorValue`, `PositionValue`, `Top`, `ZIndex`,
+`ResizeValue`, `OutlineValue`, and `ScrollMarginTop`. Edge-specific borders
+lower through the per-side properties `BorderTop`, `BorderRight`,
+`BorderBottom`, and `BorderLeft`, with `.all` collapsing to the `Border`
+shorthand. String-accepting modifiers such as `.gridTemplateColumns(...)`,
 `.transform(...)`, `.transition(...)`, and `.backdropFilter(...)` accept CSS
 strings because the corresponding SwiftCSS property value is intentionally broad.
 

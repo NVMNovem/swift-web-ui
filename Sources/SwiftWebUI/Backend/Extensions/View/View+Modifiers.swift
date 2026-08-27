@@ -17,6 +17,10 @@ public extension View {
     func gridTemplateColumns(_ value: String) -> ModifiedView<Self> { modified(.gridTemplateColumns(value)) }
     func justifyContent(_ value: JustifyContentValue) -> ModifiedView<Self> { modified(.justifyContent(value)) }
     func flexWrap(_ value: FlexWrapValue) -> ModifiedView<Self> { modified(.flexWrap(value)) }
+    func alignSelf(_ value: AlignSelfValue) -> ModifiedView<Self> { modified(.alignSelf(value)) }
+    func flexGrow(_ value: Double) -> ModifiedView<Self> { modified(.flexGrow(value)) }
+    func flexShrink(_ value: Double) -> ModifiedView<Self> { modified(.flexShrink(value)) }
+    func flexBasis(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.flexBasis(value)) }
     func margin(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.margin(.all, value)) }
     func margin(_ edges: Edge.Set, _ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.margin(edges, value)) }
     func padding(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.padding(.all, value)) }
@@ -36,6 +40,7 @@ public extension View {
     func font(_ font: Font) -> ModifiedView<Self> { modified(.font(font)) }
     func letterSpacing(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.letterSpacing(value)) }
     func textTransform(_ value: TextTransform) -> ModifiedView<Self> { modified(.textTransform(value)) }
+    func wordBreak(_ value: WordBreakValue) -> ModifiedView<Self> { modified(.wordBreak(value)) }
     func lineHeight(_ value: SwiftCSS.LineHeightValue) -> ModifiedView<Self> { modified(.lineHeight(value)) }
     func textAlign(_ value: TextAlignment) -> ModifiedView<Self> { modified(.textAlign(value)) }
     func textDecoration(_ value: TextDecoration) -> ModifiedView<Self> { modified(.textDecoration(value)) }
@@ -45,6 +50,11 @@ public extension View {
     func backdropFilter(_ value: String) -> ModifiedView<Self> { modified(.backdropFilter(value)) }
     func overflow(_ value: OverflowValue) -> ModifiedView<Self> { modified(.overflow(value)) }
     func objectFit(_ value: ObjectFitValue) -> ModifiedView<Self> { modified(.objectFit(value)) }
+    func aspectRatio(_ value: SwiftCSS.AspectRatio) -> ModifiedView<Self> { modified(.aspectRatio(value)) }
+    func aspectRatio(_ ratio: Double) -> ModifiedView<Self> { aspectRatio(SwiftCSS.AspectRatio(ratio)) }
+    func aspectRatio(_ width: Double, _ height: Double) -> ModifiedView<Self> { aspectRatio(SwiftCSS.AspectRatio(width, height)) }
+    func objectPosition(_ value: SwiftCSS.ObjectPosition) -> ModifiedView<Self> { modified(.objectPosition(value)) }
+    func objectPosition(_ cssValue: String) -> ModifiedView<Self> { objectPosition(SwiftCSS.ObjectPosition(cssValue)) }
     func pointerEvents(_ value: PointerEventsValue) -> ModifiedView<Self> { modified(.pointerEvents(value)) }
     func cursor(_ value: CursorValue) -> ModifiedView<Self> { modified(.cursor(value)) }
     func position(_ value: PositionValue) -> ModifiedView<Self> { modified(.position(value)) }
@@ -61,6 +71,7 @@ public extension View {
     func border(_ border: SwiftCSS.Border) -> ModifiedView<Self> { modified(.border(border)) }
     func border(width: SwiftCSS.Length, style: BorderLineStyle = .solid, color: SwiftCSS.Color) -> ModifiedView<Self> { modified(.borderParts(width: width, style: style, color: color)) }
     func border(_ cssValue: String) -> ModifiedView<Self> { border(SwiftCSS.Border(cssValue)) }
+    func border(_ edges: Edge.Set, _ cssValue: String) -> ModifiedView<Self> { modified(.borderEdges(edges, cssValue)) }
     func shadow(_ shadow: BoxShadow) -> ModifiedView<Self> { modified(.shadow(shadow)) }
     func shadow(_ cssValue: String) -> ModifiedView<Self> { shadow(BoxShadow(cssValue)) }
     func gap(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.gap(value)) }
