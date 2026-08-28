@@ -408,6 +408,42 @@ private func firstTextContent(in node: WebNode?) -> String? {
     #expect(raw?.transitionPhases == nil)
 }
 
+@Test func sharedLowererLowersTheTruncationTrio() {
+    // `text-overflow` only takes effect on a block whose overflow is clipped and
+    // whose text does not wrap, so the three belong together.
+    let truncated = requireElement(lower(
+        Text("A name too long for its box")
+            .whiteSpace(.nowrap)
+            .overflow(.hidden)
+            .textOverflow(.ellipsis)
+    ))
+    #expect(truncated?.styles == [
+        .init(name: "white-space", value: "nowrap"),
+        .init(name: "overflow", value: "hidden"),
+        .init(name: "text-overflow", value: "ellipsis"),
+    ])
+}
+
+@Test func sharedLowererPreservesCanonicalWhiteSpaceAndTextOverflowValues() {
+    let whiteSpace: [(WhiteSpaceValue, String)] = [
+        (.normal, "normal"),
+        (.nowrap, "nowrap"),
+        (.pre, "pre"),
+        (.preWrap, "pre-wrap"),
+        (.preLine, "pre-line"),
+        (.breakSpaces, "break-spaces"),
+    ]
+    for (value, expected) in whiteSpace {
+        let node = requireElement(lower(Text("Body").whiteSpace(value)))
+        #expect(node?.styles == [.init(name: "white-space", value: expected)])
+    }
+
+    for (value, expected) in [(TextOverflowValue.clip, "clip"), (.ellipsis, "ellipsis")] {
+        let node = requireElement(lower(Text("Body").textOverflow(value)))
+        #expect(node?.styles == [.init(name: "text-overflow", value: expected)])
+    }
+}
+
 private func lower<Content: View>(_ view: Content) -> WebNode {
     ViewNodeToWebNodeLowerer().lower(view.makeViewNode())
 }

@@ -42,6 +42,8 @@ public extension View {
     func letterSpacing(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.letterSpacing(value)) }
     func textTransform(_ value: TextTransform) -> ModifiedView<Self> { modified(.textTransform(value)) }
     func wordBreak(_ value: WordBreakValue) -> ModifiedView<Self> { modified(.wordBreak(value)) }
+    func whiteSpace(_ value: WhiteSpaceValue) -> ModifiedView<Self> { modified(.whiteSpace(value)) }
+    func textOverflow(_ value: TextOverflowValue) -> ModifiedView<Self> { modified(.textOverflow(value)) }
     func lineHeight(_ value: SwiftCSS.LineHeightValue) -> ModifiedView<Self> { modified(.lineHeight(value)) }
     func textAlign(_ value: TextAlignment) -> ModifiedView<Self> { modified(.textAlign(value)) }
     func textDecoration(_ value: TextDecoration) -> ModifiedView<Self> { modified(.textDecoration(value)) }

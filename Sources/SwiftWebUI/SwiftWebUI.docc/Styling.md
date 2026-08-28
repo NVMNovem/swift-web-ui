@@ -74,6 +74,8 @@ Div {
 .alignSelf(.center)
 .flexGrow(0)
 .wordBreak(.breakWord)
+.whiteSpace(.nowrap)
+.textOverflow(.ellipsis)
 .border(.bottom, "1px solid #eee")
 .backdropFilter("blur(18px)")
 .pointerEvents(.none)
@@ -92,6 +94,7 @@ properties and values such as `GridTemplateColumns`, `JustifyContentValue`,
 `FlexWrapValue`, `Opacity`, `Transform`, `Transition`, `BackdropFilter`,
 `OverflowValue`, `ObjectFitValue`, `AspectRatio`, `ObjectPosition`,
 `AlignItemsValue`, `AlignSelfValue`, `FlexGrow`, `FlexShrink`, `FlexBasis`, `WordBreakValue`,
+`WhiteSpaceValue`, `TextOverflowValue`,
 `PointerEventsValue`, `CursorValue`, `PositionValue`, `Top`, `Inset`, `ZIndex`,
 `ResizeValue`, `OutlineValue`, and `ScrollMarginTop`. Edge-specific borders
 lower through the per-side properties `BorderTop`, `BorderRight`,
@@ -99,6 +102,22 @@ lower through the per-side properties `BorderTop`, `BorderRight`,
 shorthand. String-accepting modifiers such as `.gridTemplateColumns(...)`,
 `.transform(...)`, `.transition(...)`, and `.backdropFilter(...)` accept CSS
 strings because the corresponding SwiftCSS property value is intentionally broad.
+
+### Truncating one line of text
+
+`text-overflow` only takes effect on a block whose overflow is clipped and whose
+text does not wrap, so the three modifiers belong together:
+
+```swift
+Text(name)
+    .whiteSpace(.nowrap)
+    .overflow(.hidden)
+    .textOverflow(.ellipsis)
+```
+
+Prefer this to shortening the string in Swift. Only the browser knows the
+rendered width of a name in the reader's font at the reader's size, so a
+Swift-side truncation is a guess that CSS does not have to make.
 
 ### Enter and exit transitions
 

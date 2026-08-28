@@ -332,6 +332,20 @@ extension ButtonStyleToken {
     #expect(!html.contains("sheet-out"))
 }
 
+@Test func truncationModifiersRenderSwiftCSSWhiteSpaceAndTextOverflowProperties() {
+    let rendered = HTMLRenderer().renderView(
+        Text("A name too long for its box")
+            .whiteSpace(.nowrap)
+            .overflow(.hidden)
+            .textOverflow(.ellipsis)
+    )
+    let css = rendered.cssString()
+
+    #expect(css.contains("white-space: nowrap"))
+    #expect(css.contains("overflow: hidden"))
+    #expect(css.contains("text-overflow: ellipsis"))
+}
+
 @Test func textTransformModifierRendersSwiftCSSTextTransformProperty() {
     let uppercase = HTMLRenderer().renderView(Text("Hello").textTransform(.uppercase))
     let lowercase = HTMLRenderer().renderView(Text("Hello").textTransform(.lowercase))

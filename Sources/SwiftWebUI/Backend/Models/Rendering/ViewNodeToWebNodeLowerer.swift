@@ -326,6 +326,8 @@ public struct ViewNodeToWebNodeLowerer {
             case .letterSpacing(let value): styles.append(style(LetterSpacing(value).cssDeclaration))
             case .textTransform(let value): styles.append(.init(name: "text-transform", value: textTransformValue(value)))
             case .wordBreak(let value): styles.append(style(WordBreak(value).cssDeclaration))
+            case .whiteSpace(let value): styles.append(style(WhiteSpace(value).cssDeclaration))
+            case .textOverflow(let value): styles.append(style(TextOverflow(value).cssDeclaration))
             case .lineHeight(let value): styles.append(.init(name: "line-height", value: value.rawValue))
             case .textAlign(let value): styles.append(.init(name: "text-align", value: textAlignmentValue(value)))
             case .textDecoration(let value): styles.append(.init(name: "text-decoration", value: textDecorationValue(value)))
@@ -418,8 +420,8 @@ public struct ViewNodeToWebNodeLowerer {
     private func layeredStyles(alignment: Alignment) -> [WebStyleDeclaration] {
         [
             style(Display(.grid).cssDeclaration),
-            .init(name: "align-items", value: layeredBlockAlignment(alignment)),
-            .init(name: "justify-items", value: layeredInlineAlignment(alignment)),
+            style(AlignItems(layeredBlockAlignment(alignment)).cssDeclaration),
+            style(JustifyItems(layeredInlineAlignment(alignment)).cssDeclaration),
         ]
     }
 
@@ -430,7 +432,7 @@ public struct ViewNodeToWebNodeLowerer {
     private func inOneGridCell(_ child: WebNode) -> WebNode {
         .element(.init(
             tagName: "div",
-            styles: [.init(name: "grid-area", value: "1 / 1")],
+            styles: [style(GridArea("1 / 1").cssDeclaration)],
             children: [child]
         ))
     }
@@ -532,20 +534,20 @@ private func tagName(for role: SemanticRole) -> String {
 /// The block-axis half of a layered stack's alignment.
 ///
 /// ``Alignment`` names one axis at a time, so the axis it does not name centres.
-private func layeredBlockAlignment(_ alignment: Alignment) -> String {
+private func layeredBlockAlignment(_ alignment: Alignment) -> AlignItemsValue {
     switch alignment {
-    case .top: "start"
-    case .bottom: "end"
-    case .leading, .center, .trailing: "center"
+    case .top: .start
+    case .bottom: .end
+    case .leading, .center, .trailing: .center
     }
 }
 
 /// The inline-axis half of a layered stack's alignment.
-private func layeredInlineAlignment(_ alignment: Alignment) -> String {
+private func layeredInlineAlignment(_ alignment: Alignment) -> JustifyItemsValue {
     switch alignment {
-    case .leading: "start"
-    case .trailing: "end"
-    case .top, .center, .bottom: "center"
+    case .leading: .start
+    case .trailing: .end
+    case .top, .center, .bottom: .center
     }
 }
 

@@ -12,7 +12,7 @@ let package = Package(
         .library(name: "SwiftWebUIRuntime", targets: ["SwiftWebUIRuntime"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/NVMNovem/swift-css", from: "1.0.0"),
+        .package(url: "https://github.com/NVMNovem/swift-css", from: "1.0.4"),
         .package(url: "https://github.com/NVMNovem/swift-html", from: "1.0.0"),
         .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.56.1"),
     ],
