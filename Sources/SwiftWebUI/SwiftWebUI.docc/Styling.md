@@ -70,6 +70,7 @@ Div {
 .objectFit(.cover)
 .aspectRatio(3, 2)
 .objectPosition("center")
+.alignItems(.center)
 .alignSelf(.center)
 .flexGrow(0)
 .wordBreak(.breakWord)
@@ -79,6 +80,7 @@ Div {
 .cursor(.pointer)
 .position(.relative)
 .top(.px(16))
+.inset(.zero)
 .zIndex(20)
 .resize(.vertical)
 .outline(.none)
@@ -89,8 +91,8 @@ SwiftWebUI stores these calls as modifier data and lowers them through SwiftCSS
 properties and values such as `GridTemplateColumns`, `JustifyContentValue`,
 `FlexWrapValue`, `Opacity`, `Transform`, `Transition`, `BackdropFilter`,
 `OverflowValue`, `ObjectFitValue`, `AspectRatio`, `ObjectPosition`,
-`AlignSelfValue`, `FlexGrow`, `FlexShrink`, `FlexBasis`, `WordBreakValue`,
-`PointerEventsValue`, `CursorValue`, `PositionValue`, `Top`, `ZIndex`,
+`AlignItemsValue`, `AlignSelfValue`, `FlexGrow`, `FlexShrink`, `FlexBasis`, `WordBreakValue`,
+`PointerEventsValue`, `CursorValue`, `PositionValue`, `Top`, `Inset`, `ZIndex`,
 `ResizeValue`, `OutlineValue`, and `ScrollMarginTop`. Edge-specific borders
 lower through the per-side properties `BorderTop`, `BorderRight`,
 `BorderBottom`, and `BorderLeft`, with `.all` collapsing to the `Border`

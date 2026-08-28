@@ -46,3 +46,42 @@ Grid(spacing: .px(12)) {
 Use ``Group`` for layout-neutral composition. An unmodified group renders transparently. If a group has modifiers or attributes, SwiftWebUI creates an implicit `div` so those modifiers have an element to attach to.
 
 Use ``Div`` only when you specifically want a low-level `div` escape hatch.
+
+Any view can become a flex container in its own right. `.display(.flex)` paired
+with `.alignItems(_:)` aligns every child on the cross axis, so a plain ``Div``
+can centre its contents without borrowing a stack to do it:
+
+```swift
+Div {
+    Text("Centred")
+}
+.display(.flex)
+.alignItems(.center)
+```
+
+`.alignItems(_:)` sets `align-items` on the container. `.alignSelf(_:)` remains
+the per-child override, and a stack's own `alignment` argument keeps setting the
+same property for ``VStack`` and ``HStack``.
+
+### Pinning to edges
+
+`.inset(_:)` pins a positioned element to all four edges in one call:
+
+```swift
+Div {
+    Text("Overlay")
+}
+.position(.fixed)
+.inset(.zero)
+```
+
+An ``Edge`` set narrows it. `.all` lowers to the CSS `inset` shorthand; anything
+narrower expands to `top`, `right`, `bottom`, and `left`, because CSS has no
+`inset-top` property:
+
+```swift
+Div { Text("Rail") }
+    .position(.absolute)
+    .inset(.vertical, .px(12))
+    .inset(.leading, .px(4))
+```

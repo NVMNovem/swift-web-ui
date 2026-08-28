@@ -277,6 +277,7 @@ public struct ViewNodeToWebNodeLowerer {
             case .gridTemplateColumns(let value): styles.append(style(GridTemplateColumns(value).cssDeclaration))
             case .justifyContent(let value): styles.append(style(JustifyContent(value).cssDeclaration))
             case .flexWrap(let value): styles.append(style(FlexWrap(value).cssDeclaration))
+            case .alignItems(let value): styles.append(style(AlignItems(value).cssDeclaration))
             case .alignSelf(let value): styles.append(style(AlignSelf(value).cssDeclaration))
             case .flexGrow(let value): styles.append(style(FlexGrow(value).cssDeclaration))
             case .flexShrink(let value): styles.append(style(FlexShrink(value).cssDeclaration))
@@ -320,6 +321,7 @@ public struct ViewNodeToWebNodeLowerer {
             case .right(let value): styles.append(style(Right(value).cssDeclaration))
             case .bottom(let value): styles.append(style(Bottom(value).cssDeclaration))
             case .left(let value): styles.append(style(Left(value).cssDeclaration))
+            case .inset(let edges, let value): styles.append(contentsOf: insetStyles(edges: edges, value: value))
             case .zIndex(let value): styles.append(style(ZIndex(value).cssDeclaration))
             case .resize(let value): styles.append(style(Resize(value).cssDeclaration))
             case .outline(let value): styles.append(style(Outline(value).cssDeclaration))
@@ -384,6 +386,21 @@ public struct ViewNodeToWebNodeLowerer {
         if edges.contains(.leading) { styles.append(style(BorderLeft(value).cssDeclaration)) }
         if edges.contains(.bottom) { styles.append(style(BorderBottom(value).cssDeclaration)) }
         if edges.contains(.trailing) { styles.append(style(BorderRight(value).cssDeclaration)) }
+        return styles
+    }
+
+    /// Lowers `.inset(_:_:)`.
+    ///
+    /// `.all` collapses to the `inset` shorthand. Anything narrower expands to the
+    /// individual physical properties, because CSS has no `inset-top` — which is why
+    /// this cannot reuse ``edgeStyles(prefix:edges:value:)``.
+    private func insetStyles(edges: Edge.Set, value: SwiftCSS.Length) -> [WebStyleDeclaration] {
+        if edges == .all { return [style(Inset(value).cssDeclaration)] }
+        var styles: [WebStyleDeclaration] = []
+        if edges.contains(.top) { styles.append(style(Top(value).cssDeclaration)) }
+        if edges.contains(.leading) { styles.append(style(Left(value).cssDeclaration)) }
+        if edges.contains(.bottom) { styles.append(style(Bottom(value).cssDeclaration)) }
+        if edges.contains(.trailing) { styles.append(style(Right(value).cssDeclaration)) }
         return styles
     }
 

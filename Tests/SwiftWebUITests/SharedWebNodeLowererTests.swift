@@ -176,6 +176,42 @@ import Testing
     #expect(calls == 1)
 }
 
+@Test func sharedLowererLowersAlignItemsOnAnyContainer() {
+    let container = requireElement(lower(
+        Div { Text("Centred") }
+            .display(.flex)
+            .alignItems(.center)
+    ))
+    #expect(container?.styles == [
+        .init(name: "display", value: "flex"),
+        .init(name: "align-items", value: "center"),
+    ])
+
+    let stretched = requireElement(lower(Div { Text("Stretched") }.alignItems(.stretch)))
+    #expect(stretched?.styles == [.init(name: "align-items", value: "stretch")])
+}
+
+@Test func sharedLowererLowersInsetShorthandAndIndividualEdges() {
+    let pinned = requireElement(lower(
+        Div { Text("Scrim") }
+            .position(.fixed)
+            .inset(.zero)
+    ))
+    #expect(pinned?.styles == [
+        .init(name: "position", value: "fixed"),
+        .init(name: "inset", value: "0"),
+    ])
+
+    let vertical = requireElement(lower(Div { Text("Rail") }.inset(.vertical, .px(12))))
+    #expect(vertical?.styles == [
+        .init(name: "top", value: "12px"),
+        .init(name: "bottom", value: "12px"),
+    ])
+
+    let leading = requireElement(lower(Div { Text("Edge") }.inset(.leading, .px(4))))
+    #expect(leading?.styles == [.init(name: "left", value: "4px")])
+}
+
 private func lower<Content: View>(_ view: Content) -> WebNode {
     ViewNodeToWebNodeLowerer().lower(view.makeViewNode())
 }

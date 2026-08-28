@@ -17,6 +17,7 @@ public extension View {
     func gridTemplateColumns(_ value: String) -> ModifiedView<Self> { modified(.gridTemplateColumns(value)) }
     func justifyContent(_ value: JustifyContentValue) -> ModifiedView<Self> { modified(.justifyContent(value)) }
     func flexWrap(_ value: FlexWrapValue) -> ModifiedView<Self> { modified(.flexWrap(value)) }
+    func alignItems(_ value: AlignItemsValue) -> ModifiedView<Self> { modified(.alignItems(value)) }
     func alignSelf(_ value: AlignSelfValue) -> ModifiedView<Self> { modified(.alignSelf(value)) }
     func flexGrow(_ value: Double) -> ModifiedView<Self> { modified(.flexGrow(value)) }
     func flexShrink(_ value: Double) -> ModifiedView<Self> { modified(.flexShrink(value)) }
@@ -62,6 +63,8 @@ public extension View {
     func right(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.right(value)) }
     func bottom(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.bottom(value)) }
     func left(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.left(value)) }
+    func inset(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.inset(.all, value)) }
+    func inset(_ edges: Edge.Set, _ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.inset(edges, value)) }
     func zIndex(_ value: Int) -> ModifiedView<Self> { modified(.zIndex(value)) }
     func resize(_ value: ResizeValue) -> ModifiedView<Self> { modified(.resize(value)) }
     func outline(_ value: OutlineValue) -> ModifiedView<Self> { modified(.outline(value)) }
