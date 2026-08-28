@@ -270,6 +270,82 @@ extension ButtonStyleToken {
     #expect(rendered.cssString().contains("letter-spacing: 2px"))
 }
 
+@Test func defaultFocusRendersAsAutofocusInStaticOutput() {
+    // Static rendering has no live document to move focus in, so `autofocus` —
+    // which the browser honours at parse time — is the honest equivalent.
+    let focused = HTMLRenderer().renderView(Input().defaultFocus())
+    #expect(focused.htmlString().contains("autofocus"))
+
+    let ordinary = HTMLRenderer().renderView(Input())
+    #expect(!ordinary.htmlString().contains("autofocus"))
+}
+
+@Test func keyHandlersAreBrowserRuntimeOnlyAndRenderNothingStatically() {
+    let rendered = HTMLRenderer().renderView(
+        Div { Text("Panel") }.onKeyDown("Escape") {}
+    )
+    let html = rendered.htmlString()
+
+    #expect(!html.contains("keydown"))
+    #expect(!html.contains("Escape"))
+}
+
+@Test func staticRenderingPresentsANonModalDialogButOmitsAModalOne() {
+    var presented = true
+    let binding = Binding(get: { presented }, set: { presented = $0 })
+
+    let nonModal = HTMLRenderer()
+        .renderView(Dialog(isPresented: binding, isModal: false) { Text("Panel") })
+        .htmlString()
+    #expect(nonModal.contains("<dialog"))
+    #expect(nonModal.contains("open"))
+    #expect(nonModal.contains("Panel"))
+
+    // A modal dialog needs the browser's top layer, which a static document has
+    // no way to enter, so it is omitted rather than silently emitted closed.
+    let modal = HTMLRenderer()
+        .renderView(Dialog(isPresented: binding) { Text("Panel") })
+        .htmlString()
+    #expect(!modal.contains("<dialog"))
+    #expect(!modal.contains("Panel"))
+
+    presented = false
+    let dismissed = HTMLRenderer()
+        .renderView(Dialog(isPresented: binding) { Text("Panel") })
+        .htmlString()
+    #expect(dismissed.contains("<dialog"))
+    #expect(!dismissed.contains("open"))
+}
+
+@Test func staticRenderingEmitsTheEnterClassAndNoExit() {
+    let html = HTMLRenderer().renderView(
+        Div { Text("Card") }
+            .class("card")
+            .transition(enter: "sheet-in", exit: "sheet-out", durationMilliseconds: 280)
+    ).htmlString()
+
+    // A static document has no moment of insertion to transition from, so the
+    // element is emitted already in its entered state. Nothing removes it, so
+    // there is no static equivalent of an exit.
+    #expect(html.contains("sheet-in"))
+    #expect(html.contains("card"))
+    #expect(!html.contains("sheet-out"))
+}
+
+@Test func truncationModifiersRenderSwiftCSSWhiteSpaceAndTextOverflowProperties() {
+    let rendered = HTMLRenderer().renderView(
+        Text("A name too long for its box")
+            .whiteSpace(.nowrap)
+            .overflow(.hidden)
+            .textOverflow(.ellipsis)
+    )
+    let css = rendered.cssString()
+
+    #expect(css.contains("white-space: nowrap"))
+    #expect(css.contains("overflow: hidden"))
+    #expect(css.contains("text-overflow: ellipsis"))
+}
+
 @Test func textTransformModifierRendersSwiftCSSTextTransformProperty() {
     let uppercase = HTMLRenderer().renderView(Text("Hello").textTransform(.uppercase))
     let lowercase = HTMLRenderer().renderView(Text("Hello").textTransform(.lowercase))

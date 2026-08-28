@@ -22,6 +22,13 @@ public enum ContainerKind {
     case vertical(alignment: Alignment, spacing: SwiftCSS.Length?)
     case horizontal(alignment: Alignment, spacing: SwiftCSS.Length?)
     case grid(spacing: SwiftCSS.Length?)
+    /// Children share one box, painted in document order.
+    case layered(alignment: Alignment)
+    /// A browser `dialog` element.
+    ///
+    /// `presentation` is reconciled state rather than an imperative call, and
+    /// `onDismiss` runs when the browser closes the dialog on its own.
+    case dialog(presentation: DialogPresentation, onDismiss: ActionIntent?)
     case div
     case article
     case section

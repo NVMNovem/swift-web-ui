@@ -1,5 +1,5 @@
 {
-  "originHash" : "c66bde8e92f19f38fabab7585395e508405c16519228d0574bb4fb6042f32cc5",
+  "originHash" : "663f6e3ff88f110416e54729f8e5a4f6dbc3355fa87309def50722576f98afbb",
   "pins" : [
     {
       "identity" : "javascriptkit",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/NVMNovem/swift-css",
       "state" : {
-        "revision" : "773dfc9052f8ea05b9843e560ad2189402f8910f",
-        "version" : "1.0.2"
+        "revision" : "a459c69e2f69a3a766a17dc25b557ee53f2ec4a6",
+        "version" : "1.0.4"
       }
     },
     {

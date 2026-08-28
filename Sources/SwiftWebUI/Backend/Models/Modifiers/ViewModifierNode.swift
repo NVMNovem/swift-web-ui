@@ -17,6 +17,7 @@ public enum ViewModifierNode {
     case gridTemplateColumns(String)
     case justifyContent(JustifyContentValue)
     case flexWrap(FlexWrapValue)
+    case alignItems(AlignItemsValue)
     case alignSelf(AlignSelfValue)
     case flexGrow(Double)
     case flexShrink(Double)
@@ -37,6 +38,8 @@ public enum ViewModifierNode {
     case letterSpacing(SwiftCSS.Length)
     case textTransform(TextTransform)
     case wordBreak(WordBreakValue)
+    case whiteSpace(WhiteSpaceValue)
+    case textOverflow(TextOverflowValue)
     case lineHeight(SwiftCSS.LineHeightValue)
     case textAlign(TextAlignment)
     case textDecoration(TextDecoration)
@@ -55,6 +58,7 @@ public enum ViewModifierNode {
     case right(SwiftCSS.Length)
     case bottom(SwiftCSS.Length)
     case left(SwiftCSS.Length)
+    case inset(Edge.Set, SwiftCSS.Length)
     case zIndex(Int)
     case resize(ResizeValue)
     case outline(OutlineValue)
@@ -67,5 +71,8 @@ public enum ViewModifierNode {
     case shadow(BoxShadow)
     case gap(SwiftCSS.Length)
     case buttonStyle(ButtonStyleToken)
+    case defaultFocus
+    case onKeyDown(key: String, action: ActionIntent)
+    case transitionPhases(TransitionPhases)
     case setState(ClientStateMutation)
 }

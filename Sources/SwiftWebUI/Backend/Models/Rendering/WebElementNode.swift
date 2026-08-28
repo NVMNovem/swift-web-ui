@@ -17,6 +17,16 @@ public struct WebElementNode: @unchecked Sendable {
     public let styleVariants: [WebStyleVariant]
     public let children: [WebNode]
     public let action: ActionIntent?
+    /// Whether this element asks to be focused once it is in a live document.
+    public let requestsFocus: Bool
+    /// Key-down handlers scoped to this element.
+    public let keyActions: [KeyAction]
+    /// How this element is presented, for elements that are presented at all.
+    public let presentation: DialogPresentation?
+    /// What to run when the browser dismisses this element on its own.
+    public let dismissAction: ActionIntent?
+    /// The classes this element wears while arriving and while leaving.
+    public let transitionPhases: TransitionPhases?
 
     public init(
         tagName: String,
@@ -24,7 +34,12 @@ public struct WebElementNode: @unchecked Sendable {
         styles: [WebStyleDeclaration] = [],
         styleVariants: [WebStyleVariant] = [],
         children: [WebNode] = [],
-        action: ActionIntent? = nil
+        action: ActionIntent? = nil,
+        requestsFocus: Bool = false,
+        keyActions: [KeyAction] = [],
+        presentation: DialogPresentation? = nil,
+        dismissAction: ActionIntent? = nil,
+        transitionPhases: TransitionPhases? = nil
     ) {
         self.tagName = tagName
         self.attributes = attributes.lastDeclarationPerName()
@@ -32,5 +47,10 @@ public struct WebElementNode: @unchecked Sendable {
         self.styleVariants = styleVariants
         self.children = children
         self.action = action
+        self.requestsFocus = requestsFocus
+        self.keyActions = keyActions
+        self.presentation = presentation
+        self.dismissAction = dismissAction
+        self.transitionPhases = transitionPhases
     }
 }

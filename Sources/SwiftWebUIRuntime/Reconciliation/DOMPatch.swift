@@ -17,6 +17,11 @@ enum DOMPatch: @unchecked Sendable, Equatable {
     case removeChild(parent: NodePath, index: Int)
     case replaceNode(path: NodePath, node: WebNode)
     case replaceAction(path: NodePath, action: ActionIntent?)
+    case replaceKeyActions(path: NodePath, actions: [KeyAction])
+    case setDialogPresentation(path: NodePath, presentation: DialogPresentation)
+    case replaceDismissAction(path: NodePath, action: ActionIntent?)
+    case setTransitionPhases(path: NodePath, phases: TransitionPhases?)
+    case focus(path: NodePath)
 }
 
 extension DOMPatch {
@@ -40,6 +45,16 @@ extension DOMPatch {
             lp == rp && webNodesEqual(ln, rn)
         case (.replaceAction(let lp, let la), .replaceAction(let rp, let ra)):
             lp == rp && actionsEquivalent(la, ra)
+        case (.replaceKeyActions(let lp, let la), .replaceKeyActions(let rp, let ra)):
+            lp == rp && keyActionsEquivalent(la, ra)
+        case (.setDialogPresentation(let lp, let lv), .setDialogPresentation(let rp, let rv)):
+            lp == rp && lv == rv
+        case (.replaceDismissAction(let lp, let la), .replaceDismissAction(let rp, let ra)):
+            lp == rp && actionsEquivalent(la, ra)
+        case (.setTransitionPhases(let lp, let lv), .setTransitionPhases(let rp, let rv)):
+            lp == rp && lv == rv
+        case (.focus(let lp), .focus(let rp)):
+            lp == rp
         default:
             false
         }
@@ -60,8 +75,22 @@ private func webNodesEqual(_ lhs: WebNode, _ rhs: WebNode) -> Bool {
             && lhs.children.count == rhs.children.count
             && zip(lhs.children, rhs.children).allSatisfy { webNodesEqual($0.0, $0.1) }
             && actionsEquivalent(lhs.action, rhs.action)
+            && lhs.requestsFocus == rhs.requestsFocus
+            && keyActionsEquivalent(lhs.keyActions, rhs.keyActions)
+            && lhs.presentation == rhs.presentation
+            && actionsEquivalent(lhs.dismissAction, rhs.dismissAction)
+            && lhs.transitionPhases == rhs.transitionPhases
     default: false
     }
+}
+
+/// Compares key handlers by the keys they claim.
+///
+/// Closures have no identity token, so two closure handlers on the same key are
+/// indistinguishable here — the same reason click actions compare this way.
+private func keyActionsEquivalent(_ lhs: [KeyAction], _ rhs: [KeyAction]) -> Bool {
+    lhs.count == rhs.count
+        && zip(lhs, rhs).allSatisfy { $0.0.key == $0.1.key && actionsEquivalent($0.0.action, $0.1.action) }
 }
 
 private func actionsEquivalent(_ lhs: ActionIntent?, _ rhs: ActionIntent?) -> Bool {
@@ -97,6 +126,24 @@ extension DOMPatch: CustomStringConvertible {
             } else {
                 "replaceAction path=\(path.indices) action=present"
             }
+        case .replaceKeyActions(let path, let actions):
+            "replaceKeyActions path=\(path.indices) keys=[\(actions.map(\.key).joined(separator: ", "))]"
+        case .setDialogPresentation(let path, let presentation):
+            "setDialogPresentation path=\(path.indices) presentation=\(presentation)"
+        case .replaceDismissAction(let path, let action):
+            if action == nil {
+                "replaceDismissAction path=\(path.indices) action=nil"
+            } else {
+                "replaceDismissAction path=\(path.indices) action=present"
+            }
+        case .setTransitionPhases(let path, let phases):
+            if let phases {
+                "setTransitionPhases path=\(path.indices) enter=\(quoted(phases.enter)) exit=\(quoted(phases.exit)) duration=\(phases.durationMilliseconds)"
+            } else {
+                "setTransitionPhases path=\(path.indices) phases=nil"
+            }
+        case .focus(let path):
+            "focus path=\(path.indices)"
         }
     }
 

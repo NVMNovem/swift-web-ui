@@ -17,6 +17,7 @@ public extension View {
     func gridTemplateColumns(_ value: String) -> ModifiedView<Self> { modified(.gridTemplateColumns(value)) }
     func justifyContent(_ value: JustifyContentValue) -> ModifiedView<Self> { modified(.justifyContent(value)) }
     func flexWrap(_ value: FlexWrapValue) -> ModifiedView<Self> { modified(.flexWrap(value)) }
+    func alignItems(_ value: AlignItemsValue) -> ModifiedView<Self> { modified(.alignItems(value)) }
     func alignSelf(_ value: AlignSelfValue) -> ModifiedView<Self> { modified(.alignSelf(value)) }
     func flexGrow(_ value: Double) -> ModifiedView<Self> { modified(.flexGrow(value)) }
     func flexShrink(_ value: Double) -> ModifiedView<Self> { modified(.flexShrink(value)) }
@@ -41,6 +42,8 @@ public extension View {
     func letterSpacing(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.letterSpacing(value)) }
     func textTransform(_ value: TextTransform) -> ModifiedView<Self> { modified(.textTransform(value)) }
     func wordBreak(_ value: WordBreakValue) -> ModifiedView<Self> { modified(.wordBreak(value)) }
+    func whiteSpace(_ value: WhiteSpaceValue) -> ModifiedView<Self> { modified(.whiteSpace(value)) }
+    func textOverflow(_ value: TextOverflowValue) -> ModifiedView<Self> { modified(.textOverflow(value)) }
     func lineHeight(_ value: SwiftCSS.LineHeightValue) -> ModifiedView<Self> { modified(.lineHeight(value)) }
     func textAlign(_ value: TextAlignment) -> ModifiedView<Self> { modified(.textAlign(value)) }
     func textDecoration(_ value: TextDecoration) -> ModifiedView<Self> { modified(.textDecoration(value)) }
@@ -62,6 +65,8 @@ public extension View {
     func right(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.right(value)) }
     func bottom(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.bottom(value)) }
     func left(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.left(value)) }
+    func inset(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.inset(.all, value)) }
+    func inset(_ edges: Edge.Set, _ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.inset(edges, value)) }
     func zIndex(_ value: Int) -> ModifiedView<Self> { modified(.zIndex(value)) }
     func resize(_ value: ResizeValue) -> ModifiedView<Self> { modified(.resize(value)) }
     func outline(_ value: OutlineValue) -> ModifiedView<Self> { modified(.outline(value)) }
@@ -76,6 +81,59 @@ public extension View {
     func shadow(_ cssValue: String) -> ModifiedView<Self> { shadow(BoxShadow(cssValue)) }
     func gap(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.gap(value)) }
     func buttonStyle(_ token: ButtonStyleToken) -> ModifiedView<Self> { modified(.buttonStyle(token)) }
+
+    /// Focuses this element once it is inserted into a live document.
+    ///
+    /// This is one-way: it says "focus me when I appear", and nothing reads
+    /// focus back out of the DOM. It is deliberately not the `autofocus`
+    /// attribute, which browsers honour at parse time rather than on insertion —
+    /// static rendering falls back to `autofocus` because that is the honest
+    /// equivalent there, but a runtime mount calls `focus()` itself.
+    func defaultFocus() -> ModifiedView<Self> { modified(.defaultFocus) }
+
+    /// Runs `perform` when this element sees a key-down for `key`.
+    ///
+    /// `key` is the DOM's own `KeyboardEvent.key` string — `"Escape"`,
+    /// `"Enter"`, `"ArrowDown"`.
+    ///
+    /// The handler is scoped to this element, so it only fires while focus is
+    /// inside it. That is deliberate: a scoped listener dies with the view,
+    /// where a document-level one outlives it. An element that is not otherwise
+    /// focusable needs `.attribute("tabindex", "-1")` and ``defaultFocus()`` for
+    /// the handler to ever see a key.
+    ///
+    /// Browser-runtime only. Static rendering emits no key handler.
+    func onKeyDown(_ key: String, perform: @escaping () -> Void) -> ModifiedView<Self> {
+        modified(.onKeyDown(key: key, action: .closure(perform)))
+    }
+
+    /// Transitions this element as it arrives and as it leaves.
+    ///
+    /// `enter` and `exit` name classes an application stylesheet defines.
+    /// `.transition(_:)` animates a property change on an element that stays
+    /// mounted; this is the other half — the arrival and the departure, which a
+    /// synchronous DOM removal otherwise never gives a frame to run in.
+    ///
+    /// The runtime adds `enter` on the frame *after* insertion, so the browser
+    /// paints the pre-transition state first, and holds a leaving element in the
+    /// document wearing `exit` for `durationMilliseconds` before removing it.
+    ///
+    /// A reader who prefers reduced motion gets neither the animation nor the
+    /// wait: the element arrives and leaves immediately.
+    ///
+    /// Browser-runtime only. Static rendering has no moment of insertion, so it
+    /// emits the element already wearing `enter`.
+    func transition(
+        enter: String,
+        exit: String,
+        durationMilliseconds: Int
+    ) -> ModifiedView<Self> {
+        modified(.transitionPhases(.init(
+            enter: enter,
+            exit: exit,
+            durationMilliseconds: durationMilliseconds
+        )))
+    }
 
     func setState(_ key: String, to value: String) -> ModifiedView<Self> {
         modified(.setState(.init(target: .named(key), value: .string(value))))

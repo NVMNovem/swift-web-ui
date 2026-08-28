@@ -54,6 +54,11 @@ struct WebNodeStaticLowerer {
         case .fragment(let children):
             return children.flatMap { lower($0, context: &context) }
         case .element(let webElement):
+            // A modal dialog lives in the browser's top layer, which a static
+            // document has no way to enter. Emitting a closed `dialog` instead
+            // would quietly drop the content while implying it is there, so a
+            // modal one is omitted and documented as browser-runtime only.
+            if webElement.presentation == .modal { return [] }
             let attributes = lowerAttributes(of: webElement, context: &context)
             let children = webElement.children.flatMap { lower($0, context: &context) }
             return [.element(.init(
@@ -73,6 +78,11 @@ struct WebNodeStaticLowerer {
         var classNames: [String] = []
         var classInsertionIndex: Int?
         var identifier: String?
+
+        // A static document has no moment of insertion to transition from, so
+        // the element is emitted already wearing its entered state. There is no
+        // static equivalent of an exit: nothing removes the element.
+        if let enter = element.transitionPhases?.enter { classNames.append(enter) }
 
         for attribute in element.attributes {
             if attribute.name == "class", classInsertionIndex == nil {
@@ -124,6 +134,13 @@ struct WebNodeStaticLowerer {
             )
         }
         if let identifier { attributes.append(.init("id", identifier)) }
+        // `autofocus` is the honest static equivalent of `.defaultFocus()`, not
+        // the same thing: a browser honours it at parse time, where the runtime
+        // calls `focus()` when the element is inserted into a live document.
+        if element.requestsFocus { attributes.append(.init("autofocus", "")) }
+        // A non-modal dialog is showable statically; `open` is how a document
+        // says so without script.
+        if element.presentation == .nonModal { attributes.append(.init("open", "")) }
         return attributes
     }
 

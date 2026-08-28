@@ -37,6 +37,43 @@ The separate `SwiftWebUIStatic` module mechanically converts `WebNode` to SwiftH
 
 The separate `SwiftWebUIRuntime` module owns browser mounting, a runtime-only mounted tree, positional `WebNode` diffing, mechanical DOM patch application, and JavaScriptKit event handlers. It applies lowered tags, attributes, styles, children, and closure actions for one mounted root without replacing unchanged DOM nodes. JavaScriptKit and mounted state do not enter the core.
 
+Focus is modelled as element state, not as an imperative call a view can make:
+``ViewModifierNode/defaultFocus`` becomes `WebElementNode.requestsFocus`, and the
+mounter and the differ reconcile it like any other element data. The mounter
+focuses a handle only after inserting it, because `focus()` on a detached node is
+a silent no-op, and the differ emits a focus patch only on the transition into
+requesting focus, so a rerender never reclaims focus an element already has.
+
+Key handling follows the click path rather than the focus one, because a handler
+is a registration rather than a piece of reconciled state:
+``ViewModifierNode/onKeyDown(key:action:)`` becomes `WebElementNode.keyActions`,
+the mounter installs one scoped handler per element, and every registration is
+released alongside the click registration when a subtree goes away.
+
+Stopping the page behind a presented view from scrolling is a document-level side
+effect rather than element state, so it lives entirely in SwiftWebUIRuntime as a
+reference count held by the mounted root. It has no ``ViewModifierNode`` case and
+no public modifier, because a counter any caller could increment is one that ends
+up unbalanced.
+
+Dialog presentation follows the focus pattern rather than the click one:
+``ContainerKind/dialog(presentation:onDismiss:)`` becomes
+`WebElementNode.presentation`, and the runtime presents an element only once it
+is in the document. Dismissal is the one place state travels the other way — the
+browser closes a dialog on Escape or its `cancel` event without consulting the
+view tree, so the runtime registers a close handler that writes back through the
+binding and takes the same `ViewInvalidation` hop a click action takes.
+
+Enter and exit transitions are the one change that alters what reconciliation
+means, because a leaving element outlives the render that removed it. The
+resolution is to split the two lifetimes: the mounted tree drops the child
+immediately, so every later sibling keeps the index it had and every subsequent
+patch in the batch still resolves to the element it meant, while the DOM handle
+lingers under its old parent until its timer fires. Nothing addresses that handle
+positionally any more, and a later render mounts a fresh one rather than
+reclaiming it. ``MountedRoot`` owns the frames and timers so a torn-down root can
+cancel work that would otherwise fire against nodes that are already gone.
+
 `RemoteList` remains static-only because it is currently defined by generated fetch/template JavaScript. Static client-state mutation actions remain a static resource feature. The runtime uses child position only as a traversal location; it does not yet define keyed identity, state slots, moves, or hydration. Removed subtrees recursively release retained handlers, while closure-bearing elements conservatively replace their handler registration after rerender because closures have no stable token.
 
 ## Embedded builder choice

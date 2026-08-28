@@ -151,4 +151,119 @@ import Testing
             .replaceAction(path: NodePath(), action: newAction)
         ])
     }
+
+    @Test func askingForFocusForTheFirstTimeEmitsExactlyOneFocusPatch() {
+        #expect(differ.diff(
+            old: element(requestsFocus: false),
+            new: element(requestsFocus: true)
+        ) == [.focus(path: NodePath())])
+    }
+
+    @Test func alreadyFocusedElementDoesNotReclaimFocusOnUnrelatedChanges() {
+        // Re-emitting focus on every rerender would yank it back mid-typing.
+        let patches = differ.diff(
+            old: element(styles: [.init(name: "gap", value: "4px")], requestsFocus: true),
+            new: element(styles: [.init(name: "gap", value: "8px")], requestsFocus: true)
+        )
+        #expect(patches == [.setStyle(path: NodePath(), name: "gap", value: "8px")])
+    }
+
+    @Test func droppingTheFocusRequestEmitsNothing() {
+        #expect(differ.diff(
+            old: element(requestsFocus: true),
+            new: element(requestsFocus: false)
+        ) == [])
+    }
+
+    @Test func focusIsRequestedAtTheElementThatAskedForIt() {
+        let old = element(children: [element("input"), element("input")])
+        let new = element(children: [element("input"), element("input", requestsFocus: true)])
+        #expect(differ.diff(old: old, new: new) == [.focus(path: NodePath([1]))])
+    }
+
+
+    @Test func addingAKeyHandlerReplacesTheElementsKeyRegistrations() {
+        let patches = differ.diff(
+            old: element(),
+            new: element(keyActions: [.init(key: "Escape", action: .closure {})])
+        )
+        #expect(patches == [.replaceKeyActions(path: NodePath(), actions: [.init(key: "Escape", action: .closure {})])])
+    }
+
+    @Test func aRerenderCarryingTheSameKeyClosureStillReplacesConservatively() {
+        // Closures have no renderer-neutral identity, so "same key, some
+        // closure" cannot be shown to be the same closure.
+        let patches = differ.diff(
+            old: element(keyActions: [.init(key: "Escape", action: .closure {})]),
+            new: element(keyActions: [.init(key: "Escape", action: .closure {})])
+        )
+        #expect(patches.count == 1)
+        #expect(patches.first == .replaceKeyActions(path: NodePath(), actions: [.init(key: "Escape", action: .closure {})]))
+    }
+
+    @Test func anElementWithNoKeyHandlersEitherSideProducesNoKeyPatch() {
+        #expect(differ.diff(old: element(), new: element()) == [])
+    }
+
+    @Test func droppingTheLastKeyHandlerEmptiesTheRegistrations() {
+        let patches = differ.diff(
+            old: element(keyActions: [.init(key: "Escape", action: .closure {})]),
+            new: element()
+        )
+        #expect(patches == [.replaceKeyActions(path: NodePath(), actions: [])])
+    }
+
+
+    @Test func presentingADialogEmitsAPresentationPatch() {
+        #expect(differ.diff(
+            old: element("dialog", presentation: .dismissed),
+            new: element("dialog", presentation: .modal)
+        ) == [.setDialogPresentation(path: NodePath(), presentation: .modal)])
+    }
+
+    @Test func dismissingADialogEmitsAPresentationPatch() {
+        #expect(differ.diff(
+            old: element("dialog", presentation: .modal),
+            new: element("dialog", presentation: .dismissed)
+        ) == [.setDialogPresentation(path: NodePath(), presentation: .dismissed)])
+    }
+
+    @Test func anUnchangedPresentationEmitsNothing() {
+        #expect(differ.diff(
+            old: element("dialog", presentation: .modal),
+            new: element("dialog", presentation: .modal)
+        ) == [])
+    }
+
+    @Test func changingModalityIsAPresentationChange() {
+        #expect(differ.diff(
+            old: element("dialog", presentation: .nonModal),
+            new: element("dialog", presentation: .modal)
+        ) == [.setDialogPresentation(path: NodePath(), presentation: .modal)])
+    }
+
+
+    @Test func changingTransitionPhasesKeepsTheMountedTreeAccurate() {
+        let phases = TransitionPhases(enter: "in", exit: "out", durationMilliseconds: 200)
+        #expect(differ.diff(
+            old: element(),
+            new: element(transitionPhases: phases)
+        ) == [.setTransitionPhases(path: NodePath(), phases: phases)])
+    }
+
+    @Test func unchangedTransitionPhasesEmitNothing() {
+        let phases = TransitionPhases(enter: "in", exit: "out", durationMilliseconds: 200)
+        #expect(differ.diff(
+            old: element(transitionPhases: phases),
+            new: element(transitionPhases: phases)
+        ) == [])
+    }
+
+    @Test func droppingTransitionPhasesClearsThem() {
+        #expect(differ.diff(
+            old: element(transitionPhases: .init(enter: "in", exit: "out", durationMilliseconds: 200)),
+            new: element()
+        ) == [.setTransitionPhases(path: NodePath(), phases: nil)])
+    }
+
 }

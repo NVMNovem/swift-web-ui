@@ -12,6 +12,16 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
     typealias Node = JSObject
     typealias ActionRegistration = JSClosure
 
+    /// A pending `setTimeout` or `requestAnimationFrame`.
+    ///
+    /// The closure is retained alongside the handle so it stays alive until the
+    /// browser calls it, and is released whether it fires or is cancelled.
+    struct ScheduledWork {
+        let handler: JSClosure
+        let handle: JSValue
+        let isAnimationFrame: Bool
+    }
+
     private let document: JSObject
 
     init?() {
@@ -30,6 +40,20 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
             throw BrowserHeadBackendError.documentHeadUnavailable
         }
         return head
+    }
+
+    func documentBody() throws -> JSObject {
+        guard let body = document.body.object else {
+            throw BrowserHeadBackendError.documentBodyUnavailable
+        }
+        return body
+    }
+
+    func inlineStyleValue(name: String, on node: JSObject) -> String? {
+        guard let value = node.style.object?.getPropertyValue!(name).string, !value.isEmpty else {
+            return nil
+        }
+        return value
     }
 
     func createElement(_ tagName: String) -> JSObject {
@@ -77,6 +101,53 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
         node.onclick = .null
     }
 
+    func setKeyAction(
+        keys: [String],
+        action: @escaping (String) -> Void,
+        on node: JSObject
+    ) -> JSClosure {
+        let handler = JSClosure { arguments in
+            guard let key = arguments.first?.key.string, keys.contains(key) else {
+                return .undefined
+            }
+            action(key)
+            return .undefined
+        }
+        node.onkeydown = .object(handler)
+        return handler
+    }
+
+    func removeKeyAction(from node: JSObject, registration: JSClosure) {
+        node.onkeydown = .null
+    }
+
+    func presentDialog(_ node: JSObject, modal: Bool) {
+        if modal {
+            _ = node.showModal!()
+        } else {
+            _ = node.show!()
+        }
+    }
+
+    func dismissDialog(_ node: JSObject) {
+        _ = node.close!()
+    }
+
+    func setDismissAction(_ action: @escaping () -> Void, on node: JSObject) -> JSClosure {
+        let handler = JSClosure { _ in
+            action()
+            return .undefined
+        }
+        // `close` rather than `cancel`: Escape, the backdrop, and an explicit
+        // `close()` all end in `close`, and only `cancel` is preventable.
+        node.onclose = .object(handler)
+        return handler
+    }
+
+    func removeDismissAction(from node: JSObject, registration: JSClosure) {
+        node.onclose = .null
+    }
+
     func append(_ child: JSObject, to parent: JSObject) {
         _ = parent.appendChild!(child)
     }
@@ -95,6 +166,41 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
 
     func removeAllChildren(from parent: JSObject) {
         _ = parent.replaceChildren!()
+    }
+
+    func focus(_ node: JSObject) {
+        _ = node.focus!()
+    }
+
+    func onNextAnimationFrame(_ body: @escaping () -> Void) -> ScheduledWork {
+        let handler = JSClosure { _ in
+            body()
+            return .undefined
+        }
+        let handle = JSObject.global.requestAnimationFrame.function!(handler)
+        return ScheduledWork(handler: handler, handle: handle, isAnimationFrame: true)
+    }
+
+    func schedule(afterMilliseconds milliseconds: Int, _ body: @escaping () -> Void) -> ScheduledWork {
+        let handler = JSClosure { _ in
+            body()
+            return .undefined
+        }
+        let handle = JSObject.global.setTimeout.function!(handler, milliseconds)
+        return ScheduledWork(handler: handler, handle: handle, isAnimationFrame: false)
+    }
+
+    func cancel(_ work: ScheduledWork) {
+        if work.isAnimationFrame {
+            _ = JSObject.global.cancelAnimationFrame.function!(work.handle)
+        } else {
+            _ = JSObject.global.clearTimeout.function!(work.handle)
+        }
+    }
+
+    func prefersReducedMotion() -> Bool {
+        guard let matchMedia = JSObject.global.matchMedia.function else { return false }
+        return matchMedia("(prefers-reduced-motion: reduce)").object?.matches.boolean ?? false
     }
 }
 #endif

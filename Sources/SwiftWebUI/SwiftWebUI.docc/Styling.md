@@ -70,15 +70,19 @@ Div {
 .objectFit(.cover)
 .aspectRatio(3, 2)
 .objectPosition("center")
+.alignItems(.center)
 .alignSelf(.center)
 .flexGrow(0)
 .wordBreak(.breakWord)
+.whiteSpace(.nowrap)
+.textOverflow(.ellipsis)
 .border(.bottom, "1px solid #eee")
 .backdropFilter("blur(18px)")
 .pointerEvents(.none)
 .cursor(.pointer)
 .position(.relative)
 .top(.px(16))
+.inset(.zero)
 .zIndex(20)
 .resize(.vertical)
 .outline(.none)
@@ -89,14 +93,74 @@ SwiftWebUI stores these calls as modifier data and lowers them through SwiftCSS
 properties and values such as `GridTemplateColumns`, `JustifyContentValue`,
 `FlexWrapValue`, `Opacity`, `Transform`, `Transition`, `BackdropFilter`,
 `OverflowValue`, `ObjectFitValue`, `AspectRatio`, `ObjectPosition`,
-`AlignSelfValue`, `FlexGrow`, `FlexShrink`, `FlexBasis`, `WordBreakValue`,
-`PointerEventsValue`, `CursorValue`, `PositionValue`, `Top`, `ZIndex`,
+`AlignItemsValue`, `AlignSelfValue`, `FlexGrow`, `FlexShrink`, `FlexBasis`, `WordBreakValue`,
+`WhiteSpaceValue`, `TextOverflowValue`,
+`PointerEventsValue`, `CursorValue`, `PositionValue`, `Top`, `Inset`, `ZIndex`,
 `ResizeValue`, `OutlineValue`, and `ScrollMarginTop`. Edge-specific borders
 lower through the per-side properties `BorderTop`, `BorderRight`,
 `BorderBottom`, and `BorderLeft`, with `.all` collapsing to the `Border`
 shorthand. String-accepting modifiers such as `.gridTemplateColumns(...)`,
 `.transform(...)`, `.transition(...)`, and `.backdropFilter(...)` accept CSS
 strings because the corresponding SwiftCSS property value is intentionally broad.
+
+### Truncating one line of text
+
+`text-overflow` only takes effect on a block whose overflow is clipped and whose
+text does not wrap, so the three modifiers belong together:
+
+```swift
+Text(name)
+    .whiteSpace(.nowrap)
+    .overflow(.hidden)
+    .textOverflow(.ellipsis)
+```
+
+Prefer this to shortening the string in Swift. Only the browser knows the
+rendered width of a name in the reader's font at the reader's size, so a
+Swift-side truncation is a guess that CSS does not have to make.
+
+### Enter and exit transitions
+
+`.transition(_:)` writes a raw CSS `transition` string, which animates a property
+change on an element that stays mounted. `.transition(enter:exit:durationMilliseconds:)`
+is the other half — arriving and leaving:
+
+```swift
+Div {
+    Text("Card")
+}
+.transition(enter: "sheet-in", exit: "sheet-out", durationMilliseconds: 280)
+```
+
+`enter` and `exit` name classes an application stylesheet defines; SwiftWebUI only
+schedules them. The runtime adds `enter` on the frame *after* insertion, because
+applying it in the same frame is the classic no-op — the browser never paints the
+pre-transition state, so there is nothing to transition from. On removal it puts
+`exit` on the element and holds it in the document for `durationMilliseconds`
+before taking it out, which a synchronous removal would never allow.
+
+The duration is a number rather than a CSS string because the runtime schedules
+against it and cannot parse `280ms ease` to find out how long to wait. Keep it in
+step with the duration in the stylesheet.
+
+A reader who prefers reduced motion gets neither the animation nor the wait: the
+element arrives and leaves immediately. Skipping the animation but keeping the
+delay would be the worst of both.
+
+> Note: A leaving element is out of the view tree straight away and lingers only
+> in the DOM, so it still occupies layout until it goes. Take it out of flow in
+> the `exit` class — `position: absolute` — when its siblings should close the
+> gap immediately.
+
+> Important: Enter and exit are browser-runtime only, and apply to an element
+> that is removed, not one that is replaced. Static rendering has no moment of
+> insertion, so it emits the element already wearing `enter`, and has no
+> equivalent of an exit at all.
+
+### Focus
+
+`.defaultFocus()` is not styling — it asks the browser to move focus to the
+element once it is in a live document. See <doc:Forms>.
 
 ### Buttons
 

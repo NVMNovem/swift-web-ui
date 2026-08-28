@@ -23,17 +23,31 @@ enum DOMPatchApplicationError: Error, CustomStringConvertible {
     }
 }
 
-final class DOMPatchApplier<Backend: DOMBackend> {
+final class DOMPatchApplier<Backend: BrowserHeadBackend> {
     typealias Node = MountedNode<Backend.Node, Backend.ActionRegistration>
 
     private let backend: Backend
     private let container: Backend.Node
+    private let scrollLock: ScrollLock<Backend>
+    private let transitions: TransitionScheduler<Backend>
     private let loggingEnabled: Bool
 
-    init(backend: Backend, container: Backend.Node, loggingEnabled: Bool = false) {
+    init(
+        backend: Backend,
+        container: Backend.Node,
+        scrollLock: ScrollLock<Backend>,
+        transitions: TransitionScheduler<Backend>,
+        loggingEnabled: Bool = false
+    ) {
         self.backend = backend
         self.container = container
+        self.scrollLock = scrollLock
+        self.transitions = transitions
         self.loggingEnabled = loggingEnabled
+    }
+
+    private var mounter: DOMMounter<Backend> {
+        DOMMounter(backend: backend, scrollLock: scrollLock, transitions: transitions)
     }
 
     func apply(_ patches: [DOMPatch], to mountedRoot: inout Node) throws {
@@ -57,6 +71,14 @@ final class DOMPatchApplier<Backend: DOMBackend> {
                 backend.removeClickAction(from: element.handle, registration: registration)
                 element.actionRegistration = nil
             }
+            releaseKeyActions(of: element)
+            if let registration = element.dismissRegistration {
+                backend.removeDismissAction(from: element.handle, registration: registration)
+                element.dismissRegistration = nil
+            }
+            // A presented dialog that goes away must give the scroll lock back,
+            // or the page can never scroll again.
+            mounter.releaseScrollLock(of: element)
         case .fragment(let fragment):
             for child in fragment.children {
                 recursivelyReleaseActions(in: child)
@@ -74,12 +96,21 @@ final class DOMPatchApplier<Backend: DOMBackend> {
             text.value = value
         case .setAttribute(let path, let name, let value):
             let element = try element(at: path, in: mountedRoot)
-            backend.setAttribute(name: name, value: value, on: element.handle)
             setNamedValue(name: name, value: value, in: &element.attributes)
+            if name == "class" {
+                // Rewriting `class` outright would drop a phase mid-transition.
+                mounter.writeClassAttribute(of: element)
+            } else {
+                backend.setAttribute(name: name, value: value, on: element.handle)
+            }
         case .removeAttribute(let path, let name):
             let element = try element(at: path, in: mountedRoot)
-            backend.removeAttribute(name: name, from: element.handle)
             element.attributes.removeAll { $0.name == name }
+            if name == "class" {
+                mounter.writeClassAttribute(of: element)
+            } else {
+                backend.removeAttribute(name: name, from: element.handle)
+            }
         case .setStyle(let path, let name, let value):
             let element = try element(at: path, in: mountedRoot)
             backend.setStyle(name: name, value: value, on: element.handle)
@@ -93,14 +124,43 @@ final class DOMPatchApplier<Backend: DOMBackend> {
             if let registration = element.actionRegistration {
                 backend.removeClickAction(from: element.handle, registration: registration)
             }
-            element.actionRegistration = DOMMounter(backend: backend).register(action, on: element.handle)
+            element.actionRegistration = mounter.register(action, on: element.handle)
+        case .replaceKeyActions(let path, let actions):
+            let element = try element(at: path, in: mountedRoot)
+            releaseKeyActions(of: element)
+            element.keyActionRegistrations = mounter.registerKeyActions(actions, on: element.handle)
+        case .replaceDismissAction(let path, let action):
+            let element = try element(at: path, in: mountedRoot)
+            if let registration = element.dismissRegistration {
+                backend.removeDismissAction(from: element.handle, registration: registration)
+            }
+            element.dismissRegistration = mounter.registerDismissAction(action, on: element.handle)
+        case .setDialogPresentation(let path, let presentation):
+            let element = try element(at: path, in: mountedRoot)
+            mounter.present(presentation, on: element)
+        case .setTransitionPhases(let path, let phases):
+            try element(at: path, in: mountedRoot).transitionPhases = phases
         case .insertChild(let parentPath, let index, let webNode):
             try insertChild(webNode, at: index, parentPath: parentPath, root: mountedRoot)
         case .removeChild(let parentPath, let index):
             try removeChild(at: index, parentPath: parentPath, root: mountedRoot)
         case .replaceNode(let path, let webNode):
             try replaceNode(at: path, with: webNode, root: &mountedRoot)
+        case .focus(let path):
+            let element = try element(at: path, in: mountedRoot)
+            backend.focus(element.handle)
         }
+    }
+
+    /// Frees every key-down registration an element holds.
+    ///
+    /// An unreleased handler leaks on every rebuild, which is what
+    /// ``recursivelyReleaseActions(in:)`` exists to prevent.
+    private func releaseKeyActions(of element: MountedElementNode<Backend.Node, Backend.ActionRegistration>) {
+        for registration in element.keyActionRegistrations {
+            backend.removeKeyAction(from: element.handle, registration: registration)
+        }
+        element.keyActionRegistrations = []
     }
 
     private func insertChild(_ webNode: WebNode, at index: Int, parentPath: NodePath, root: Node) throws {
@@ -114,10 +174,13 @@ final class DOMPatchApplier<Backend: DOMBackend> {
             throw DOMPatchApplicationError.invalidPath(parentPath.appending(index))
         }
         let reference = children[index...].lazy.compactMap(\.firstDOMHandle).first
-        let mounted = DOMMounter(backend: backend).mount(webNode)
+        let mounter = mounter
+        var pending = DOMMounter<Backend>.PendingInsertionEffects()
+        let mounted = mounter.mount(webNode, pending: &pending)
         for handle in mounted.topLevelDOMHandles {
             backend.insert(handle, into: domParent, before: reference)
         }
+        mounter.flush(pending)
         children.insert(mounted, at: index)
         context.node.children = children
     }
@@ -134,19 +197,44 @@ final class DOMPatchApplier<Backend: DOMBackend> {
         }
         let removed = children.remove(at: index)
         recursivelyReleaseActions(in: removed)
-        for handle in removed.topLevelDOMHandles {
-            backend.remove(handle, from: domParent)
-        }
+        // The mounted tree drops the child now, so every later sibling keeps the
+        // index it already had and every subsequent patch in this batch still
+        // resolves to the element it meant. A leaving element outlives that only
+        // in the DOM, where nothing addresses it positionally.
         context.node.children = children
+        beginExit(of: removed, from: domParent)
+    }
+
+    /// Removes a leaving subtree, letting it run an exit transition first.
+    ///
+    /// The element is already out of the mounted tree, so nothing can address it
+    /// by path any more and nothing will re-insert this handle — a later render
+    /// mounts a new one. That is what makes holding it in the DOM safe.
+    private func beginExit(of removed: Node, from domParent: Backend.Node) {
+        let handles = removed.topLevelDOMHandles
+        guard
+            case .element(let element) = removed,
+            let phases = element.transitionPhases
+        else {
+            for handle in handles { backend.remove(handle, from: domParent) }
+            return
+        }
+        mounter.setPhaseClass(phases.exit, on: element)
+        transitions.after(milliseconds: phases.durationMilliseconds) { [backend] in
+            for handle in handles { backend.remove(handle, from: domParent) }
+        }
     }
 
     private func replaceNode(at path: NodePath, with webNode: WebNode, root: inout Node) throws {
         let context = try context(at: path, in: root)
-        let replacement = DOMMounter(backend: backend).mount(webNode)
+        let mounter = mounter
+        var pending = DOMMounter<Backend>.PendingInsertionEffects()
+        let replacement = mounter.mount(webNode, pending: &pending)
         let reference = context.node.firstDOMHandle ?? nextDOMHandle(after: path, in: root)
         for handle in replacement.topLevelDOMHandles {
             backend.insert(handle, into: context.domParent, before: reference)
         }
+        mounter.flush(pending)
         recursivelyReleaseActions(in: context.node)
         for handle in context.node.topLevelDOMHandles {
             backend.remove(handle, from: context.domParent)

@@ -57,6 +57,7 @@ Normal composition uses fixed-arity generic carriers rather than `AnyView` or vi
 - ``Group``
 - ``VStack``
 - ``HStack``
+- ``ZStack``
 - ``Grid``
 - ``Article``
 - ``Section``
@@ -81,6 +82,7 @@ Normal composition uses fixed-arity generic carriers rather than `AnyView` or vi
 
 - <doc:StateAndBindings>
 - <doc:Navigation>
+- <doc:Presentation>
 - <doc:Tabs>
 - <doc:Forms>
 - ``State``
@@ -89,6 +91,8 @@ Normal composition uses fixed-arity generic carriers rather than `AnyView` or vi
 - ``Tab``
 - ``TabBar``
 - ``TabView``
+- ``Dialog``
+- ``DialogPresentation``
 
 ### More
 

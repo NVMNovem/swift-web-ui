@@ -43,7 +43,7 @@ public func mount<Content: View>(
     let installedResources: InstalledRuntimeResources<JavaScriptDOMBackend.Node>
     do {
         installedResources = try RuntimeStylesheetInstaller(backend: backend)
-            .install(resources)
+            .install(resources.withRuntimeStylesheets())
     } catch {
         print("[SwiftWebUIRuntime] resource installation failed: \(error)")
         return
