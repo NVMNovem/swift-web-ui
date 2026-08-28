@@ -15,7 +15,26 @@ final class FakeDOMNode {
     var attributes: [String: String] = [:]
     var styles: [String: String] = [:]
     var action: (() -> Void)?
+    var keyAction: ((String) -> Void)?
+    var keyActionKeys: [String] = []
+    var dismissAction: (() -> Void)?
+    var isPresented = false
+    var isModal = false
     var children: [FakeDOMNode] = []
+
+    /// Closes the dialog the way the browser would, notifying the page after.
+    func browserDismiss() {
+        guard isPresented else { return }
+        isPresented = false
+        isModal = false
+        dismissAction?()
+    }
+
+    /// Delivers a key-down the way the browser would: only for a claimed key.
+    func pressKey(_ key: String) {
+        guard keyActionKeys.contains(key) else { return }
+        keyAction?(key)
+    }
 
     init(id: Int, tagName: String? = nil, text: String? = nil) {
         self.id = id
@@ -36,14 +55,29 @@ final class FakeDOMBackend: BrowserHeadBackend {
     private var nextRegistration = 1
     let root = FakeDOMNode(id: 0, tagName: "root")
     let head = FakeDOMNode(id: -1, tagName: "head")
+    let body = FakeDOMNode(id: -2, tagName: "body")
+    var failDocumentBody = false
     var operations: [String] = []
     var releasedRegistrations: [Int] = []
+    var focusedNodes: [FakeDOMNode] = []
     var buildCount = 0
     var failResourceTextInstallation = false
 
     func documentHead() throws -> FakeDOMNode {
         operations.append("documentHead")
         return head
+    }
+
+    func documentBody() throws -> FakeDOMNode {
+        operations.append("documentBody")
+        if failDocumentBody {
+            throw BrowserHeadBackendError.documentBodyUnavailable
+        }
+        return body
+    }
+
+    func inlineStyleValue(name: String, on node: FakeDOMNode) -> String? {
+        node.styles[name]
     }
 
     func createElement(_ tagName: String) -> FakeDOMNode {
@@ -104,6 +138,50 @@ final class FakeDOMBackend: BrowserHeadBackend {
         node.action = nil
     }
 
+    func setKeyAction(
+        keys: [String],
+        action: @escaping (String) -> Void,
+        on node: FakeDOMNode
+    ) -> Int {
+        defer { nextRegistration += 1 }
+        operations.append("setKeyAction \(node.id) \(nextRegistration) [\(keys.joined(separator: ", "))]")
+        node.keyAction = action
+        node.keyActionKeys = keys
+        return nextRegistration
+    }
+
+    func removeKeyAction(from node: FakeDOMNode, registration: Int) {
+        operations.append("removeKeyAction \(node.id) \(registration)")
+        releasedRegistrations.append(registration)
+        node.keyAction = nil
+        node.keyActionKeys = []
+    }
+
+    func presentDialog(_ node: FakeDOMNode, modal: Bool) {
+        operations.append("presentDialog \(node.id) modal=\(modal)")
+        node.isPresented = true
+        node.isModal = modal
+    }
+
+    func dismissDialog(_ node: FakeDOMNode) {
+        operations.append("dismissDialog \(node.id)")
+        node.isPresented = false
+        node.isModal = false
+    }
+
+    func setDismissAction(_ action: @escaping () -> Void, on node: FakeDOMNode) -> Int {
+        defer { nextRegistration += 1 }
+        operations.append("setDismissAction \(node.id) \(nextRegistration)")
+        node.dismissAction = action
+        return nextRegistration
+    }
+
+    func removeDismissAction(from node: FakeDOMNode, registration: Int) {
+        operations.append("removeDismissAction \(node.id) \(registration)")
+        releasedRegistrations.append(registration)
+        node.dismissAction = nil
+    }
+
     func append(_ child: FakeDOMNode, to parent: FakeDOMNode) {
         operations.append("append \(child.id) to \(parent.id)")
         parent.children.append(child)
@@ -127,16 +205,25 @@ final class FakeDOMBackend: BrowserHeadBackend {
         operations.append("removeAll \(parent.id)")
         parent.children.removeAll()
     }
+
+    func focus(_ node: FakeDOMNode) {
+        operations.append("focus \(node.id)")
+        focusedNodes.append(node)
+    }
 }
 
 func mounted(
     _ webNode: WebNode,
-    backend: FakeDOMBackend
+    backend: FakeDOMBackend,
+    scrollLock: ScrollLock<FakeDOMBackend>? = nil
 ) -> MountedNode<FakeDOMNode, Int> {
-    let result = DOMMounter(backend: backend).mount(webNode)
+    let mounter = DOMMounter(backend: backend, scrollLock: scrollLock ?? ScrollLock(backend: backend))
+    var pending = DOMMounter<FakeDOMBackend>.PendingInsertionEffects()
+    let result = mounter.mount(webNode, pending: &pending)
     for handle in result.topLevelDOMHandles {
         backend.append(handle, to: backend.root)
     }
+    mounter.flush(pending)
     return result
 }
 
@@ -145,13 +232,21 @@ func element(
     attributes: [WebAttribute] = [],
     styles: [WebStyleDeclaration] = [],
     children: [WebNode] = [],
-    action: ActionIntent? = nil
+    action: ActionIntent? = nil,
+    requestsFocus: Bool = false,
+    keyActions: [KeyAction] = [],
+    presentation: DialogPresentation? = nil,
+    dismissAction: ActionIntent? = nil
 ) -> WebNode {
     .element(.init(
         tagName: tag,
         attributes: attributes,
         styles: styles,
         children: children,
-        action: action
+        action: action,
+        requestsFocus: requestsFocus,
+        keyActions: keyActions,
+        presentation: presentation,
+        dismissAction: dismissAction
     ))
 }

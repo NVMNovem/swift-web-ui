@@ -69,5 +69,7 @@ public enum ViewModifierNode {
     case shadow(BoxShadow)
     case gap(SwiftCSS.Length)
     case buttonStyle(ButtonStyleToken)
+    case defaultFocus
+    case onKeyDown(key: String, action: ActionIntent)
     case setState(ClientStateMutation)
 }

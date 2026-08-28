@@ -80,6 +80,31 @@ public extension View {
     func gap(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.gap(value)) }
     func buttonStyle(_ token: ButtonStyleToken) -> ModifiedView<Self> { modified(.buttonStyle(token)) }
 
+    /// Focuses this element once it is inserted into a live document.
+    ///
+    /// This is one-way: it says "focus me when I appear", and nothing reads
+    /// focus back out of the DOM. It is deliberately not the `autofocus`
+    /// attribute, which browsers honour at parse time rather than on insertion —
+    /// static rendering falls back to `autofocus` because that is the honest
+    /// equivalent there, but a runtime mount calls `focus()` itself.
+    func defaultFocus() -> ModifiedView<Self> { modified(.defaultFocus) }
+
+    /// Runs `perform` when this element sees a key-down for `key`.
+    ///
+    /// `key` is the DOM's own `KeyboardEvent.key` string — `"Escape"`,
+    /// `"Enter"`, `"ArrowDown"`.
+    ///
+    /// The handler is scoped to this element, so it only fires while focus is
+    /// inside it. That is deliberate: a scoped listener dies with the view,
+    /// where a document-level one outlives it. An element that is not otherwise
+    /// focusable needs `.attribute("tabindex", "-1")` and ``defaultFocus()`` for
+    /// the handler to ever see a key.
+    ///
+    /// Browser-runtime only. Static rendering emits no key handler.
+    func onKeyDown(_ key: String, perform: @escaping () -> Void) -> ModifiedView<Self> {
+        modified(.onKeyDown(key: key, action: .closure(perform)))
+    }
+
     func setState(_ key: String, to value: String) -> ModifiedView<Self> {
         modified(.setState(.init(target: .named(key), value: .string(value))))
     }

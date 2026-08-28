@@ -7,7 +7,7 @@
 
 @_spi(Runtime) @_spi(Rendering) import SwiftWebUI
 
-final class MountedRoot<Backend: DOMBackend> {
+final class MountedRoot<Backend: BrowserHeadBackend> {
     typealias Node = MountedNode<Backend.Node, Backend.ActionRegistration>
 
     private let container: Backend.Node
@@ -21,6 +21,11 @@ final class MountedRoot<Backend: DOMBackend> {
 
     /// Owns `@State` storage for everything mounted under this root.
     let stateSlots = StateSlotStore()
+    /// Owns the document body's scroll lock for everything mounted under this root.
+    ///
+    /// Only the presentation primitive drives it. There is deliberately no
+    /// public modifier for it — see ``ScrollLock``.
+    let scrollLock: ScrollLock<Backend>
     private var isRebuilding = false
 
     deinit {
@@ -41,6 +46,7 @@ final class MountedRoot<Backend: DOMBackend> {
         self.configuration = configuration
         self.installedResources = installedResources
         self.build = build
+        self.scrollLock = ScrollLock(backend: backend)
     }
 
     func start() {
@@ -82,6 +88,7 @@ final class MountedRoot<Backend: DOMBackend> {
         let applier = DOMPatchApplier(
             backend: backend,
             container: container,
+            scrollLock: scrollLock,
             loggingEnabled: configuration.reconciliationLogging
         )
         do {
@@ -91,8 +98,11 @@ final class MountedRoot<Backend: DOMBackend> {
             print("[SwiftWebUIRuntime] reconciliation fallback: \(error)")
             applier.recursivelyReleaseActions(in: mountedNode)
             backend.removeAllChildren(from: container)
-            let replacement = DOMMounter(backend: backend).mount(newWebNode)
+            let mounter = DOMMounter(backend: backend, scrollLock: scrollLock)
+            var pending = DOMMounter<Backend>.PendingInsertionEffects()
+            let replacement = mounter.mount(newWebNode, pending: &pending)
             appendToContainer(replacement)
+            mounter.flush(pending)
             self.mountedNode = replacement
         }
         previousWebNode = newWebNode
@@ -100,13 +110,16 @@ final class MountedRoot<Backend: DOMBackend> {
 
     private func initialMount() {
         if let mountedNode {
-            DOMPatchApplier(backend: backend, container: container)
+            DOMPatchApplier(backend: backend, container: container, scrollLock: scrollLock)
                 .recursivelyReleaseActions(in: mountedNode)
         }
         backend.removeAllChildren(from: container)
         let webNode = buildTrackingState()
-        let mountedNode = DOMMounter(backend: backend).mount(webNode)
+        let mounter = DOMMounter(backend: backend, scrollLock: scrollLock)
+        var pending = DOMMounter<Backend>.PendingInsertionEffects()
+        let mountedNode = mounter.mount(webNode, pending: &pending)
         appendToContainer(mountedNode)
+        mounter.flush(pending)
         previousWebNode = webNode
         self.mountedNode = mountedNode
     }

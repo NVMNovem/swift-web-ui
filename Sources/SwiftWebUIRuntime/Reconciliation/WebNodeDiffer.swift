@@ -54,6 +54,25 @@ struct WebNodeDiffer {
             if actionsRequireReplacement(old: oldElement.action, new: newElement.action) {
                 patches.append(.replaceAction(path: path, action: newElement.action))
             }
+            if keyActionsRequireReplacement(old: oldElement.keyActions, new: newElement.keyActions) {
+                patches.append(.replaceKeyActions(path: path, actions: newElement.keyActions))
+            }
+            if actionsRequireReplacement(old: oldElement.dismissAction, new: newElement.dismissAction) {
+                patches.append(.replaceDismissAction(path: path, action: newElement.dismissAction))
+            }
+            // Presentation is reconciled like any other element state, so the
+            // view never calls `showModal()` itself.
+            if let presentation = newElement.presentation, presentation != oldElement.presentation {
+                patches.append(.setDialogPresentation(path: path, presentation: presentation))
+            }
+            // Only the transition into asking for focus may move it. An element
+            // that already had focus requested keeps it: re-emitting on every
+            // rerender would yank focus back mid-typing on unrelated state
+            // changes. This has to be explicit — the element comparison above
+            // would otherwise treat any difference as a reason to act.
+            if !oldElement.requestsFocus, newElement.requestsFocus {
+                patches.append(.focus(path: path))
+            }
             diffChildren(
                 old: oldElement.children,
                 new: newElement.children,
@@ -107,6 +126,18 @@ struct WebNodeDiffer {
         }
         for item in new where oldValues[name(item)] != value(item) {
             patches.append(set(name(item), value(item)))
+        }
+    }
+
+    /// Key handlers replace conservatively for the same reason click actions do:
+    /// a closure has no renderer-neutral identity, so a rerender that still
+    /// carries one cannot be shown to carry the same one.
+    private func keyActionsRequireReplacement(old: [KeyAction], new: [KeyAction]) -> Bool {
+        if old.isEmpty, new.isEmpty { return false }
+        if old.count != new.count { return true }
+        return zip(old, new).contains { pair in
+            pair.0.key != pair.1.key
+                || actionsRequireReplacement(old: pair.0.action, new: pair.1.action)
         }
     }
 

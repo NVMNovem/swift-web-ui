@@ -82,6 +82,9 @@ public struct ViewNodeToWebNodeLowerer {
         var attributes: [WebAttribute] = []
         var styles: [WebStyleDeclaration] = []
         var children: [WebNode] = []
+        var sharesOneGridCell = false
+        var presentation: DialogPresentation?
+        var dismissAction: ActionIntent?
 
         switch container.kind {
         case .group:
@@ -96,6 +99,18 @@ public struct ViewNodeToWebNodeLowerer {
             tagName = "div"
             styles = [style(Display(.grid).cssDeclaration)]
             if let spacing { styles.append(style(Gap(spacing).cssDeclaration)) }
+        case .layered(let alignment):
+            tagName = "div"
+            styles = layeredStyles(alignment: alignment)
+            sharesOneGridCell = true
+        case .dialog(let dialogPresentation, let onDismiss):
+            tagName = "dialog"
+            presentation = dialogPresentation
+            dismissAction = onDismiss
+            // A key handler only fires while focus is inside its element, and a
+            // dialog is not focusable by default.
+            attributes.append(.init(name: "tabindex", value: "-1"))
+            attributes.append(.init(name: "class", value: dialogBackdropClassName))
         case .div:
             tagName = "div"
         case .article:
@@ -118,13 +133,16 @@ public struct ViewNodeToWebNodeLowerer {
             tagName = tag
         }
 
-        children.append(contentsOf: container.children.flatMap { flattenedChildren(of: lower($0)) })
+        let loweredChildren = container.children.flatMap { flattenedChildren(of: lower($0)) }
+        children.append(contentsOf: sharesOneGridCell ? loweredChildren.map(inOneGridCell) : loweredChildren)
         return element(
             tagName: tagName,
             baseAttributes: attributes,
             baseStyles: styles,
             modifiers: modifiers,
-            children: children
+            children: children,
+            presentation: presentation,
+            dismissAction: dismissAction
         )
     }
 
@@ -253,13 +271,17 @@ public struct ViewNodeToWebNodeLowerer {
         baseStyles: [WebStyleDeclaration] = [],
         modifiers: [ViewModifierNode],
         children: [WebNode] = [],
-        action baseAction: ActionIntent? = nil
+        action baseAction: ActionIntent? = nil,
+        presentation: DialogPresentation? = nil,
+        dismissAction: ActionIntent? = nil
     ) -> WebNode {
         var attributes: [WebAttribute] = []
         var classNames: [String] = []
         var identifier: String?
         var styles = baseStyles
         var action = baseAction
+        var requestsFocus = false
+        var keyActions: [KeyAction] = []
 
         for attribute in baseAttributes {
             collect(attribute, attributes: &attributes, classNames: &classNames, identifier: &identifier)
@@ -338,6 +360,8 @@ public struct ViewNodeToWebNodeLowerer {
                 if let className = token.className { classNames.append(className) }
                 styles.append(contentsOf: token.declarations.map(style))
             case .setState(let mutation): action = .setState(mutation)
+            case .defaultFocus: requestsFocus = true
+            case .onKeyDown(let key, let keyAction): keyActions.append(.init(key: key, action: keyAction))
             }
         }
 
@@ -348,7 +372,11 @@ public struct ViewNodeToWebNodeLowerer {
             attributes: attributes,
             styles: styles,
             children: children,
-            action: action
+            action: action,
+            requestsFocus: requestsFocus,
+            keyActions: keyActions,
+            presentation: presentation,
+            dismissAction: dismissAction
         ))
     }
 
@@ -377,6 +405,31 @@ public struct ViewNodeToWebNodeLowerer {
         ]
         if let spacing { styles.append(style(Gap(spacing).cssDeclaration)) }
         return styles
+    }
+
+    /// Lowers ``ContainerKind/layered(alignment:)``.
+    ///
+    /// A grid, not absolute positioning: absolutely-positioned children are out
+    /// of flow, so the stack would collapse to zero height instead of sizing to
+    /// its largest child.
+    private func layeredStyles(alignment: Alignment) -> [WebStyleDeclaration] {
+        [
+            style(Display(.grid).cssDeclaration),
+            .init(name: "align-items", value: layeredBlockAlignment(alignment)),
+            .init(name: "justify-items", value: layeredInlineAlignment(alignment)),
+        ]
+    }
+
+    /// Wraps a layered child so it shares the single grid cell with its siblings.
+    ///
+    /// The lowerer builds children generically, so the declaration cannot be
+    /// merged into the child itself. The extra element is visible in the output.
+    private func inOneGridCell(_ child: WebNode) -> WebNode {
+        .element(.init(
+            tagName: "div",
+            styles: [.init(name: "grid-area", value: "1 / 1")],
+            children: [child]
+        ))
     }
 
     private func borderEdgeStyles(edges: Edge.Set, value: String) -> [WebStyleDeclaration] {
@@ -470,6 +523,26 @@ private func tagName(for role: SemanticRole) -> String {
     case .h4: "h4"
     case .h5: "h5"
     case .h6: "h6"
+    }
+}
+
+/// The block-axis half of a layered stack's alignment.
+///
+/// ``Alignment`` names one axis at a time, so the axis it does not name centres.
+private func layeredBlockAlignment(_ alignment: Alignment) -> String {
+    switch alignment {
+    case .top: "start"
+    case .bottom: "end"
+    case .leading, .center, .trailing: "center"
+    }
+}
+
+/// The inline-axis half of a layered stack's alignment.
+private func layeredInlineAlignment(_ alignment: Alignment) -> String {
+    switch alignment {
+    case .leading: "start"
+    case .trailing: "end"
+    case .top, .center, .bottom: "center"
     }
 }
 

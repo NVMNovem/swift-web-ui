@@ -112,6 +112,10 @@ The runtime proof-of-concept module owns:
 - pure `WebNodeDiffer` patch production;
 - mechanical `DOMPatchApplier` DOM mutation and mounted-metadata updates;
 - JavaScriptKit DOM materialization and per-element click-handler retention/release;
+- moving focus for elements that requested it, after they are in the document;
+- per-element scoped key-down handler retention/release;
+- the document body's scroll lock, as a counter held by the single mounted root;
+- reconciled dialog presentation, and the close handler that writes dismissal back to the view tree;
 - incremental reconciliation after renderer-neutral state invalidation.
 
 Runtime element declarations stay inline. Named selectors, CSS custom properties,

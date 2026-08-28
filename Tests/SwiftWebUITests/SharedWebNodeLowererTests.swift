@@ -212,6 +212,180 @@ import Testing
     #expect(leading?.styles == [.init(name: "left", value: "4px")])
 }
 
+@Test func sharedLowererLowersBothButtonLabelForms() {
+    let plain = requireElement(lower(Button("Go") {}))
+    #expect(plain?.tagName == "button")
+    #expect(plain?.children.count == 1)
+    guard case .text(let plainLabel)? = plain?.children.first else {
+        Issue.record("Expected a raw text child for a string label")
+        return
+    }
+    #expect(plainLabel == "Go")
+
+    let composed = requireElement(lower(
+        Button {
+            HStack(spacing: .px(8)) {
+                Image("avatar.png", alt: "")
+                Text("Damian")
+            }
+        }
+    ))
+    #expect(composed?.tagName == "button")
+    #expect(composed?.children.count == 1)
+    guard case .element(let stack)? = composed?.children.first else {
+        Issue.record("Expected the composed label to lower to an element")
+        return
+    }
+    #expect(stack.tagName == "div")
+    #expect(stack.children.count == 2)
+}
+
+@Test func sharedLowererLayersZStackChildrenInOneGridCell() {
+    let layered = requireElement(lower(
+        ZStack {
+            Text("Card")
+            Text("Badge")
+        }
+    ))
+    #expect(layered?.tagName == "div")
+    #expect(layered?.styles == [
+        .init(name: "display", value: "grid"),
+        .init(name: "align-items", value: "center"),
+        .init(name: "justify-items", value: "center"),
+    ])
+    #expect(layered?.children.count == 2)
+
+    guard case .element(let firstCell)? = layered?.children.first else {
+        Issue.record("Expected each layered child to be wrapped in a cell")
+        return
+    }
+    #expect(firstCell.styles == [.init(name: "grid-area", value: "1 / 1")])
+    #expect(firstCell.children.count == 1)
+}
+
+@Test func sharedLowererMapsLayeredAlignmentOntoBothAxes() {
+    let cases: [(Alignment, String, String)] = [
+        (.center, "center", "center"),
+        (.leading, "center", "start"),
+        (.trailing, "center", "end"),
+        (.top, "start", "center"),
+        (.bottom, "end", "center"),
+    ]
+
+    for (alignment, block, inline) in cases {
+        let node = requireElement(lower(ZStack(alignment: alignment) { Text("A") }))
+        #expect(node?.styles == [
+            .init(name: "display", value: "grid"),
+            .init(name: "align-items", value: block),
+            .init(name: "justify-items", value: inline),
+        ])
+    }
+}
+
+@Test func sharedLowererBuildsOverlayAndBackgroundAsLayeredStacks() {
+    let overlaid = requireElement(lower(
+        Text("Card").overlay(alignment: .top) { Text("Badge") }
+    ))
+    #expect(overlaid?.styles.contains(.init(name: "display", value: "grid")) == true)
+    #expect(overlaid?.children.count == 2)
+
+    // The receiver paints first, the overlay over it.
+    #expect(firstTextContent(in: overlaid?.children.first) == "Card")
+    #expect(firstTextContent(in: overlaid?.children.last) == "Badge")
+
+    let backed = requireElement(lower(
+        Text("Card").background { Div {} }
+    ))
+    #expect(backed?.children.count == 2)
+
+    // The background paints first, the receiver over it.
+    #expect(firstTextContent(in: backed?.children.last) == "Card")
+}
+
+private func firstTextContent(in node: WebNode?) -> String? {
+    switch node {
+    case .text(let content): return content
+    case .element(let element): return element.children.lazy.compactMap(firstTextContent(in:)).first
+    default: return nil
+    }
+}
+
+@Test func sharedLowererCarriesDefaultFocusAsElementState() {
+    let focused = requireElement(lower(Input().defaultFocus()))
+    #expect(focused?.requestsFocus == true)
+
+    let ordinary = requireElement(lower(Input()))
+    #expect(ordinary?.requestsFocus == false)
+
+    // It is element state, not a style or an attribute.
+    #expect(focused?.styles.isEmpty == true)
+    #expect(focused?.attributes.contains { $0.name == "autofocus" } == false)
+}
+
+@Test func sharedLowererCarriesKeyActionsInDeclarationOrder() {
+    let node = requireElement(lower(
+        Div { Text("Panel") }
+            .attribute("tabindex", "-1")
+            .onKeyDown("Escape") {}
+            .onKeyDown("Enter") {}
+    ))
+    #expect(node?.keyActions.map(\.key) == ["Escape", "Enter"])
+    #expect(requireElement(lower(Div { Text("Plain") }))?.keyActions.isEmpty == true)
+}
+
+@Test func sharedLowererCarriesDialogPresentationAsElementState() {
+    var presented = true
+    let binding = Binding(get: { presented }, set: { presented = $0 })
+
+    let open = requireElement(lower(Dialog(isPresented: binding) { Text("Panel") }))
+    #expect(open?.tagName == "dialog")
+    #expect(open?.presentation == .modal)
+    #expect(open?.dismissAction != nil)
+    // A key handler only fires while focus is inside its element.
+    #expect(open?.attributes.contains(.init(name: "tabindex", value: "-1")) == true)
+
+    let nonModal = requireElement(lower(Dialog(isPresented: binding, isModal: false) { Text("Panel") }))
+    #expect(nonModal?.presentation == .nonModal)
+
+    presented = false
+    let closed = requireElement(lower(Dialog(isPresented: binding) { Text("Panel") }))
+    #expect(closed?.presentation == .dismissed)
+}
+
+@Test func dialogDismissActionWritesFalseBackThroughItsBinding() {
+    var presented = true
+    let binding = Binding(get: { presented }, set: { presented = $0 })
+    let node = requireElement(lower(Dialog(isPresented: binding) { Text("Panel") }))
+
+    guard case .closure(let dismiss)? = node?.dismissAction else {
+        Issue.record("Expected a dismissal closure")
+        return
+    }
+    dismiss()
+
+    // Otherwise the DOM and the view tree disagree, and the next rebuild
+    // re-opens a sheet the reader just closed.
+    #expect(presented == false)
+}
+
+@Test func sheetEmitsTheDialogBesideItsReceiver() {
+    var presented = true
+    let binding = Binding(get: { presented }, set: { presented = $0 })
+
+    let node = lower(Text("Page").sheet(isPresented: binding) { Text("Panel") })
+    guard case .fragment(let children) = node else {
+        Issue.record("Expected the receiver and its sheet side by side")
+        return
+    }
+    #expect(children.count == 2)
+    guard case .element(let dialog) = children[1] else {
+        Issue.record("Expected the sheet to lower to a dialog element")
+        return
+    }
+    #expect(dialog.tagName == "dialog")
+    #expect(dialog.presentation == .modal)
+}
+
 private func lower<Content: View>(_ view: Content) -> WebNode {
     ViewNodeToWebNodeLowerer().lower(view.makeViewNode())
 }

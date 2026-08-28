@@ -56,6 +56,27 @@ struct ProjectCard: View {
 
 ## Discussion
 
+``Button`` takes either a string or a content closure, the same pair ``Link``
+offers. Reach for the content form whenever the control is more than a word —
+it keeps the whole presentation inside the real control, so the focus ring
+traces what the reader is actually clicking:
+
+```swift
+Button {
+    HStack(spacing: .px(8)) {
+        Image(avatarURL, alt: "")
+            .frame(width: .px(24), height: .px(24))
+            .clipShape(.capsule)
+        Text(name)
+    }
+} 
+```
+
+> Note: Both initialisers build their label in a detached ``ViewContext``, as
+> ``Link`` does. A `@State` value declared inside the closure does not bind to
+> the mounted root's slot store and falls back to private storage — declare
+> state on the enclosing view instead.
+
 Prefer semantic views when they express the document structure. Use ``Article`` for self-contained content, ``Section`` for sectioning content, and ``Footer`` for footer content. Use ``Div`` as a low-level escape hatch.
 
 ``Element`` goes one level lower still, for markup SwiftWebUI attaches no semantics to — most often a foreign element such as `svg`:

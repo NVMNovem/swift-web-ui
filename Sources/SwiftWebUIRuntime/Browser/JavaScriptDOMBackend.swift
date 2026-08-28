@@ -32,6 +32,20 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
         return head
     }
 
+    func documentBody() throws -> JSObject {
+        guard let body = document.body.object else {
+            throw BrowserHeadBackendError.documentBodyUnavailable
+        }
+        return body
+    }
+
+    func inlineStyleValue(name: String, on node: JSObject) -> String? {
+        guard let value = node.style.object?.getPropertyValue!(name).string, !value.isEmpty else {
+            return nil
+        }
+        return value
+    }
+
     func createElement(_ tagName: String) -> JSObject {
         document.createElement!(tagName).object!
     }
@@ -77,6 +91,53 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
         node.onclick = .null
     }
 
+    func setKeyAction(
+        keys: [String],
+        action: @escaping (String) -> Void,
+        on node: JSObject
+    ) -> JSClosure {
+        let handler = JSClosure { arguments in
+            guard let key = arguments.first?.key.string, keys.contains(key) else {
+                return .undefined
+            }
+            action(key)
+            return .undefined
+        }
+        node.onkeydown = .object(handler)
+        return handler
+    }
+
+    func removeKeyAction(from node: JSObject, registration: JSClosure) {
+        node.onkeydown = .null
+    }
+
+    func presentDialog(_ node: JSObject, modal: Bool) {
+        if modal {
+            _ = node.showModal!()
+        } else {
+            _ = node.show!()
+        }
+    }
+
+    func dismissDialog(_ node: JSObject) {
+        _ = node.close!()
+    }
+
+    func setDismissAction(_ action: @escaping () -> Void, on node: JSObject) -> JSClosure {
+        let handler = JSClosure { _ in
+            action()
+            return .undefined
+        }
+        // `close` rather than `cancel`: Escape, the backdrop, and an explicit
+        // `close()` all end in `close`, and only `cancel` is preventable.
+        node.onclose = .object(handler)
+        return handler
+    }
+
+    func removeDismissAction(from node: JSObject, registration: JSClosure) {
+        node.onclose = .null
+    }
+
     func append(_ child: JSObject, to parent: JSObject) {
         _ = parent.appendChild!(child)
     }
@@ -95,6 +156,10 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
 
     func removeAllChildren(from parent: JSObject) {
         _ = parent.replaceChildren!()
+    }
+
+    func focus(_ node: JSObject) {
+        _ = node.focus!()
     }
 }
 #endif

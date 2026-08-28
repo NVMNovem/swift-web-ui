@@ -100,6 +100,11 @@ shorthand. String-accepting modifiers such as `.gridTemplateColumns(...)`,
 `.transform(...)`, `.transition(...)`, and `.backdropFilter(...)` accept CSS
 strings because the corresponding SwiftCSS property value is intentionally broad.
 
+### Focus
+
+`.defaultFocus()` is not styling — it asks the browser to move focus to the
+element once it is in a live document. See <doc:Forms>.
+
 ### Buttons
 
 - ``ButtonStyleToken``

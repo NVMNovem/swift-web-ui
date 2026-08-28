@@ -67,6 +67,22 @@ final class MountedElementNode<Handle, ActionRegistration> {
     var styles: [WebStyleDeclaration]
     var children: [MountedNode<Handle, ActionRegistration>]
     var actionRegistration: ActionRegistration?
+    /// Every key-down registration this element holds.
+    ///
+    /// A backend that owns one handler slot per element returns a single
+    /// registration; one that installs a listener per key returns several.
+    /// Either way an unreleased registration leaks, so they are released
+    /// together with the click registration.
+    var keyActionRegistrations: [ActionRegistration]
+    /// The handler for the browser dismissing this element on its own.
+    var dismissRegistration: ActionRegistration?
+    /// How the browser is currently showing this element, if at all.
+    var presentation: DialogPresentation?
+    /// Whether this element currently holds the document's scroll lock.
+    ///
+    /// Tracked per element so a release is exact: the lock is a counter, and an
+    /// element that never took it must never give it back.
+    var holdsScrollLock = false
 
     init(
         handle: Handle,
@@ -74,7 +90,10 @@ final class MountedElementNode<Handle, ActionRegistration> {
         attributes: [WebAttribute],
         styles: [WebStyleDeclaration],
         children: [MountedNode<Handle, ActionRegistration>],
-        actionRegistration: ActionRegistration?
+        actionRegistration: ActionRegistration?,
+        keyActionRegistrations: [ActionRegistration] = [],
+        dismissRegistration: ActionRegistration? = nil,
+        presentation: DialogPresentation? = nil
     ) {
         self.handle = handle
         self.tagName = tagName
@@ -82,6 +101,9 @@ final class MountedElementNode<Handle, ActionRegistration> {
         self.styles = styles
         self.children = children
         self.actionRegistration = actionRegistration
+        self.keyActionRegistrations = keyActionRegistrations
+        self.dismissRegistration = dismissRegistration
+        self.presentation = presentation
     }
 }
 

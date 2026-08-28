@@ -186,7 +186,280 @@ import Testing
         #expect(parent.children[0].text == "A")
     }
 
-    private func applier(_ backend: FakeDOMBackend) -> DOMPatchApplier<FakeDOMBackend> {
-        DOMPatchApplier(backend: backend, container: backend.root)
+    @Test func mountingFocusesOnlyAfterTheHandleIsInTheDocument() {
+        let backend = FakeDOMBackend()
+        _ = mounted(element("input", requestsFocus: true), backend: backend)
+        let input = backend.root.children[0]
+
+        // `focus()` on a detached node is silently a no-op, so the focus call
+        // must come after the append that puts the handle in the document.
+        let appendIndex = backend.operations.firstIndex(of: "append \(input.id) to \(backend.root.id)")
+        let focusIndex = backend.operations.firstIndex(of: "focus \(input.id)")
+        #expect(appendIndex != nil)
+        #expect(focusIndex != nil)
+        if let appendIndex, let focusIndex { #expect(appendIndex < focusIndex) }
+        #expect(backend.focusedNodes.count == 1)
+    }
+
+    @Test func focusPatchFocusesTheElementAtItsPath() throws {
+        let backend = FakeDOMBackend()
+        var tree = mounted(element(children: [element("input"), element("input")]), backend: backend)
+        let second = backend.root.children[0].children[1]
+        backend.operations.removeAll()
+
+        try applier(backend).apply([.focus(path: NodePath([1]))], to: &tree)
+
+        #expect(backend.operations == ["focus \(second.id)"])
+        #expect(backend.focusedNodes.last === second)
+    }
+
+    @Test func aChildInsertedAskingForFocusIsFocusedAfterItIsInserted() throws {
+        let backend = FakeDOMBackend()
+        var tree = mounted(element(children: [element("input")]), backend: backend)
+        let parent = backend.root.children[0]
+        backend.operations.removeAll()
+
+        try applier(backend).apply(
+            [.insertChild(parent: NodePath(), index: 1, node: element("input", requestsFocus: true))],
+            to: &tree
+        )
+
+        let inserted = parent.children[1]
+        let insertIndex = backend.operations.firstIndex { $0.hasPrefix("insert \(inserted.id) into") }
+        let focusIndex = backend.operations.firstIndex(of: "focus \(inserted.id)")
+        #expect(insertIndex != nil)
+        #expect(focusIndex != nil)
+        if let insertIndex, let focusIndex { #expect(insertIndex < focusIndex) }
+    }
+
+    @Test func mountedKeyHandlerFiresOnlyForItsOwnKey() {
+        let backend = FakeDOMBackend()
+        var escapes = 0
+        var enters = 0
+        _ = mounted(
+            element(keyActions: [
+                .init(key: "Escape", action: .closure { escapes += 1 }),
+                .init(key: "Enter", action: .closure { enters += 1 }),
+            ]),
+            backend: backend
+        )
+        let node = backend.root.children[0]
+
+        node.pressKey("Escape")
+        node.pressKey("ArrowDown")
+        node.pressKey("Enter")
+
+        #expect(escapes == 1)
+        #expect(enters == 1)
+    }
+
+    @Test func replacingKeyActionsReleasesTheOldRegistrationFirst() throws {
+        let backend = FakeDOMBackend()
+        var tree = mounted(
+            element(keyActions: [.init(key: "Escape", action: .closure {})]),
+            backend: backend
+        )
+        let node = backend.root.children[0]
+        backend.operations.removeAll()
+        backend.releasedRegistrations.removeAll()
+
+        var fired = 0
+        try applier(backend).apply(
+            [.replaceKeyActions(path: NodePath(), actions: [.init(key: "Enter", action: .closure { fired += 1 })])],
+            to: &tree
+        )
+
+        #expect(backend.releasedRegistrations.count == 1)
+        #expect(backend.operations.contains { $0.hasPrefix("removeKeyAction \(node.id)") })
+        #expect(backend.operations.contains { $0.hasPrefix("setKeyAction \(node.id)") })
+
+        node.pressKey("Escape")
+        #expect(fired == 0)
+        node.pressKey("Enter")
+        #expect(fired == 1)
+    }
+
+    @Test func removingASubtreeReleasesItsKeyRegistrations() throws {
+        let backend = FakeDOMBackend()
+        var tree = mounted(
+            element(children: [
+                element("div", keyActions: [.init(key: "Escape", action: .closure {})]),
+            ]),
+            backend: backend
+        )
+        backend.releasedRegistrations.removeAll()
+
+        try applier(backend).apply([.removeChild(parent: NodePath(), index: 0)], to: &tree)
+
+        // An unreleased handler leaks on every rebuild.
+        #expect(backend.releasedRegistrations.count == 1)
+    }
+
+    @Test func mountingAndUnmountingRepeatedlyLeaksNoKeyRegistrations() throws {
+        let backend = FakeDOMBackend()
+        var tree = mounted(element(), backend: backend)
+        let applier = applier(backend)
+
+        for _ in 0..<100 {
+            try applier.apply(
+                [.insertChild(
+                    parent: NodePath(),
+                    index: 0,
+                    node: element("div", keyActions: [.init(key: "Escape", action: .closure {})])
+                )],
+                to: &tree
+            )
+            try applier.apply([.removeChild(parent: NodePath(), index: 0)], to: &tree)
+        }
+
+        #expect(backend.releasedRegistrations.count == 100)
+        #expect(backend.root.children[0].children.isEmpty)
+    }
+
+    @Test func aPresentedModalDialogIsShownOnlyAfterItIsInTheDocument() {
+        let backend = FakeDOMBackend()
+        _ = mounted(element("dialog", presentation: .modal), backend: backend)
+        let dialog = backend.root.children[0]
+
+        // `showModal()` on a detached node throws, so it has to follow the append.
+        let appendIndex = backend.operations.firstIndex(of: "append \(dialog.id) to \(backend.root.id)")
+        let presentIndex = backend.operations.firstIndex(of: "presentDialog \(dialog.id) modal=true")
+        #expect(appendIndex != nil)
+        #expect(presentIndex != nil)
+        if let appendIndex, let presentIndex { #expect(appendIndex < presentIndex) }
+        #expect(dialog.isPresented)
+        #expect(dialog.isModal)
+    }
+
+    @Test func aDismissedDialogIsNeverShownOnMount() {
+        let backend = FakeDOMBackend()
+        _ = mounted(element("dialog", presentation: .dismissed), backend: backend)
+
+        #expect(!backend.root.children[0].isPresented)
+        #expect(!backend.operations.contains { $0.hasPrefix("presentDialog") })
+    }
+
+    @Test func presentingAModalDialogTakesTheScrollLockAndDismissingGivesItBack() throws {
+        let backend = FakeDOMBackend()
+        let scrollLock = ScrollLock(backend: backend)
+        var tree = mounted(
+            element("dialog", presentation: .dismissed),
+            backend: backend,
+            scrollLock: scrollLock
+        )
+        #expect(!scrollLock.isLocked)
+
+        try applier(backend, scrollLock: scrollLock).apply(
+            [.setDialogPresentation(path: NodePath(), presentation: .modal)],
+            to: &tree
+        )
+        #expect(scrollLock.isLocked)
+        #expect(backend.body.styles["overflow"] == "hidden")
+
+        try applier(backend, scrollLock: scrollLock).apply(
+            [.setDialogPresentation(path: NodePath(), presentation: .dismissed)],
+            to: &tree
+        )
+        #expect(!scrollLock.isLocked)
+        #expect(backend.body.styles["overflow"] == nil)
+    }
+
+    @Test func presentingTheSameDialogTwiceTakesTheScrollLockOnce() throws {
+        let backend = FakeDOMBackend()
+        let scrollLock = ScrollLock(backend: backend)
+        var tree = mounted(
+            element("dialog", presentation: .modal),
+            backend: backend,
+            scrollLock: scrollLock
+        )
+        let applier = applier(backend, scrollLock: scrollLock)
+
+        try applier.apply([.setDialogPresentation(path: NodePath(), presentation: .modal)], to: &tree)
+        try applier.apply([.setDialogPresentation(path: NodePath(), presentation: .dismissed)], to: &tree)
+
+        // An element that took the lock once must give it back exactly once.
+        #expect(!scrollLock.isLocked)
+        #expect(backend.body.styles["overflow"] == nil)
+    }
+
+    @Test func twoNestedSheetsRestoreScrollingExactlyOnce() throws {
+        let backend = FakeDOMBackend()
+        let scrollLock = ScrollLock(backend: backend)
+        var tree = mounted(
+            element(children: [
+                element("dialog", presentation: .modal),
+                element("dialog", presentation: .modal),
+            ]),
+            backend: backend,
+            scrollLock: scrollLock
+        )
+        let applier = applier(backend, scrollLock: scrollLock)
+        #expect(scrollLock.isLocked)
+
+        try applier.apply([.setDialogPresentation(path: NodePath([1]), presentation: .dismissed)], to: &tree)
+        #expect(scrollLock.isLocked)
+
+        try applier.apply([.setDialogPresentation(path: NodePath([0]), presentation: .dismissed)], to: &tree)
+        #expect(!scrollLock.isLocked)
+        #expect(backend.body.styles["overflow"] == nil)
+    }
+
+    @Test func removingAPresentedDialogGivesTheScrollLockBack() throws {
+        let backend = FakeDOMBackend()
+        let scrollLock = ScrollLock(backend: backend)
+        var tree = mounted(
+            element(children: [element("dialog", presentation: .modal)]),
+            backend: backend,
+            scrollLock: scrollLock
+        )
+        #expect(scrollLock.isLocked)
+
+        try applier(backend, scrollLock: scrollLock)
+            .apply([.removeChild(parent: NodePath(), index: 0)], to: &tree)
+
+        // Otherwise the page could never scroll again.
+        #expect(!scrollLock.isLocked)
+        #expect(backend.body.styles["overflow"] == nil)
+    }
+
+    @Test func theBrowserClosingADialogRunsItsDismissAction() {
+        let backend = FakeDOMBackend()
+        var dismissed = 0
+        _ = mounted(
+            element("dialog", presentation: .modal, dismissAction: .closure { dismissed += 1 }),
+            backend: backend
+        )
+        let dialog = backend.root.children[0]
+
+        // Escape and the backdrop end in the same place: the browser closes the
+        // dialog without asking, and the binding has to hear about it.
+        dialog.browserDismiss()
+
+        #expect(dismissed == 1)
+        #expect(!dialog.isPresented)
+    }
+
+    @Test func removingADialogReleasesItsDismissRegistration() throws {
+        let backend = FakeDOMBackend()
+        var tree = mounted(
+            element(children: [element("dialog", presentation: .dismissed, dismissAction: .closure {})]),
+            backend: backend
+        )
+        backend.releasedRegistrations.removeAll()
+
+        try applier(backend).apply([.removeChild(parent: NodePath(), index: 0)], to: &tree)
+
+        #expect(backend.releasedRegistrations.count == 1)
+    }
+
+    private func applier(
+        _ backend: FakeDOMBackend,
+        scrollLock: ScrollLock<FakeDOMBackend>? = nil
+    ) -> DOMPatchApplier<FakeDOMBackend> {
+        DOMPatchApplier(
+            backend: backend,
+            container: backend.root,
+            scrollLock: scrollLock ?? ScrollLock(backend: backend)
+        )
     }
 }
