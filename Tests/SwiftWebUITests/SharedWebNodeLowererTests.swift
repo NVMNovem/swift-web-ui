@@ -386,6 +386,28 @@ private func firstTextContent(in node: WebNode?) -> String? {
     #expect(dialog.presentation == .modal)
 }
 
+@Test func sharedLowererCarriesTransitionPhasesAsElementState() {
+    let node = requireElement(lower(
+        Div { Text("Card") }
+            .transition(enter: "sheet-in", exit: "sheet-out", durationMilliseconds: 280)
+    ))
+    #expect(node?.transitionPhases == .init(
+        enter: "sheet-in",
+        exit: "sheet-out",
+        durationMilliseconds: 280
+    ))
+    // Phases are scheduling data, not a style declaration.
+    #expect(node?.styles.isEmpty == true)
+
+    #expect(requireElement(lower(Div { Text("Plain") }))?.transitionPhases == nil)
+}
+
+@Test func rawTransitionAndTransitionPhasesAreDifferentModifiers() {
+    let raw = requireElement(lower(Div {}.transition("opacity 220ms ease")))
+    #expect(raw?.styles == [.init(name: "transition", value: "opacity 220ms ease")])
+    #expect(raw?.transitionPhases == nil)
+}
+
 private func lower<Content: View>(_ view: Content) -> WebNode {
     ViewNodeToWebNodeLowerer().lower(view.makeViewNode())
 }

@@ -79,6 +79,11 @@ struct WebNodeStaticLowerer {
         var classInsertionIndex: Int?
         var identifier: String?
 
+        // A static document has no moment of insertion to transition from, so
+        // the element is emitted already wearing its entered state. There is no
+        // static equivalent of an exit: nothing removes the element.
+        if let enter = element.transitionPhases?.enter { classNames.append(enter) }
+
         for attribute in element.attributes {
             if attribute.name == "class", classInsertionIndex == nil {
                 classInsertionIndex = attributes.count

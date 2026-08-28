@@ -64,6 +64,16 @@ browser closes a dialog on Escape or its `cancel` event without consulting the
 view tree, so the runtime registers a close handler that writes back through the
 binding and takes the same `ViewInvalidation` hop a click action takes.
 
+Enter and exit transitions are the one change that alters what reconciliation
+means, because a leaving element outlives the render that removed it. The
+resolution is to split the two lifetimes: the mounted tree drops the child
+immediately, so every later sibling keeps the index it had and every subsequent
+patch in the batch still resolves to the element it meant, while the DOM handle
+lingers under its old parent until its timer fires. Nothing addresses that handle
+positionally any more, and a later render mounts a fresh one rather than
+reclaiming it. ``MountedRoot`` owns the frames and timers so a torn-down root can
+cancel work that would otherwise fire against nodes that are already gone.
+
 `RemoteList` remains static-only because it is currently defined by generated fetch/template JavaScript. Static client-state mutation actions remain a static resource feature. The runtime uses child position only as a traversal location; it does not yet define keyed identity, state slots, moves, or hydration. Removed subtrees recursively release retained handlers, while closure-bearing elements conservatively replace their handler registration after rerender because closures have no stable token.
 
 ## Embedded builder choice

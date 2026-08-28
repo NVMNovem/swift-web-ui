@@ -317,6 +317,21 @@ extension ButtonStyleToken {
     #expect(!dismissed.contains("open"))
 }
 
+@Test func staticRenderingEmitsTheEnterClassAndNoExit() {
+    let html = HTMLRenderer().renderView(
+        Div { Text("Card") }
+            .class("card")
+            .transition(enter: "sheet-in", exit: "sheet-out", durationMilliseconds: 280)
+    ).htmlString()
+
+    // A static document has no moment of insertion to transition from, so the
+    // element is emitted already in its entered state. Nothing removes it, so
+    // there is no static equivalent of an exit.
+    #expect(html.contains("sheet-in"))
+    #expect(html.contains("card"))
+    #expect(!html.contains("sheet-out"))
+}
+
 @Test func textTransformModifierRendersSwiftCSSTextTransformProperty() {
     let uppercase = HTMLRenderer().renderView(Text("Hello").textTransform(.uppercase))
     let lowercase = HTMLRenderer().renderView(Text("Hello").textTransform(.lowercase))

@@ -12,6 +12,16 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
     typealias Node = JSObject
     typealias ActionRegistration = JSClosure
 
+    /// A pending `setTimeout` or `requestAnimationFrame`.
+    ///
+    /// The closure is retained alongside the handle so it stays alive until the
+    /// browser calls it, and is released whether it fires or is cancelled.
+    struct ScheduledWork {
+        let handler: JSClosure
+        let handle: JSValue
+        let isAnimationFrame: Bool
+    }
+
     private let document: JSObject
 
     init?() {
@@ -160,6 +170,37 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
 
     func focus(_ node: JSObject) {
         _ = node.focus!()
+    }
+
+    func onNextAnimationFrame(_ body: @escaping () -> Void) -> ScheduledWork {
+        let handler = JSClosure { _ in
+            body()
+            return .undefined
+        }
+        let handle = JSObject.global.requestAnimationFrame.function!(handler)
+        return ScheduledWork(handler: handler, handle: handle, isAnimationFrame: true)
+    }
+
+    func schedule(afterMilliseconds milliseconds: Int, _ body: @escaping () -> Void) -> ScheduledWork {
+        let handler = JSClosure { _ in
+            body()
+            return .undefined
+        }
+        let handle = JSObject.global.setTimeout.function!(handler, milliseconds)
+        return ScheduledWork(handler: handler, handle: handle, isAnimationFrame: false)
+    }
+
+    func cancel(_ work: ScheduledWork) {
+        if work.isAnimationFrame {
+            _ = JSObject.global.cancelAnimationFrame.function!(work.handle)
+        } else {
+            _ = JSObject.global.clearTimeout.function!(work.handle)
+        }
+    }
+
+    func prefersReducedMotion() -> Bool {
+        guard let matchMedia = JSObject.global.matchMedia.function else { return false }
+        return matchMedia("(prefers-reduced-motion: reduce)").object?.matches.boolean ?? false
     }
 }
 #endif

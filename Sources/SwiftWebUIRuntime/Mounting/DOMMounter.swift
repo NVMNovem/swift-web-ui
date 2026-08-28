@@ -19,12 +19,16 @@ struct DOMMounter<Backend: BrowserHeadBackend> {
     struct PendingInsertionEffects {
         var focusRequests: [Backend.Node] = []
         var presentations: [(element: Element, presentation: DialogPresentation)] = []
+        var enters: [Element] = []
 
-        var isEmpty: Bool { focusRequests.isEmpty && presentations.isEmpty }
+        var isEmpty: Bool {
+            focusRequests.isEmpty && presentations.isEmpty && enters.isEmpty
+        }
     }
 
     let backend: Backend
     let scrollLock: ScrollLock<Backend>
+    let transitions: TransitionScheduler<Backend>
 
     func mount(_ node: WebNode, pending: inout PendingInsertionEffects) -> Node {
         switch node {
@@ -63,8 +67,12 @@ struct DOMMounter<Backend: BrowserHeadBackend> {
                 children: children,
                 actionRegistration: register(webElement.action, on: handle),
                 keyActionRegistrations: registerKeyActions(webElement.keyActions, on: handle),
-                dismissRegistration: registerDismissAction(webElement.dismissAction, on: handle)
+                dismissRegistration: registerDismissAction(webElement.dismissAction, on: handle),
+                transitionPhases: webElement.transitionPhases
             )
+            if webElement.transitionPhases != nil {
+                pending.enters.append(element)
+            }
             if webElement.requestsFocus {
                 pending.focusRequests.append(handle)
             }
@@ -79,11 +87,41 @@ struct DOMMounter<Backend: BrowserHeadBackend> {
     ///
     /// Call this only after the mounted handles are in the document.
     func flush(_ pending: PendingInsertionEffects) {
+        for element in pending.enters {
+            transitions.onNextFrame { [self] in
+                guard let enter = element.transitionPhases?.enter else { return }
+                setPhaseClass(enter, on: element)
+            }
+        }
         for (element, presentation) in pending.presentations {
             present(presentation, on: element)
         }
         for handle in pending.focusRequests {
             backend.focus(handle)
+        }
+    }
+
+    /// Puts `phase` on an element, on top of the classes it declared itself.
+    func setPhaseClass(_ phase: String?, on element: Element) {
+        element.activePhaseClass = phase
+        writeClassAttribute(of: element)
+    }
+
+    /// Writes `class` as the element's own classes plus its current phase.
+    ///
+    /// Both halves go through here so neither can silently drop the other: a
+    /// rerender that rewrites `class` mid-transition keeps the phase, and a
+    /// phase change keeps the element's own classes.
+    func writeClassAttribute(of element: Element) {
+        let declared = element.attributes.first { $0.name == "class" }?.value
+        let value = [declared, element.activePhaseClass]
+            .compactMap { $0 }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        if value.isEmpty {
+            backend.removeAttribute(name: "class", from: element.handle)
+        } else {
+            backend.setAttribute(name: "class", value: value, on: element.handle)
         }
     }
 

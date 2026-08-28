@@ -83,6 +83,13 @@ final class MountedElementNode<Handle, ActionRegistration> {
     /// Tracked per element so a release is exact: the lock is a counter, and an
     /// element that never took it must never give it back.
     var holdsScrollLock = false
+    /// The classes this element wears while arriving and while leaving.
+    var transitionPhases: TransitionPhases?
+    /// The phase class currently on the element, on top of its own classes.
+    ///
+    /// Kept separate from `attributes` so a rerender that rewrites `class`
+    /// mid-transition does not drop the phase.
+    var activePhaseClass: String?
 
     init(
         handle: Handle,
@@ -93,7 +100,8 @@ final class MountedElementNode<Handle, ActionRegistration> {
         actionRegistration: ActionRegistration?,
         keyActionRegistrations: [ActionRegistration] = [],
         dismissRegistration: ActionRegistration? = nil,
-        presentation: DialogPresentation? = nil
+        presentation: DialogPresentation? = nil,
+        transitionPhases: TransitionPhases? = nil
     ) {
         self.handle = handle
         self.tagName = tagName
@@ -104,6 +112,7 @@ final class MountedElementNode<Handle, ActionRegistration> {
         self.keyActionRegistrations = keyActionRegistrations
         self.dismissRegistration = dismissRegistration
         self.presentation = presentation
+        self.transitionPhases = transitionPhases
     }
 }
 

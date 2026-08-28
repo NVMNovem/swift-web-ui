@@ -88,6 +88,13 @@ with a custom property, or override the rule outright:
 :root { --swiftwebui-dialog-backdrop: rgba(12, 14, 20, 0.6); }
 ```
 
+### Animating a sheet
+
+A dialog is removed like anything else, so
+``View/transition(enter:exit:durationMilliseconds:)`` gives it an arrival and a
+departure that a synchronous removal would otherwise never allow. See
+<doc:Styling>.
+
 > Important: A modal dialog is browser-runtime only. Static rendering has no top
 > layer to show one in, so ``HTMLRenderer`` omits a presented modal dialog
 > entirely rather than emitting a closed `dialog` that implies the content is

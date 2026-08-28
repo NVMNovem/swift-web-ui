@@ -60,6 +60,9 @@ struct WebNodeDiffer {
             if actionsRequireReplacement(old: oldElement.dismissAction, new: newElement.dismissAction) {
                 patches.append(.replaceDismissAction(path: path, action: newElement.dismissAction))
             }
+            if oldElement.transitionPhases != newElement.transitionPhases {
+                patches.append(.setTransitionPhases(path: path, phases: newElement.transitionPhases))
+            }
             // Presentation is reconciled like any other element state, so the
             // view never calls `showModal()` itself.
             if let presentation = newElement.presentation, presentation != oldElement.presentation {

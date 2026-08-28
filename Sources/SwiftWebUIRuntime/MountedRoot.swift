@@ -26,6 +26,8 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     /// Only the presentation primitive drives it. There is deliberately no
     /// public modifier for it — see ``ScrollLock``.
     let scrollLock: ScrollLock<Backend>
+    /// Owns the frames and timers that enter and exit transitions run on.
+    let transitions: TransitionScheduler<Backend>
     private var isRebuilding = false
 
     deinit {
@@ -47,6 +49,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         self.installedResources = installedResources
         self.build = build
         self.scrollLock = ScrollLock(backend: backend)
+        self.transitions = TransitionScheduler(backend: backend)
     }
 
     func start() {
@@ -58,6 +61,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     }
 
     func stop() {
+        transitions.cancelAll()
         ViewInvalidation.clear()
         StateSlotStorage.clear()
         stateSlots.releaseAll()
@@ -89,6 +93,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
             backend: backend,
             container: container,
             scrollLock: scrollLock,
+            transitions: transitions,
             loggingEnabled: configuration.reconciliationLogging
         )
         do {
@@ -97,8 +102,9 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         } catch {
             print("[SwiftWebUIRuntime] reconciliation fallback: \(error)")
             applier.recursivelyReleaseActions(in: mountedNode)
+            transitions.cancelAll()
             backend.removeAllChildren(from: container)
-            let mounter = DOMMounter(backend: backend, scrollLock: scrollLock)
+            let mounter = DOMMounter(backend: backend, scrollLock: scrollLock, transitions: transitions)
             var pending = DOMMounter<Backend>.PendingInsertionEffects()
             let replacement = mounter.mount(newWebNode, pending: &pending)
             appendToContainer(replacement)
@@ -110,12 +116,18 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
 
     private func initialMount() {
         if let mountedNode {
-            DOMPatchApplier(backend: backend, container: container, scrollLock: scrollLock)
-                .recursivelyReleaseActions(in: mountedNode)
+            DOMPatchApplier(
+                backend: backend,
+                container: container,
+                scrollLock: scrollLock,
+                transitions: transitions
+            ).recursivelyReleaseActions(in: mountedNode)
         }
+        // Nothing that was waiting to leave has a parent any more.
+        transitions.cancelAll()
         backend.removeAllChildren(from: container)
         let webNode = buildTrackingState()
-        let mounter = DOMMounter(backend: backend, scrollLock: scrollLock)
+        let mounter = DOMMounter(backend: backend, scrollLock: scrollLock, transitions: transitions)
         var pending = DOMMounter<Backend>.PendingInsertionEffects()
         let mountedNode = mounter.mount(webNode, pending: &pending)
         appendToContainer(mountedNode)

@@ -29,22 +29,25 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
     private let backend: Backend
     private let container: Backend.Node
     private let scrollLock: ScrollLock<Backend>
+    private let transitions: TransitionScheduler<Backend>
     private let loggingEnabled: Bool
 
     init(
         backend: Backend,
         container: Backend.Node,
         scrollLock: ScrollLock<Backend>,
+        transitions: TransitionScheduler<Backend>,
         loggingEnabled: Bool = false
     ) {
         self.backend = backend
         self.container = container
         self.scrollLock = scrollLock
+        self.transitions = transitions
         self.loggingEnabled = loggingEnabled
     }
 
     private var mounter: DOMMounter<Backend> {
-        DOMMounter(backend: backend, scrollLock: scrollLock)
+        DOMMounter(backend: backend, scrollLock: scrollLock, transitions: transitions)
     }
 
     func apply(_ patches: [DOMPatch], to mountedRoot: inout Node) throws {
@@ -93,12 +96,21 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
             text.value = value
         case .setAttribute(let path, let name, let value):
             let element = try element(at: path, in: mountedRoot)
-            backend.setAttribute(name: name, value: value, on: element.handle)
             setNamedValue(name: name, value: value, in: &element.attributes)
+            if name == "class" {
+                // Rewriting `class` outright would drop a phase mid-transition.
+                mounter.writeClassAttribute(of: element)
+            } else {
+                backend.setAttribute(name: name, value: value, on: element.handle)
+            }
         case .removeAttribute(let path, let name):
             let element = try element(at: path, in: mountedRoot)
-            backend.removeAttribute(name: name, from: element.handle)
             element.attributes.removeAll { $0.name == name }
+            if name == "class" {
+                mounter.writeClassAttribute(of: element)
+            } else {
+                backend.removeAttribute(name: name, from: element.handle)
+            }
         case .setStyle(let path, let name, let value):
             let element = try element(at: path, in: mountedRoot)
             backend.setStyle(name: name, value: value, on: element.handle)
@@ -126,6 +138,8 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
         case .setDialogPresentation(let path, let presentation):
             let element = try element(at: path, in: mountedRoot)
             mounter.present(presentation, on: element)
+        case .setTransitionPhases(let path, let phases):
+            try element(at: path, in: mountedRoot).transitionPhases = phases
         case .insertChild(let parentPath, let index, let webNode):
             try insertChild(webNode, at: index, parentPath: parentPath, root: mountedRoot)
         case .removeChild(let parentPath, let index):
@@ -183,10 +197,32 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
         }
         let removed = children.remove(at: index)
         recursivelyReleaseActions(in: removed)
-        for handle in removed.topLevelDOMHandles {
-            backend.remove(handle, from: domParent)
-        }
+        // The mounted tree drops the child now, so every later sibling keeps the
+        // index it already had and every subsequent patch in this batch still
+        // resolves to the element it meant. A leaving element outlives that only
+        // in the DOM, where nothing addresses it positionally.
         context.node.children = children
+        beginExit(of: removed, from: domParent)
+    }
+
+    /// Removes a leaving subtree, letting it run an exit transition first.
+    ///
+    /// The element is already out of the mounted tree, so nothing can address it
+    /// by path any more and nothing will re-insert this handle — a later render
+    /// mounts a new one. That is what makes holding it in the DOM safe.
+    private func beginExit(of removed: Node, from domParent: Backend.Node) {
+        let handles = removed.topLevelDOMHandles
+        guard
+            case .element(let element) = removed,
+            let phases = element.transitionPhases
+        else {
+            for handle in handles { backend.remove(handle, from: domParent) }
+            return
+        }
+        mounter.setPhaseClass(phases.exit, on: element)
+        transitions.after(milliseconds: phases.durationMilliseconds) { [backend] in
+            for handle in handles { backend.remove(handle, from: domParent) }
+        }
     }
 
     private func replaceNode(at path: NodePath, with webNode: WebNode, root: inout Node) throws {

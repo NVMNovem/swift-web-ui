@@ -105,6 +105,34 @@ public extension View {
         modified(.onKeyDown(key: key, action: .closure(perform)))
     }
 
+    /// Transitions this element as it arrives and as it leaves.
+    ///
+    /// `enter` and `exit` name classes an application stylesheet defines.
+    /// `.transition(_:)` animates a property change on an element that stays
+    /// mounted; this is the other half — the arrival and the departure, which a
+    /// synchronous DOM removal otherwise never gives a frame to run in.
+    ///
+    /// The runtime adds `enter` on the frame *after* insertion, so the browser
+    /// paints the pre-transition state first, and holds a leaving element in the
+    /// document wearing `exit` for `durationMilliseconds` before removing it.
+    ///
+    /// A reader who prefers reduced motion gets neither the animation nor the
+    /// wait: the element arrives and leaves immediately.
+    ///
+    /// Browser-runtime only. Static rendering has no moment of insertion, so it
+    /// emits the element already wearing `enter`.
+    func transition(
+        enter: String,
+        exit: String,
+        durationMilliseconds: Int
+    ) -> ModifiedView<Self> {
+        modified(.transitionPhases(.init(
+            enter: enter,
+            exit: exit,
+            durationMilliseconds: durationMilliseconds
+        )))
+    }
+
     func setState(_ key: String, to value: String) -> ModifiedView<Self> {
         modified(.setState(.init(target: .named(key), value: .string(value))))
     }

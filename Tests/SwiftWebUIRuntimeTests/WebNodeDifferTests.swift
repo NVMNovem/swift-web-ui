@@ -242,4 +242,28 @@ import Testing
         ) == [.setDialogPresentation(path: NodePath(), presentation: .modal)])
     }
 
+
+    @Test func changingTransitionPhasesKeepsTheMountedTreeAccurate() {
+        let phases = TransitionPhases(enter: "in", exit: "out", durationMilliseconds: 200)
+        #expect(differ.diff(
+            old: element(),
+            new: element(transitionPhases: phases)
+        ) == [.setTransitionPhases(path: NodePath(), phases: phases)])
+    }
+
+    @Test func unchangedTransitionPhasesEmitNothing() {
+        let phases = TransitionPhases(enter: "in", exit: "out", durationMilliseconds: 200)
+        #expect(differ.diff(
+            old: element(transitionPhases: phases),
+            new: element(transitionPhases: phases)
+        ) == [])
+    }
+
+    @Test func droppingTransitionPhasesClearsThem() {
+        #expect(differ.diff(
+            old: element(transitionPhases: .init(enter: "in", exit: "out", durationMilliseconds: 200)),
+            new: element()
+        ) == [.setTransitionPhases(path: NodePath(), phases: nil)])
+    }
+
 }

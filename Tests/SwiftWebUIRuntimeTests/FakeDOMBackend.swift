@@ -51,6 +51,18 @@ final class FakeDOMBackend: BrowserHeadBackend {
     typealias Node = FakeDOMNode
     typealias ActionRegistration = Int
 
+    /// A piece of scheduled work the test drives by hand.
+    final class ScheduledWork {
+        let body: () -> Void
+        let milliseconds: Int?
+        var isCancelled = false
+
+        init(body: @escaping () -> Void, milliseconds: Int?) {
+            self.body = body
+            self.milliseconds = milliseconds
+        }
+    }
+
     private var nextNodeID = 1
     private var nextRegistration = 1
     let root = FakeDOMNode(id: 0, tagName: "root")
@@ -206,6 +218,41 @@ final class FakeDOMBackend: BrowserHeadBackend {
         parent.children.removeAll()
     }
 
+    var reducedMotion = false
+    private(set) var scheduled: [ScheduledWork] = []
+    private(set) var cancelledWork = 0
+
+    func onNextAnimationFrame(_ body: @escaping () -> Void) -> ScheduledWork {
+        operations.append("requestAnimationFrame")
+        let work = ScheduledWork(body: body, milliseconds: nil)
+        scheduled.append(work)
+        return work
+    }
+
+    func schedule(afterMilliseconds milliseconds: Int, _ body: @escaping () -> Void) -> ScheduledWork {
+        operations.append("setTimeout \(milliseconds)")
+        let work = ScheduledWork(body: body, milliseconds: milliseconds)
+        scheduled.append(work)
+        return work
+    }
+
+    func cancel(_ work: ScheduledWork) {
+        operations.append("cancelScheduled")
+        work.isCancelled = true
+        cancelledWork += 1
+    }
+
+    func prefersReducedMotion() -> Bool { reducedMotion }
+
+    /// Runs everything the browser would have run, in the order it was queued.
+    func runScheduledWork() {
+        let due = scheduled
+        scheduled.removeAll()
+        for work in due where !work.isCancelled {
+            work.body()
+        }
+    }
+
     func focus(_ node: FakeDOMNode) {
         operations.append("focus \(node.id)")
         focusedNodes.append(node)
@@ -215,9 +262,14 @@ final class FakeDOMBackend: BrowserHeadBackend {
 func mounted(
     _ webNode: WebNode,
     backend: FakeDOMBackend,
-    scrollLock: ScrollLock<FakeDOMBackend>? = nil
+    scrollLock: ScrollLock<FakeDOMBackend>? = nil,
+    transitions: TransitionScheduler<FakeDOMBackend>? = nil
 ) -> MountedNode<FakeDOMNode, Int> {
-    let mounter = DOMMounter(backend: backend, scrollLock: scrollLock ?? ScrollLock(backend: backend))
+    let mounter = DOMMounter(
+        backend: backend,
+        scrollLock: scrollLock ?? ScrollLock(backend: backend),
+        transitions: transitions ?? TransitionScheduler(backend: backend)
+    )
     var pending = DOMMounter<FakeDOMBackend>.PendingInsertionEffects()
     let result = mounter.mount(webNode, pending: &pending)
     for handle in result.topLevelDOMHandles {
@@ -236,7 +288,8 @@ func element(
     requestsFocus: Bool = false,
     keyActions: [KeyAction] = [],
     presentation: DialogPresentation? = nil,
-    dismissAction: ActionIntent? = nil
+    dismissAction: ActionIntent? = nil,
+    transitionPhases: TransitionPhases? = nil
 ) -> WebNode {
     .element(.init(
         tagName: tag,
@@ -247,6 +300,7 @@ func element(
         requestsFocus: requestsFocus,
         keyActions: keyActions,
         presentation: presentation,
-        dismissAction: dismissAction
+        dismissAction: dismissAction,
+        transitionPhases: transitionPhases
     ))
 }

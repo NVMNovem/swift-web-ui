@@ -25,6 +25,8 @@ public struct WebElementNode: @unchecked Sendable {
     public let presentation: DialogPresentation?
     /// What to run when the browser dismisses this element on its own.
     public let dismissAction: ActionIntent?
+    /// The classes this element wears while arriving and while leaving.
+    public let transitionPhases: TransitionPhases?
 
     public init(
         tagName: String,
@@ -36,7 +38,8 @@ public struct WebElementNode: @unchecked Sendable {
         requestsFocus: Bool = false,
         keyActions: [KeyAction] = [],
         presentation: DialogPresentation? = nil,
-        dismissAction: ActionIntent? = nil
+        dismissAction: ActionIntent? = nil,
+        transitionPhases: TransitionPhases? = nil
     ) {
         self.tagName = tagName
         self.attributes = attributes.lastDeclarationPerName()
@@ -48,5 +51,6 @@ public struct WebElementNode: @unchecked Sendable {
         self.keyActions = keyActions
         self.presentation = presentation
         self.dismissAction = dismissAction
+        self.transitionPhases = transitionPhases
     }
 }

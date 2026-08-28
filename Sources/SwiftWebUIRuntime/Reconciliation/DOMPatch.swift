@@ -20,6 +20,7 @@ enum DOMPatch: @unchecked Sendable, Equatable {
     case replaceKeyActions(path: NodePath, actions: [KeyAction])
     case setDialogPresentation(path: NodePath, presentation: DialogPresentation)
     case replaceDismissAction(path: NodePath, action: ActionIntent?)
+    case setTransitionPhases(path: NodePath, phases: TransitionPhases?)
     case focus(path: NodePath)
 }
 
@@ -50,6 +51,8 @@ extension DOMPatch {
             lp == rp && lv == rv
         case (.replaceDismissAction(let lp, let la), .replaceDismissAction(let rp, let ra)):
             lp == rp && actionsEquivalent(la, ra)
+        case (.setTransitionPhases(let lp, let lv), .setTransitionPhases(let rp, let rv)):
+            lp == rp && lv == rv
         case (.focus(let lp), .focus(let rp)):
             lp == rp
         default:
@@ -76,6 +79,7 @@ private func webNodesEqual(_ lhs: WebNode, _ rhs: WebNode) -> Bool {
             && keyActionsEquivalent(lhs.keyActions, rhs.keyActions)
             && lhs.presentation == rhs.presentation
             && actionsEquivalent(lhs.dismissAction, rhs.dismissAction)
+            && lhs.transitionPhases == rhs.transitionPhases
     default: false
     }
 }
@@ -131,6 +135,12 @@ extension DOMPatch: CustomStringConvertible {
                 "replaceDismissAction path=\(path.indices) action=nil"
             } else {
                 "replaceDismissAction path=\(path.indices) action=present"
+            }
+        case .setTransitionPhases(let path, let phases):
+            if let phases {
+                "setTransitionPhases path=\(path.indices) enter=\(quoted(phases.enter)) exit=\(quoted(phases.exit)) duration=\(phases.durationMilliseconds)"
+            } else {
+                "setTransitionPhases path=\(path.indices) phases=nil"
             }
         case .focus(let path):
             "focus path=\(path.indices)"

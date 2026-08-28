@@ -282,6 +282,7 @@ public struct ViewNodeToWebNodeLowerer {
         var action = baseAction
         var requestsFocus = false
         var keyActions: [KeyAction] = []
+        var transitionPhases: TransitionPhases?
 
         for attribute in baseAttributes {
             collect(attribute, attributes: &attributes, classNames: &classNames, identifier: &identifier)
@@ -362,6 +363,7 @@ public struct ViewNodeToWebNodeLowerer {
             case .setState(let mutation): action = .setState(mutation)
             case .defaultFocus: requestsFocus = true
             case .onKeyDown(let key, let keyAction): keyActions.append(.init(key: key, action: keyAction))
+            case .transitionPhases(let phases): transitionPhases = phases
             }
         }
 
@@ -376,7 +378,8 @@ public struct ViewNodeToWebNodeLowerer {
             requestsFocus: requestsFocus,
             keyActions: keyActions,
             presentation: presentation,
-            dismissAction: dismissAction
+            dismissAction: dismissAction,
+            transitionPhases: transitionPhases
         ))
     }
 

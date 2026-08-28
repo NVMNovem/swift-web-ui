@@ -454,12 +454,14 @@ import Testing
 
     private func applier(
         _ backend: FakeDOMBackend,
-        scrollLock: ScrollLock<FakeDOMBackend>? = nil
+        scrollLock: ScrollLock<FakeDOMBackend>? = nil,
+        transitions: TransitionScheduler<FakeDOMBackend>? = nil
     ) -> DOMPatchApplier<FakeDOMBackend> {
         DOMPatchApplier(
             backend: backend,
             container: backend.root,
-            scrollLock: scrollLock ?? ScrollLock(backend: backend)
+            scrollLock: scrollLock ?? ScrollLock(backend: backend),
+            transitions: transitions ?? TransitionScheduler(backend: backend)
         )
     }
 }

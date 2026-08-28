@@ -8,6 +8,11 @@
 protocol DOMBackend: AnyObject {
     associatedtype Node
     associatedtype ActionRegistration
+    /// A cancellable piece of scheduled work.
+    ///
+    /// Distinct from `ActionRegistration` because cancelling needs the browser's
+    /// timer or frame handle, not the closure that was registered.
+    associatedtype ScheduledWork
 
     func createElement(_ tagName: String) -> Node
     func createTextNode(_ content: String) -> Node
@@ -46,6 +51,18 @@ protocol DOMBackend: AnyObject {
     /// A `focus()` on a node that is not in the document is silently a no-op, so
     /// callers must insert first.
     func focus(_ node: Node)
+    /// Runs `body` on the next animation frame.
+    ///
+    /// Applying a class in the same frame as an insertion is the classic no-op:
+    /// the browser never paints the pre-transition state, so there is nothing to
+    /// transition from.
+    func onNextAnimationFrame(_ body: @escaping () -> Void) -> ScheduledWork
+    /// Runs `body` after `milliseconds`.
+    func schedule(afterMilliseconds milliseconds: Int, _ body: @escaping () -> Void) -> ScheduledWork
+    /// Cancels work that has not run yet.
+    func cancel(_ work: ScheduledWork)
+    /// Whether the reader has asked for reduced motion.
+    func prefersReducedMotion() -> Bool
 }
 
 enum BrowserHeadBackendError: Error, CustomStringConvertible {

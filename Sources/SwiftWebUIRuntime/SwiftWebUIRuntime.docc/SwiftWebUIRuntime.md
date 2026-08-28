@@ -37,6 +37,16 @@ on the last release, restoring whatever inline `overflow` it found rather than
 assuming there was none. A counter any caller could increment is a counter that
 ends up unbalanced, and the symptom is a page that can never scroll again.
 
+The runtime schedules enter and exit transitions. An entering element gets its
+enter class on the frame after insertion; a leaving one keeps its DOM node, under
+its old parent and wearing its exit class, for the declared duration. That node is
+already out of the mounted tree, so positional paths are unaffected and a later
+render mounts a fresh node rather than reclaiming the leaving one. Pending frames
+and timers are cancelled when the root is stopped or remounted, because work that
+outlives its subtree would try to remove a node that is no longer a child of
+anything. A reader who prefers reduced motion skips both the animation and the
+wait.
+
 Use ``SwiftWebUIRuntimeConfiguration`` to opt in to patch logging. Paths in that
 output describe the current mounted-tree location and are not stable identity.
 
