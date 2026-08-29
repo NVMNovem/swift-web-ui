@@ -11,4 +11,8 @@ public enum Alignment: String, Hashable, Sendable {
     case trailing
     case top
     case bottom
+    case topLeading
+    case topTrailing
+    case bottomLeading
+    case bottomTrailing
 }

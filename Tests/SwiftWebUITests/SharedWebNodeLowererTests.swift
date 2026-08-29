@@ -270,6 +270,10 @@ import Testing
         (.trailing, "center", "end"),
         (.top, "start", "center"),
         (.bottom, "end", "center"),
+        (.topLeading, "start", "start"),
+        (.topTrailing, "start", "end"),
+        (.bottomLeading, "end", "start"),
+        (.bottomTrailing, "end", "end"),
     ]
 
     for (alignment, block, inline) in cases {
@@ -279,6 +283,31 @@ import Testing
             .init(name: "align-items", value: block),
             .init(name: "justify-items", value: inline),
         ])
+    }
+}
+
+@Test func sharedLowererAlignsStacksOnTheirCrossAxis() {
+    // A stack aligns on one axis, so a corner alignment contributes the half
+    // that names the stack's cross axis.
+    let cases: [(Alignment, String, String)] = [
+        // alignment, VStack (inline cross axis), HStack (block cross axis)
+        (.center, "center", "center"),
+        (.leading, "flex-start", "flex-start"),
+        (.trailing, "flex-end", "flex-end"),
+        (.top, "flex-start", "flex-start"),
+        (.bottom, "flex-end", "flex-end"),
+        (.topLeading, "flex-start", "flex-start"),
+        (.topTrailing, "flex-end", "flex-start"),
+        (.bottomLeading, "flex-start", "flex-end"),
+        (.bottomTrailing, "flex-end", "flex-end"),
+    ]
+
+    for (alignment, vertical, horizontal) in cases {
+        let column = requireElement(lower(VStack(alignment: alignment) { Text("V") }))
+        #expect(column?.styles.contains(.init(name: "align-items", value: vertical)) == true)
+
+        let row = requireElement(lower(HStack(alignment: alignment) { Text("H") }))
+        #expect(row?.styles.contains(.init(name: "align-items", value: horizontal)) == true)
     }
 }
 

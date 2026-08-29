@@ -87,9 +87,15 @@ Image("cover.jpg", alt: "")
     }
 ```
 
-``Alignment`` names one axis at a time, so a layered stack centres the axis it
-does not name: `.leading` and `.trailing` set the inline axis, `.top` and
-`.bottom` the block axis, and `.center` sets both.
+``Alignment`` names at most one edge per axis, so a layered stack centres any
+axis left unnamed: `.leading` and `.trailing` set the inline axis, `.top` and
+`.bottom` the block axis, and `.center` sets both. The corners —
+`.topLeading`, `.topTrailing`, `.bottomLeading` and `.bottomTrailing` — name
+both axes at once.
+
+A flex stack aligns its children on its cross axis only, so it reads the half of
+a corner alignment that names that axis: `.topTrailing` puts a `VStack`'s
+children at the trailing edge and an `HStack`'s at the top.
 
 > Note: Sharing one grid cell needs a `grid-area` declaration per child, and the
 > lowerer builds children generically. A layered stack therefore wraps each child
