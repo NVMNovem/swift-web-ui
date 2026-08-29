@@ -403,10 +403,13 @@ public struct ViewNodeToWebNodeLowerer {
         alignment: Alignment,
         spacing: SwiftCSS.Length?
     ) -> [WebStyleDeclaration] {
+        // A column stacks along the block axis, so its children line up on the
+        // inline one; a row is the other way round.
+        let crossAxis: LayoutAxis = direction == "column" ? .inline : .block
         var styles = [
             style(Display(.flex).cssDeclaration),
             WebStyleDeclaration(name: "flex-direction", value: direction),
-            WebStyleDeclaration(name: "align-items", value: alignmentValue(alignment)),
+            WebStyleDeclaration(name: "align-items", value: alignmentValue(alignment, crossAxis: crossAxis)),
         ]
         if let spacing { styles.append(style(Gap(spacing).cssDeclaration)) }
         return styles
@@ -531,31 +534,73 @@ private func tagName(for role: SemanticRole) -> String {
     }
 }
 
-/// The block-axis half of a layered stack's alignment.
+/// Where one axis of an ``Alignment`` puts its content.
+private enum AxisPlacement {
+    case start
+    case center
+    case end
+}
+
+/// The two axes a container aligns on: block runs top to bottom, inline leading
+/// to trailing.
+private enum LayoutAxis {
+    case block
+    case inline
+}
+
+/// The half of `alignment` that names `axis`.
 ///
-/// ``Alignment`` names one axis at a time, so the axis it does not name centres.
+/// An ``Alignment`` names at most one edge per axis, so an axis it leaves
+/// unnamed centres.
+private func placement(of alignment: Alignment, on axis: LayoutAxis) -> AxisPlacement {
+    switch axis {
+    case .block:
+        switch alignment {
+        case .top, .topLeading, .topTrailing: .start
+        case .bottom, .bottomLeading, .bottomTrailing: .end
+        case .leading, .center, .trailing: .center
+        }
+    case .inline:
+        switch alignment {
+        case .leading, .topLeading, .bottomLeading: .start
+        case .trailing, .topTrailing, .bottomTrailing: .end
+        case .top, .center, .bottom: .center
+        }
+    }
+}
+
+/// The block-axis half of a layered stack's alignment.
 private func layeredBlockAlignment(_ alignment: Alignment) -> AlignItemsValue {
-    switch alignment {
-    case .top: .start
-    case .bottom: .end
-    case .leading, .center, .trailing: .center
+    switch placement(of: alignment, on: .block) {
+    case .start: .start
+    case .center: .center
+    case .end: .end
     }
 }
 
 /// The inline-axis half of a layered stack's alignment.
 private func layeredInlineAlignment(_ alignment: Alignment) -> JustifyItemsValue {
-    switch alignment {
-    case .leading: .start
-    case .trailing: .end
-    case .top, .center, .bottom: .center
+    switch placement(of: alignment, on: .inline) {
+    case .start: .start
+    case .center: .center
+    case .end: .end
     }
 }
 
-private func alignmentValue(_ alignment: Alignment) -> String {
-    switch alignment {
-    case .leading, .top: "flex-start"
-    case .center: "center"
-    case .trailing, .bottom: "flex-end"
+/// The `align-items` keyword for a flex stack whose cross axis is `crossAxis`.
+///
+/// A stack only aligns its children on the cross axis, so a corner alignment
+/// contributes just the half naming that axis. An alignment that names no
+/// cross-axis edge falls back to the edge it does name, so a stack still honours
+/// an alignment written for the other axis — `VStack(alignment: .top)` keeps
+/// aligning to the start.
+private func alignmentValue(_ alignment: Alignment, crossAxis: LayoutAxis) -> String {
+    let cross = placement(of: alignment, on: crossAxis)
+    let main = placement(of: alignment, on: crossAxis == .block ? .inline : .block)
+    switch cross == .center ? main : cross {
+    case .start: return "flex-start"
+    case .center: return "center"
+    case .end: return "flex-end"
     }
 }
 
