@@ -2137,6 +2137,31 @@ extension ButtonStyleToken {
     #expect(!document.htmlString(prettyPrinted: false).contains("<title>"))
 }
 
+@Test func navigationTitleModifierSuppliesWebDocumentTitle() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Content").navigationTitle("Projects < Swift & Web")
+    )
+    let document = WebDocument(renderedView: rendered)
+
+    #expect(rendered.navigationTitle == "Projects < Swift & Web")
+    #expect(document.htmlString(prettyPrinted: false).contains(
+        "<title>Projects &lt; Swift &amp; Web</title>"
+    ))
+}
+
+@Test func explicitWebDocumentTitleOverridesNavigationTitleModifier() {
+    let document = WebDocument(
+        title: "Document title",
+        renderedView: HTMLRenderer().renderView(
+            Text("Content").navigationTitle("View title")
+        )
+    )
+
+    let html = document.htmlString(prettyPrinted: false)
+    #expect(html.contains("<title>Document title</title>"))
+    #expect(!html.contains("<title>View title</title>"))
+}
+
 @Test func webDocumentLinksStylesheetOnlyWhenCSSExistsAndPathIsSet() {
     let unstyledDocument = WebDocument(
         renderedView: HTMLRenderer().renderView(Text("Plain")),

@@ -54,7 +54,7 @@ public func mount<Content: View>(
         backend: backend,
         configuration: configuration,
         installedResources: installedResources,
-        build: { ViewNodeToWebNodeLowerer().lower(view.makeViewNode()) }
+        build: { ViewNodeToWebNodeLowerer().lowerView(view.makeViewNode()) }
     )
     mountedRoot = root
     root.start()

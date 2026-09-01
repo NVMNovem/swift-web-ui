@@ -134,7 +134,7 @@ private func makeRoot<Content: View>(
     backend: FakeDOMBackend
 ) -> MountedRoot<FakeDOMBackend> {
     MountedRoot(container: backend.root, backend: backend) {
-        ViewNodeToWebNodeLowerer().lower(view.makeViewNode())
+        ViewNodeToWebNodeLowerer().lowerView(view.makeViewNode())
     }
 }
 

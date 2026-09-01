@@ -81,10 +81,17 @@ public struct RenderedResources: Sendable {
 public struct RenderedView: Sendable {
     public var content: RenderedContent
     public var resources: RenderedResources
+    /// Document title supplied by the rendered view, when present.
+    public var navigationTitle: String?
 
-    public init(content: RenderedContent, resources: RenderedResources) {
+    public init(
+        content: RenderedContent,
+        resources: RenderedResources,
+        navigationTitle: String? = nil
+    ) {
         self.content = content
         self.resources = resources
+        self.navigationTitle = navigationTitle
     }
 
     public func htmlString(prettyPrinted: Bool = false) -> String {

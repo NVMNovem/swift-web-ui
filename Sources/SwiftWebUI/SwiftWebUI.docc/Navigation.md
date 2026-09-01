@@ -24,6 +24,22 @@ Link(destination: "https://example.com/project") {
 .attribute("rel", "noreferrer")
 ```
 
+Set the browser tab title from the view that supplies the page:
+
+```swift
+VStack {
+    Text("Projects")
+        .semanticRole(.h1)
+}
+.navigationTitle("Projects")
+```
+
+Static rendering carries the title into `RenderedView`; `WebDocument` emits it
+as `<title>` unless the document was given an explicit title. A runtime mount
+sets `document.title` and reconciles it when state rebuilds the view. When more
+than one active child supplies a title, the last child wins; a title on their
+containing view overrides its descendants.
+
 Use ``TabBar`` for selection-only navigation, filters, segmented controls, and timeline selectors:
 
 ```swift
@@ -43,6 +59,10 @@ TabBar(selection: SectionID.home) {
 ### Links
 
 - ``Link``
+
+### Page Title
+
+- ``View/navigationTitle(_:)``
 
 ### Tab Navigation
 

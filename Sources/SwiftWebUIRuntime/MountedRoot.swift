@@ -11,13 +11,15 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     typealias Node = MountedNode<Backend.Node, Backend.ActionRegistration>
 
     private let container: Backend.Node
-    private let build: () -> WebNode
+    private let build: () -> LoweredView
     private let backend: Backend
     private let differ = WebNodeDiffer()
     private let configuration: SwiftWebUIRuntimeConfiguration
     let installedResources: InstalledRuntimeResources<Backend.Node>
     private var previousWebNode: WebNode?
     private var mountedNode: Node?
+    private let originalDocumentTitle: String
+    private var appliedNavigationTitle: String?
 
     /// Owns `@State` storage for everything mounted under this root.
     let stateSlots = StateSlotStore()
@@ -41,15 +43,32 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         backend: Backend,
         configuration: SwiftWebUIRuntimeConfiguration = .init(),
         installedResources: InstalledRuntimeResources<Backend.Node> = .init(),
-        build: @escaping () -> WebNode
+        build: @escaping () -> LoweredView
     ) {
         self.container = container
         self.backend = backend
         self.configuration = configuration
         self.installedResources = installedResources
         self.build = build
+        self.originalDocumentTitle = backend.documentTitle
         self.scrollLock = ScrollLock(backend: backend)
         self.transitions = TransitionScheduler(backend: backend)
+    }
+
+    convenience init(
+        container: Backend.Node,
+        backend: Backend,
+        configuration: SwiftWebUIRuntimeConfiguration = .init(),
+        installedResources: InstalledRuntimeResources<Backend.Node> = .init(),
+        build: @escaping () -> WebNode
+    ) {
+        self.init(
+            container: container,
+            backend: backend,
+            configuration: configuration,
+            installedResources: installedResources,
+            build: { LoweredView(webNode: build()) }
+        )
     }
 
     func start() {
@@ -62,13 +81,14 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
 
     func stop() {
         transitions.cancelAll()
+        restoreDocumentTitle()
         ViewInvalidation.clear()
         StateSlotStorage.clear()
         stateSlots.releaseAll()
     }
 
     /// Rebuilds the presentation tree, reclaiming state for views that disappeared.
-    private func buildTrackingState() -> WebNode {
+    private func buildTrackingState() -> LoweredView {
         isRebuilding = true
         stateSlots.beginBuild()
         defer {
@@ -87,7 +107,8 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
             initialMount()
             return
         }
-        let newWebNode = buildTrackingState()
+        let loweredView = buildTrackingState()
+        let newWebNode = loweredView.webNode
         let patches = differ.diff(old: previousWebNode!, new: newWebNode)
         let applier = DOMPatchApplier(
             backend: backend,
@@ -112,6 +133,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
             self.mountedNode = replacement
         }
         previousWebNode = newWebNode
+        applyNavigationTitle(loweredView.documentMetadata.navigationTitle)
     }
 
     private func initialMount() {
@@ -126,7 +148,8 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         // Nothing that was waiting to leave has a parent any more.
         transitions.cancelAll()
         backend.removeAllChildren(from: container)
-        let webNode = buildTrackingState()
+        let loweredView = buildTrackingState()
+        let webNode = loweredView.webNode
         let mounter = DOMMounter(backend: backend, scrollLock: scrollLock, transitions: transitions)
         var pending = DOMMounter<Backend>.PendingInsertionEffects()
         let mountedNode = mounter.mount(webNode, pending: &pending)
@@ -134,6 +157,19 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         mounter.flush(pending)
         previousWebNode = webNode
         self.mountedNode = mountedNode
+        applyNavigationTitle(loweredView.documentMetadata.navigationTitle)
+    }
+
+    private func applyNavigationTitle(_ title: String?) {
+        guard title != appliedNavigationTitle else { return }
+        backend.setDocumentTitle(title ?? originalDocumentTitle)
+        appliedNavigationTitle = title
+    }
+
+    private func restoreDocumentTitle() {
+        guard appliedNavigationTitle != nil else { return }
+        backend.setDocumentTitle(originalDocumentTitle)
+        appliedNavigationTitle = nil
     }
 
     private func appendToContainer(_ node: Node) {

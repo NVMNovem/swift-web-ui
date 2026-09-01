@@ -80,6 +80,8 @@ enum BrowserHeadBackendError: Error, CustomStringConvertible {
 }
 
 protocol BrowserHeadBackend: DOMBackend {
+    var documentTitle: String { get }
+    func setDocumentTitle(_ title: String)
     func documentHead() throws -> Node
     func documentBody() throws -> Node
     func setResourceText(_ content: String, on node: Node) throws

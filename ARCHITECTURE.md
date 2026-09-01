@@ -42,7 +42,7 @@ HTML/CSS/JS output      click -> State -> reconcile
 
 The logical shared core is physically organized under `Sources/SwiftWebUI/Backend`. `Attributes` contains property wrappers and result builders, `Protocols` contains public protocol boundaries, `Types` contains lightweight semantic/style values, and `Models` groups views, modifiers, styles, and renderer-neutral rendering models. Public views normally have one focused source file each.
 
-`Models/Rendering` keeps the shared pipeline discoverable as one responsibility: semantic `ViewNode` models, concrete `WebNode` presentation models, and `ViewNodeToWebNodeLowerer`. Splitting those model declarations across focused files does not add lowering stages or backend semantics. The static and runtime modules remain separate top-level targets and continue to consume the same `WebNode` output mechanically.
+`Models/Rendering` keeps the shared pipeline discoverable as one responsibility: semantic `ViewNode` models, concrete `WebNode` presentation models, document metadata, and `ViewNodeToWebNodeLowerer`. Splitting those model declarations across focused files does not add lowering stages or backend semantics. The static and runtime modules remain separate top-level targets and continue to consume the same `LoweredView` output mechanically.
 
 The `Backend` directory is a source-organization convention, not a fourth architectural layer. There is intentionally no catch-all `Core` source folder.
 
@@ -60,7 +60,7 @@ public protocol View {
 
 Primitive views implement `makeViewNode()` directly. Composed views use the default implementation that lowers their concrete `body`. Traversal never discovers primitive types with casts and never stores an HTML-rendering closure.
 
-The recursive `ViewNode` enum represents DSL semantics: text roles, semantic/layout containers, controls, groups, and modifiers. `ViewNodeToWebNodeLowerer` is the only layer that interprets those semantics. It produces recursive `WebNode` values containing concrete tag names, canonical `WebAttribute` values, concrete `WebStyleDeclaration` property/value pairs, children, and action intent. It contains no serialized HTML/CSS, DOM object, generated resource, or static class hash.
+The recursive `ViewNode` enum represents DSL semantics: text roles, semantic/layout containers, controls, groups, and modifiers. `ViewNodeToWebNodeLowerer` is the only layer that interprets those semantics. It produces a `LoweredView`: a recursive body `WebNode` plus document-level metadata such as the active navigation title. `WebNode` values contain concrete tag names, canonical `WebAttribute` values, concrete `WebStyleDeclaration` property/value pairs, children, and action intent; document metadata deliberately remains beside that body tree. The lowerer contains no serialized HTML/CSS, DOM object, generated resource, or static class hash.
 
 ## Builder composition
 
@@ -80,7 +80,7 @@ The shared core owns:
 - concrete modifiers and compatible SwiftCSS values/declarations;
 - reference-backed `State`, closure-backed `Binding`, stable state identity, and action intent;
 - the renderer boundary and concrete `ViewNode`.
-- concrete `WebNode` presentation and the single `ViewNodeToWebNodeLowerer` semantic pass.
+- concrete `WebNode` body presentation, document metadata, and the single `ViewNodeToWebNodeLowerer` semantic pass.
 
 The static module owns:
 
@@ -106,6 +106,7 @@ supplies the markup around it.
 The runtime proof-of-concept module owns:
 
 - browser-facing `RuntimeResources` and ordered stylesheet installation;
+- reconciled browser document title updates from shared view metadata;
 - installed stylesheet handles retained by the single application root, outside reconciliation;
 - browser element lookup and mounting;
 - runtime-only mounted nodes and positional paths;

@@ -35,6 +35,14 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
         document.getElementById!(identifier).object
     }
 
+    var documentTitle: String {
+        document.title.string ?? ""
+    }
+
+    func setDocumentTitle(_ title: String) {
+        document.title = .string(title)
+    }
+
     func documentHead() throws -> JSObject {
         guard let head = document.head.object else {
             throw BrowserHeadBackendError.documentHeadUnavailable
