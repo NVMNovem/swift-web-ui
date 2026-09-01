@@ -24,12 +24,12 @@ struct LandingPage: View {
         }
         .padding(.px(24))
         .background(Color("var(--panel)"))
+        .navigationTitle("Landing")
     }
 }
 
 let rendered = HTMLRenderer().renderView(LandingPage())
 let document = WebDocument(
-    title: "Landing",
     renderedView: rendered,
     stylesheetPath: "styles.css",
     scriptPath: "app.js"

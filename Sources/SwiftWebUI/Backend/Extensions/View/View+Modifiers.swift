@@ -8,6 +8,13 @@
 import SwiftCSS
 
 public extension View {
+    /// Sets the browser tab title while this view supplies the rendered page.
+    ///
+    /// Static documents use this value when `WebDocument` has no explicit
+    /// title. A mounted runtime application updates `document.title` during
+    /// reconciliation, so a title derived from `State` stays current.
+    func navigationTitle(_ title: String) -> ModifiedView<Self> { modified(.navigationTitle(title)) }
+
     func `class`(_ name: String) -> ModifiedView<Self> { modified(.cssClass(name)) }
     func id(_ value: String) -> ModifiedView<Self> { modified(.identifier(value)) }
     func attribute(_ name: String, _ value: String) -> ModifiedView<Self> { modified(.attribute(name: name, value: value)) }

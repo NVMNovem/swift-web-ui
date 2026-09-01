@@ -74,6 +74,12 @@ final class FakeDOMBackend: BrowserHeadBackend {
     var focusedNodes: [FakeDOMNode] = []
     var buildCount = 0
     var failResourceTextInstallation = false
+    var documentTitle = "Host Document"
+
+    func setDocumentTitle(_ title: String) {
+        operations.append("setDocumentTitle \(title)")
+        documentTitle = title
+    }
 
     func documentHead() throws -> FakeDOMNode {
         operations.append("documentHead")

@@ -27,6 +27,34 @@ import Testing
     #expect(children.count == 2)
 }
 
+@Test func sharedLowererCollectsNavigationTitleOutsideTheBodyWebNode() {
+    let lowerer = ViewNodeToWebNodeLowerer()
+    let lowered = lowerer.lowerView(
+        VStack {
+            Text("First").navigationTitle("First title")
+            Text("Last").navigationTitle("Last title")
+        }
+        .navigationTitle("Page title")
+        .makeViewNode()
+    )
+
+    #expect(lowered.documentMetadata.navigationTitle == "Page title")
+    let element = requireElement(lowered.webNode)
+    #expect(element?.attributes.allSatisfy { !$0.name.contains("title") } == true)
+}
+
+@Test func sharedLowererUsesTheLastSiblingNavigationTitleWithoutAContainerTitle() {
+    let lowered = ViewNodeToWebNodeLowerer().lowerView(
+        Group {
+            Text("First").navigationTitle("First title")
+            Text("Last").navigationTitle("Last title")
+        }
+        .makeViewNode()
+    )
+
+    #expect(lowered.documentMetadata.navigationTitle == "Last title")
+}
+
 @Test func sharedLowererOwnsStackGridAndSemanticContainerMeaning() {
     let vertical = requireElement(lower(VStack(alignment: .leading, spacing: .px(8)) { Text("V") }))
     #expect(vertical?.tagName == "div")

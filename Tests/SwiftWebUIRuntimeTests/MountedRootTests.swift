@@ -51,5 +51,39 @@ extension RuntimeMountTests {
             #expect(backend.root.children[0] === button)
             #expect(backend.operations == ["removeAction \(button.id) 1", "setAction \(button.id) 2"])
         }
+
+        @Test func navigationTitleReconcilesAndRestoresTheHostTitle() {
+            let backend = FakeDOMBackend()
+            var title: String? = "Projects"
+            let root = MountedRoot(container: backend.root, backend: backend) {
+                LoweredView(
+                    webNode: element("main", children: [.text("Content")]),
+                    documentMetadata: .init(navigationTitle: title)
+                )
+            }
+
+            root.start()
+            #expect(backend.documentTitle == "Projects")
+
+            backend.operations.removeAll()
+            title = "Settings"
+            root.invalidate()
+            #expect(backend.operations == ["setDocumentTitle Settings"])
+            #expect(backend.documentTitle == "Settings")
+
+            backend.operations.removeAll()
+            title = nil
+            root.invalidate()
+            #expect(backend.operations == ["setDocumentTitle Host Document"])
+            #expect(backend.documentTitle == "Host Document")
+
+            backend.operations.removeAll()
+            title = "Profile"
+            root.invalidate()
+            backend.operations.removeAll()
+            root.stop()
+            #expect(backend.operations == ["setDocumentTitle Host Document"])
+            #expect(backend.documentTitle == "Host Document")
+        }
     }
 }

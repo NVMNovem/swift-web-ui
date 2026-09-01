@@ -7,6 +7,11 @@ the shared renderer-neutral `WebNode` presentation, materialize that presentatio
 as browser DOM objects, and incrementally reconcile the mounted tree after a `State`
 mutation.
 
+A view's ``SwiftWebUI/View/navigationTitle(_:)`` is document metadata rather
+than body DOM. The mounted root applies it to `document.title`, updates it after
+state-driven rebuilds, and restores the title that existed before mounting when
+the view stops supplying a title or the root is stopped.
+
 The runtime backend mechanically applies every lowered element tag, attribute,
 style declaration, fragment, child, and closure action. Container, modifier, and
 font semantics remain exclusively in SwiftWebUI's shared lowerer. The runtime

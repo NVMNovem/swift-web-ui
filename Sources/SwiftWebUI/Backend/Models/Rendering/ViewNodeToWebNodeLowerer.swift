@@ -13,10 +13,32 @@ public struct ViewNodeToWebNodeLowerer {
     public init() {}
 
     public func lower(_ node: ViewNode) -> WebNode {
-        lower(node, modifiers: [])
+        lowerView(node).webNode
     }
 
-    private func lower(_ node: ViewNode, modifiers: [ViewModifierNode]) -> WebNode {
+    /// Lowers body presentation and document-level metadata in one semantic pass.
+    public func lowerView(_ node: ViewNode) -> LoweredView {
+        var metadata = ViewDocumentMetadata()
+        let webNode = lower(node, modifiers: [], metadata: &metadata)
+        return LoweredView(webNode: webNode, documentMetadata: metadata)
+    }
+
+    private func lower(
+        _ node: ViewNode,
+        modifiers: [ViewModifierNode],
+        metadata: inout ViewDocumentMetadata
+    ) -> WebNode {
+        let navigationTitle = modifiers.compactMap { modifier -> String? in
+            if case .navigationTitle(let title) = modifier { return title }
+            return nil
+        }.last
+        defer {
+            // Children lower first. A title on their containing view therefore
+            // overrides a descendant title, while the last sibling wins when a
+            // container itself has no title.
+            if let navigationTitle { metadata.navigationTitle = navigationTitle }
+        }
+
         switch node {
         case .empty:
             return .empty
@@ -27,12 +49,12 @@ public struct ViewNodeToWebNodeLowerer {
                 children: [.text(text.content)]
             )
         case .container(let container):
-            return lower(container, modifiers: modifiers)
+            return lower(container, modifiers: modifiers, metadata: &metadata)
         case .button(let button):
             return element(
                 tagName: "button",
                 modifiers: modifiers,
-                children: plainTextOrLowered(button.label),
+                children: plainTextOrLowered(button.label, metadata: &metadata),
                 action: button.action
             )
         case .link(let link):
@@ -41,8 +63,8 @@ public struct ViewNodeToWebNodeLowerer {
                 baseAttributes: [.init(name: "href", value: link.destination)],
                 modifiers: modifiers,
                 children: link.usesPlainTextLabel
-                    ? plainTextOrLowered(link.label)
-                    : flattenedChildren(of: lower(link.label))
+                    ? plainTextOrLowered(link.label, metadata: &metadata)
+                    : flattenedChildren(of: lower(link.label, modifiers: [], metadata: &metadata))
             )
         case .image(let image):
             return element(
@@ -65,17 +87,25 @@ public struct ViewNodeToWebNodeLowerer {
                 modifiers: modifiers
             )
         case .tabControl(let control):
-            return lower(control, modifiers: modifiers)
+            return lower(control, modifiers: modifiers, metadata: &metadata)
         case .group(let children):
-            return lowerGroup(children, modifiers: modifiers)
+            return lowerGroup(children, modifiers: modifiers, metadata: &metadata)
         case .modified(let modified):
-            return lower(modified.content, modifiers: modified.modifiers + modifiers)
+            return lower(
+                modified.content,
+                modifiers: modified.modifiers + modifiers,
+                metadata: &metadata
+            )
         }
     }
 
-    private func lower(_ container: ContainerNode, modifiers: [ViewModifierNode]) -> WebNode {
+    private func lower(
+        _ container: ContainerNode,
+        modifiers: [ViewModifierNode],
+        metadata: inout ViewDocumentMetadata
+    ) -> WebNode {
         if case .group = container.kind {
-            return lowerGroup(container.children, modifiers: modifiers)
+            return lowerGroup(container.children, modifiers: modifiers, metadata: &metadata)
         }
 
         let tagName: String
@@ -88,7 +118,7 @@ public struct ViewNodeToWebNodeLowerer {
 
         switch container.kind {
         case .group:
-            return lowerGroup(container.children, modifiers: modifiers)
+            return lowerGroup(container.children, modifiers: modifiers, metadata: &metadata)
         case .vertical(let alignment, let spacing):
             tagName = "div"
             styles = stackStyles(direction: "column", alignment: alignment, spacing: spacing)
@@ -133,7 +163,9 @@ public struct ViewNodeToWebNodeLowerer {
             tagName = tag
         }
 
-        let loweredChildren = container.children.flatMap { flattenedChildren(of: lower($0)) }
+        let loweredChildren = container.children.flatMap {
+            flattenedChildren(of: lower($0, modifiers: [], metadata: &metadata))
+        }
         children.append(contentsOf: sharesOneGridCell ? loweredChildren.map(inOneGridCell) : loweredChildren)
         return element(
             tagName: tagName,
@@ -146,13 +178,23 @@ public struct ViewNodeToWebNodeLowerer {
         )
     }
 
-    private func lowerGroup(_ children: [ViewNode], modifiers: [ViewModifierNode]) -> WebNode {
-        let lowered = children.flatMap { flattenedChildren(of: lower($0)) }
+    private func lowerGroup(
+        _ children: [ViewNode],
+        modifiers: [ViewModifierNode],
+        metadata: inout ViewDocumentMetadata
+    ) -> WebNode {
+        let lowered = children.flatMap {
+            flattenedChildren(of: lower($0, modifiers: [], metadata: &metadata))
+        }
         guard !modifiers.isEmpty else { return .fragment(lowered) }
         return element(tagName: "div", modifiers: modifiers, children: lowered)
     }
 
-    private func lower(_ control: TabControlNode, modifiers: [ViewModifierNode]) -> WebNode {
+    private func lower(
+        _ control: TabControlNode,
+        modifiers: [ViewModifierNode],
+        metadata: inout ViewDocumentMetadata
+    ) -> WebNode {
         let stateKey = control.state.map { webStateKey($0.target) }
         var wrapperAttributes = [
             WebAttribute(
@@ -220,7 +262,7 @@ public struct ViewNodeToWebNodeLowerer {
                 attributes: attributes,
                 styles: selected ? selectedStyles : unselectedStyles,
                 styleVariants: variants,
-                children: flattenedChildren(of: lower(tab.label)),
+                children: flattenedChildren(of: lower(tab.label, modifiers: [], metadata: &metadata)),
                 action: action
             ))
         }
@@ -251,7 +293,7 @@ public struct ViewNodeToWebNodeLowerer {
                 return .element(.init(
                     tagName: "div",
                     attributes: attributes,
-                    children: flattenedChildren(of: lower(tab.content))
+                    children: flattenedChildren(of: lower(tab.content, modifiers: [], metadata: &metadata))
                 ))
             })
         }
@@ -290,6 +332,7 @@ public struct ViewNodeToWebNodeLowerer {
 
         for modifier in modifiers {
             switch modifier {
+            case .navigationTitle: break
             case .cssClass(let name): classNames.append(name)
             case .identifier(let value): identifier = value
             case .attribute(let name, let value):
@@ -507,9 +550,12 @@ public struct ViewNodeToWebNodeLowerer {
         }
     }
 
-    private func plainTextOrLowered(_ node: ViewNode) -> [WebNode] {
+    private func plainTextOrLowered(
+        _ node: ViewNode,
+        metadata: inout ViewDocumentMetadata
+    ) -> [WebNode] {
         if case .text(let text) = node { return [.text(text.content)] }
-        return flattenedChildren(of: lower(node))
+        return flattenedChildren(of: lower(node, modifiers: [], metadata: &metadata))
     }
 
     private func flattenedChildren(of node: WebNode) -> [WebNode] {

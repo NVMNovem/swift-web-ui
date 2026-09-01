@@ -20,11 +20,12 @@ public struct HTMLRenderer: ViewRendererProtocol {
 
     public func renderView<Content: View>(_ view: Content) -> RenderedView {
         var context = StaticRenderContext()
-        let webNode = ViewNodeToWebNodeLowerer().lower(view.makeViewNode())
-        let html = WebNodeStaticLowerer().lower(webNode, context: &context)
+        let loweredView = ViewNodeToWebNodeLowerer().lowerView(view.makeViewNode())
+        let html = WebNodeStaticLowerer().lower(loweredView.webNode, context: &context)
         return RenderedView(
             content: RenderedContent(html: html),
-            resources: context.renderedResources()
+            resources: context.renderedResources(),
+            navigationTitle: loweredView.documentMetadata.navigationTitle
         )
     }
 

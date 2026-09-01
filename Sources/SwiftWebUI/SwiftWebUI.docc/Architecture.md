@@ -33,9 +33,14 @@ The rendering model folder groups `ViewNode`, `WebNode`, their focused supportin
 
 ## Renderer ownership
 
+The shared lowerer produces a `LoweredView`: a body `WebNode` and document-level
+metadata such as the active navigation title. Keeping metadata beside the body
+tree lets both backends consume one semantic result without putting
+document-head state into `WebNode`.
+
 The separate `SwiftWebUIStatic` module mechanically converts `WebNode` to SwiftHTML/SwiftCSS ASTs and owns `HTMLRenderer`, rendered output/resource models, style hashing, generated JavaScript, `WebDocument`, and `PreviewExporter`. Static applications import that module; it re-exports SwiftWebUI.
 
-The separate `SwiftWebUIRuntime` module owns browser mounting, a runtime-only mounted tree, positional `WebNode` diffing, mechanical DOM patch application, and JavaScriptKit event handlers. It applies lowered tags, attributes, styles, children, and closure actions for one mounted root without replacing unchanged DOM nodes. JavaScriptKit and mounted state do not enter the core.
+The separate `SwiftWebUIRuntime` module owns browser mounting, a runtime-only mounted tree, positional `WebNode` diffing, mechanical DOM patch application, document-title reconciliation, and JavaScriptKit event handlers. It applies lowered tags, attributes, styles, children, closure actions, and document metadata for one mounted root without replacing unchanged DOM nodes. JavaScriptKit and mounted state do not enter the core.
 
 Focus is modelled as element state, not as an imperative call a view can make:
 ``ViewModifierNode/defaultFocus`` becomes `WebElementNode.requestsFocus`, and the

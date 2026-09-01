@@ -93,6 +93,7 @@ public struct WebScript: Equatable, Sendable {
 
 public struct WebDocument {
     public var language: String?
+    /// An explicit document title, overriding the rendered view's navigation title.
     public var title: String?
     public var meta: [MetaTag]
     /// Head content `MetaTag` cannot express — `<link rel>`, a media-scoped
@@ -202,7 +203,7 @@ public struct WebDocument {
     private func renderedHeadNodes() -> [SwiftHTML.HTMLNode] {
         var nodes = meta.map(\.htmlNode)
         nodes.append(contentsOf: self.headNodes)
-        if let title {
+        if let title = title ?? renderedView.navigationTitle {
             nodes.append(element("title", children: [.text(title)]))
         }
         if let stylesheetPath, linksStylesheet {
