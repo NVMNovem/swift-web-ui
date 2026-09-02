@@ -85,5 +85,60 @@ extension RuntimeMountTests {
             #expect(backend.operations == ["setDocumentTitle Host Document"])
             #expect(backend.documentTitle == "Host Document")
         }
+
+        @Test func navigationIconReconcilesAndRemovesItsManagedHeadLink() {
+            let backend = FakeDOMBackend()
+            var icon: NavigationIcon? = .svg("<svg viewBox=\"0 0 16 16\"/>")
+            let root = MountedRoot(container: backend.root, backend: backend) {
+                LoweredView(
+                    webNode: element("main", children: [.text("Content")]),
+                    documentMetadata: .init(navigationIcon: icon)
+                )
+            }
+            defer { root.stop() }
+
+            root.start()
+            #expect(backend.head.children.count == 1)
+            let handle = backend.head.children[0]
+            #expect(handle.tagName == "link")
+            #expect(handle.attributes == [
+                "rel": "icon",
+                "href": "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2016%2016%22%2F%3E",
+                "type": "image/svg+xml",
+            ])
+
+            backend.operations.removeAll()
+            icon = .url("/settings.png")
+            root.invalidate()
+            #expect(backend.head.children.count == 1)
+            #expect(backend.head.children[0] === handle)
+            #expect(handle.attributes == ["rel": "icon", "href": "/settings.png"])
+            #expect(backend.operations == [
+                "documentHead",
+                "setAttribute \(handle.id) href=/settings.png",
+                "removeAttribute \(handle.id) type",
+            ])
+
+            backend.operations.removeAll()
+            icon = nil
+            root.invalidate()
+            #expect(backend.head.children.isEmpty)
+            #expect(backend.operations == [
+                "documentHead",
+                "remove \(handle.id) from -1",
+            ])
+
+            icon = .url("/profile.png")
+            root.invalidate()
+            #expect(backend.head.children.count == 1)
+            let profileHandle = backend.head.children[0]
+            backend.operations.removeAll()
+            root.stop()
+            #expect(backend.head.children.isEmpty)
+            #expect(backend.operations == [
+                "documentHead",
+                "remove \(profileHandle.id) from -1",
+            ])
+        }
     }
 }

@@ -56,6 +56,12 @@ selectors, CSS variables, pseudo-classes, media queries, transitions, and animat
 it is retained by the single mounted root and is not part of reconciliation. The
 runtime does not generate CSS classes or reuse the static `StyleRegistry`.
 
+`navigationTitle` and `navigationIcon` are lowered as document metadata rather
+than `WebNode` content. The mounted root reconciles the title and owns one
+managed `<link rel="icon">` for the active view; changing or clearing the
+modifier updates or removes that link without recreating the mounted body tree.
+Local favicon files remain application build assets.
+
 ```swift
 SwiftWebUIRuntime.mount(
     RootView(),

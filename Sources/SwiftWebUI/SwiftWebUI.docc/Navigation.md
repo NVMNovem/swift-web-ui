@@ -40,6 +40,23 @@ sets `document.title` and reconciles it when state rebuilds the view. When more
 than one active child supplies a title, the last child wins; a title on their
 containing view overrides its descendants.
 
+Set a browser tab icon with ``View/navigationIcon(_:)``. `.svg` takes literal
+SVG markup and renders it as a data URL with the SVG MIME type. `.url` takes a
+browser-resolvable asset path or URL and leaves type selection to the browser.
+Application build tooling must copy local files into the served output.
+
+```swift
+VStack {
+    Text("Projects")
+}
+.navigationTitle("Projects")
+.navigationIcon(.svg("<svg viewBox=\"0 0 16 16\"><circle cx=\"8\" cy=\"8\" r=\"8\"/></svg>"))
+```
+
+Static documents emit the favicon link in their head. A runtime mount installs
+and reconciles one managed favicon link, then removes it when the mounted root
+stops so the host document can resume control.
+
 Use ``TabBar`` for selection-only navigation, filters, segmented controls, and timeline selectors:
 
 ```swift
@@ -63,6 +80,8 @@ TabBar(selection: SectionID.home) {
 ### Page Title
 
 - ``View/navigationTitle(_:)``
+- ``View/navigationIcon(_:)``
+- ``NavigationIcon``
 
 ### Tab Navigation
 

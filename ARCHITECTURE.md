@@ -60,7 +60,7 @@ public protocol View {
 
 Primitive views implement `makeViewNode()` directly. Composed views use the default implementation that lowers their concrete `body`. Traversal never discovers primitive types with casts and never stores an HTML-rendering closure.
 
-The recursive `ViewNode` enum represents DSL semantics: text roles, semantic/layout containers, controls, groups, and modifiers. `ViewNodeToWebNodeLowerer` is the only layer that interprets those semantics. It produces a `LoweredView`: a recursive body `WebNode` plus document-level metadata such as the active navigation title. `WebNode` values contain concrete tag names, canonical `WebAttribute` values, concrete `WebStyleDeclaration` property/value pairs, children, and action intent; document metadata deliberately remains beside that body tree. The lowerer contains no serialized HTML/CSS, DOM object, generated resource, or static class hash.
+The recursive `ViewNode` enum represents DSL semantics: text roles, semantic/layout containers, controls, groups, and modifiers. `ViewNodeToWebNodeLowerer` is the only layer that interprets those semantics. It produces a `LoweredView`: a recursive body `WebNode` plus document-level metadata such as the active navigation title and icon. `WebNode` values contain concrete tag names, canonical `WebAttribute` values, concrete `WebStyleDeclaration` property/value pairs, children, and action intent; document metadata deliberately remains beside that body tree. The lowerer contains no serialized HTML/CSS, DOM object, generated resource, or static class hash.
 
 ## Builder composition
 
@@ -106,7 +106,7 @@ supplies the markup around it.
 The runtime proof-of-concept module owns:
 
 - browser-facing `RuntimeResources` and ordered stylesheet installation;
-- reconciled browser document title updates from shared view metadata;
+- reconciled browser document title and icon updates from shared view metadata;
 - installed stylesheet handles retained by the single application root, outside reconciliation;
 - browser element lookup and mounting;
 - runtime-only mounted nodes and positional paths;
