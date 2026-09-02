@@ -83,15 +83,19 @@ public struct RenderedView: Sendable {
     public var resources: RenderedResources
     /// Document title supplied by the rendered view, when present.
     public var navigationTitle: String?
+    /// Browser tab icon supplied by the rendered view, when present.
+    public var navigationIcon: NavigationIcon?
 
     public init(
         content: RenderedContent,
         resources: RenderedResources,
-        navigationTitle: String? = nil
+        navigationTitle: String? = nil,
+        navigationIcon: NavigationIcon? = nil
     ) {
         self.content = content
         self.resources = resources
         self.navigationTitle = navigationTitle
+        self.navigationIcon = navigationIcon
     }
 
     public func htmlString(prettyPrinted: Bool = false) -> String {

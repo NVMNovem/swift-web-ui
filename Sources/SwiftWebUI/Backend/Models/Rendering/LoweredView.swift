@@ -9,9 +9,14 @@
 @_spi(Rendering)
 public struct ViewDocumentMetadata: Equatable, Sendable {
     public var navigationTitle: String?
+    public var navigationIcon: NavigationIcon?
 
-    public init(navigationTitle: String? = nil) {
+    public init(
+        navigationTitle: String? = nil,
+        navigationIcon: NavigationIcon? = nil
+    ) {
         self.navigationTitle = navigationTitle
+        self.navigationIcon = navigationIcon
     }
 }
 

@@ -20,6 +20,8 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     private var mountedNode: Node?
     private let originalDocumentTitle: String
     private var appliedNavigationTitle: String?
+    private var navigationIconHandle: Backend.Node?
+    private var appliedNavigationIcon: NavigationIcon?
 
     /// Owns `@State` storage for everything mounted under this root.
     let stateSlots = StateSlotStore()
@@ -82,6 +84,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     func stop() {
         transitions.cancelAll()
         restoreDocumentTitle()
+        removeNavigationIcon()
         ViewInvalidation.clear()
         StateSlotStorage.clear()
         stateSlots.releaseAll()
@@ -134,6 +137,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         }
         previousWebNode = newWebNode
         applyNavigationTitle(loweredView.documentMetadata.navigationTitle)
+        applyNavigationIcon(loweredView.documentMetadata.navigationIcon)
     }
 
     private func initialMount() {
@@ -158,6 +162,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         previousWebNode = webNode
         self.mountedNode = mountedNode
         applyNavigationTitle(loweredView.documentMetadata.navigationTitle)
+        applyNavigationIcon(loweredView.documentMetadata.navigationIcon)
     }
 
     private func applyNavigationTitle(_ title: String?) {
@@ -170,6 +175,49 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         guard appliedNavigationTitle != nil else { return }
         backend.setDocumentTitle(originalDocumentTitle)
         appliedNavigationTitle = nil
+    }
+
+    private func applyNavigationIcon(_ icon: NavigationIcon?) {
+        guard icon != appliedNavigationIcon else { return }
+        guard let icon else {
+            removeNavigationIcon()
+            return
+        }
+
+        do {
+            let head = try backend.documentHead()
+            let handle: Backend.Node
+            if let navigationIconHandle {
+                handle = navigationIconHandle
+            } else {
+                handle = backend.createElement("link")
+                backend.setAttribute(name: "rel", value: "icon", on: handle)
+                backend.append(handle, to: head)
+                navigationIconHandle = handle
+            }
+
+            backend.setAttribute(name: "href", value: icon.href, on: handle)
+            if let mimeType = icon.mimeType {
+                backend.setAttribute(name: "type", value: mimeType, on: handle)
+            } else {
+                backend.removeAttribute(name: "type", from: handle)
+            }
+            appliedNavigationIcon = icon
+        } catch {
+            print("[SwiftWebUIRuntime] navigation icon installation failed: \(error)")
+        }
+    }
+
+    private func removeNavigationIcon() {
+        guard let navigationIconHandle else { return }
+        do {
+            let head = try backend.documentHead()
+            backend.remove(navigationIconHandle, from: head)
+            self.navigationIconHandle = nil
+            appliedNavigationIcon = nil
+        } catch {
+            print("[SwiftWebUIRuntime] navigation icon removal failed: \(error)")
+        }
     }
 
     private func appendToContainer(_ node: Node) {

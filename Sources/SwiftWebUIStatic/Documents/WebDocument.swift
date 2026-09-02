@@ -7,7 +7,7 @@
 
 import Foundation
 import SwiftHTML
-import SwiftWebUI
+@_spi(Rendering) import SwiftWebUI
 
 /// Where the rendered view's own CSS is delivered.
 public enum RenderedStyleDelivery: Equatable, Sendable {
@@ -205,6 +205,16 @@ public struct WebDocument {
         nodes.append(contentsOf: self.headNodes)
         if let title = title ?? renderedView.navigationTitle {
             nodes.append(element("title", children: [.text(title)]))
+        }
+        if let navigationIcon = renderedView.navigationIcon {
+            var attributes: [SwiftHTML.Attribute] = [
+                .init("rel", "icon"),
+                .init("href", navigationIcon.href),
+            ]
+            if let mimeType = navigationIcon.mimeType {
+                attributes.append(.init("type", mimeType))
+            }
+            nodes.append(element("link", attributes: attributes, isVoid: true))
         }
         if let stylesheetPath, linksStylesheet {
             nodes.append(

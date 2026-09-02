@@ -15,6 +15,13 @@ public extension View {
     /// reconciliation, so a title derived from `State` stays current.
     func navigationTitle(_ title: String) -> ModifiedView<Self> { modified(.navigationTitle(title)) }
 
+    /// Sets the browser tab icon while this view supplies the rendered page.
+    ///
+    /// Static documents emit a favicon link. A mounted runtime application
+    /// installs and updates its own link in the document head during
+    /// reconciliation, then removes it when the root stops.
+    func navigationIcon(_ icon: NavigationIcon) -> ModifiedView<Self> { modified(.navigationIcon(icon)) }
+
     func `class`(_ name: String) -> ModifiedView<Self> { modified(.cssClass(name)) }
     func id(_ value: String) -> ModifiedView<Self> { modified(.identifier(value)) }
     func attribute(_ name: String, _ value: String) -> ModifiedView<Self> { modified(.attribute(name: name, value: value)) }

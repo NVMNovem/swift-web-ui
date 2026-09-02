@@ -25,6 +25,7 @@ struct LandingPage: View {
         .padding(.px(24))
         .background(Color("var(--panel)"))
         .navigationTitle("Landing")
+        .navigationIcon(.svg("<svg viewBox=\"0 0 16 16\"><circle cx=\"8\" cy=\"8\" r=\"8\"/></svg>"))
     }
 }
 
@@ -41,6 +42,10 @@ let js = rendered.jsString(prettyPrinted: false)
 ```
 
 Use `import SwiftWebUI` when defining only shared views for Embedded or a runtime renderer. Use `import SwiftWebUIStatic` for static rendering; that module re-exports the core DSL.
+
+`navigationIcon(.svg(...))` accepts literal SVG markup and embeds it as a data
+URL. Use `.url(...)` for an icon file; local files must be copied into the
+deployed site by the application build tooling.
 
 `WebDocument` also describes documents that have to stand on their own before any
 other code runs — a page that boots a WebAssembly bundle, for instance, where the

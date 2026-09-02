@@ -9,6 +9,7 @@ import SwiftCSS
 
 public enum ViewModifierNode {
     case navigationTitle(String)
+    case navigationIcon(NavigationIcon)
     case cssClass(String)
     case identifier(String)
     case attribute(name: String, value: String)

@@ -2149,6 +2149,30 @@ extension ButtonStyleToken {
     ))
 }
 
+@Test func navigationIconModifierSuppliesWebDocumentFaviconLink() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Content").navigationIcon(.svg("<svg viewBox=\"0 0 16 16\"/>"))
+    )
+    let document = WebDocument(renderedView: rendered)
+
+    #expect(rendered.navigationIcon == .svg("<svg viewBox=\"0 0 16 16\"/>"))
+    #expect(document.htmlString(prettyPrinted: false).contains(
+        "<link rel=\"icon\" href=\"data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2016%2016%22%2F%3E\" type=\"image/svg+xml\">"
+    ))
+}
+
+@Test func navigationIconURLLeavesTheBrowserToDetermineTheIconType() {
+    let document = WebDocument(
+        renderedView: HTMLRenderer().renderView(
+            Text("Content").navigationIcon(.url("https://example.com/favicon.png"))
+        )
+    )
+
+    let html = document.htmlString(prettyPrinted: false)
+    #expect(html.contains("<link rel=\"icon\" href=\"https://example.com/favicon.png\">"))
+    #expect(!html.contains("type=\"image/svg+xml\""))
+}
+
 @Test func explicitWebDocumentTitleOverridesNavigationTitleModifier() {
     let document = WebDocument(
         title: "Document title",

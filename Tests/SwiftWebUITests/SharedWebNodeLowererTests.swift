@@ -55,6 +55,34 @@ import Testing
     #expect(lowered.documentMetadata.navigationTitle == "Last title")
 }
 
+@Test func sharedLowererCollectsNavigationIconOutsideTheBodyWebNode() {
+    let lowerer = ViewNodeToWebNodeLowerer()
+    let lowered = lowerer.lowerView(
+        VStack {
+            Text("First").navigationIcon(.url("/first.png"))
+            Text("Last").navigationIcon(.url("/last.png"))
+        }
+        .navigationIcon(.svg("<svg viewBox=\"0 0 16 16\"/>"))
+        .makeViewNode()
+    )
+
+    #expect(lowered.documentMetadata.navigationIcon == .svg("<svg viewBox=\"0 0 16 16\"/>"))
+    let element = requireElement(lowered.webNode)
+    #expect(element?.attributes.allSatisfy { !$0.name.contains("icon") } == true)
+}
+
+@Test func sharedLowererUsesTheLastSiblingNavigationIconWithoutAContainerIcon() {
+    let lowered = ViewNodeToWebNodeLowerer().lowerView(
+        Group {
+            Text("First").navigationIcon(.url("/first.png"))
+            Text("Last").navigationIcon(.svg("<svg/>"))
+        }
+        .makeViewNode()
+    )
+
+    #expect(lowered.documentMetadata.navigationIcon == .svg("<svg/>"))
+}
+
 @Test func sharedLowererOwnsStackGridAndSemanticContainerMeaning() {
     let vertical = requireElement(lower(VStack(alignment: .leading, spacing: .px(8)) { Text("V") }))
     #expect(vertical?.tagName == "div")

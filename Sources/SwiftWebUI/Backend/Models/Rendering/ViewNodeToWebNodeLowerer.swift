@@ -32,11 +32,16 @@ public struct ViewNodeToWebNodeLowerer {
             if case .navigationTitle(let title) = modifier { return title }
             return nil
         }.last
+        let navigationIcon = modifiers.compactMap { modifier -> NavigationIcon? in
+            if case .navigationIcon(let icon) = modifier { return icon }
+            return nil
+        }.last
         defer {
-            // Children lower first. A title on their containing view therefore
-            // overrides a descendant title, while the last sibling wins when a
-            // container itself has no title.
+            // Children lower first. Metadata on their containing view therefore
+            // overrides descendant metadata, while the last sibling wins when a
+            // container itself has none.
             if let navigationTitle { metadata.navigationTitle = navigationTitle }
+            if let navigationIcon { metadata.navigationIcon = navigationIcon }
         }
 
         switch node {
@@ -332,7 +337,7 @@ public struct ViewNodeToWebNodeLowerer {
 
         for modifier in modifiers {
             switch modifier {
-            case .navigationTitle: break
+            case .navigationTitle, .navigationIcon: break
             case .cssClass(let name): classNames.append(name)
             case .identifier(let value): identifier = value
             case .attribute(let name, let value):

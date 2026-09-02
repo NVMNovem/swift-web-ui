@@ -25,7 +25,8 @@ public struct HTMLRenderer: ViewRendererProtocol {
         return RenderedView(
             content: RenderedContent(html: html),
             resources: context.renderedResources(),
-            navigationTitle: loweredView.documentMetadata.navigationTitle
+            navigationTitle: loweredView.documentMetadata.navigationTitle,
+            navigationIcon: loweredView.documentMetadata.navigationIcon
         )
     }
 
