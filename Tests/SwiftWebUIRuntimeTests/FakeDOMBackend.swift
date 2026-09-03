@@ -98,6 +98,21 @@ final class FakeDOMBackend: BrowserHeadBackend {
         node.styles[name]
     }
 
+    func attributeValue(name: String, on node: FakeDOMNode) -> String? {
+        node.attributes[name]
+    }
+
+    /// The head's own icon links, in document order.
+    ///
+    /// A `rel` of `shortcut icon` counts, because `rel` is a token list.
+    func documentIconLinks() -> [FakeDOMNode] {
+        operations.append("documentIconLinks")
+        return head.children.filter { child in
+            child.tagName == "link"
+                && (child.attributes["rel"]?.split(separator: " ").contains("icon") ?? false)
+        }
+    }
+
     func createElement(_ tagName: String) -> FakeDOMNode {
         defer { nextNodeID += 1 }
         operations.append("createElement \(tagName)")

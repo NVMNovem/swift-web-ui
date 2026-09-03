@@ -53,9 +53,16 @@ VStack {
 .navigationIcon(.svg("<svg viewBox=\"0 0 16 16\"><circle cx=\"8\" cy=\"8\" r=\"8\"/></svg>"))
 ```
 
-Static documents emit the favicon link in their head. A runtime mount installs
-and reconciles one managed favicon link, then removes it when the mounted root
-stops so the host document can resume control.
+Static documents emit the favicon link in their head. A runtime mount writes to
+the document's own `link[rel~="icon"]` where the page ships one — a placeholder
+is how a page avoids a `/favicon.ico` request — and restores what it found when
+the mounted root stops, exactly as it restores the document title. Only a page
+with no icon link at all gets one appended, and that one is removed on stop.
+
+Adopting matters: a browser resolves the tab icon from the first icon link it
+can decode and does not reconsider because a second one was appended later, so a
+mount that always appended would sit behind the page's own link and the modifier
+would appear to do nothing.
 
 Use ``TabBar`` for selection-only navigation, filters, segmented controls, and timeline selectors:
 

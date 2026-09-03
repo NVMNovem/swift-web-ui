@@ -22,6 +22,12 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     private var appliedNavigationTitle: String?
     private var navigationIconHandle: Backend.Node?
     private var appliedNavigationIcon: NavigationIcon?
+    /// What an adopted icon link carried before this root wrote to it.
+    ///
+    /// Non-`nil` exactly when ``navigationIconHandle`` is a link the document
+    /// authored rather than one this root created, which is what decides
+    /// whether unmounting restores it or removes it.
+    private var adoptedNavigationIcon: (href: String?, type: String?)?
 
     /// Owns `@State` storage for everything mounted under this root.
     let stateSlots = StateSlotStore()
@@ -185,17 +191,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         }
 
         do {
-            let head = try backend.documentHead()
-            let handle: Backend.Node
-            if let navigationIconHandle {
-                handle = navigationIconHandle
-            } else {
-                handle = backend.createElement("link")
-                backend.setAttribute(name: "rel", value: "icon", on: handle)
-                backend.append(handle, to: head)
-                navigationIconHandle = handle
-            }
-
+            let handle = try navigationIconHandle ?? installIconLink()
             backend.setAttribute(name: "href", value: icon.href, on: handle)
             if let mimeType = icon.mimeType {
                 backend.setAttribute(name: "type", value: mimeType, on: handle)
@@ -208,15 +204,68 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         }
     }
 
+    /// The link this root writes the icon to: the document's own where it has
+    /// one, and otherwise one appended to the head.
+    ///
+    /// Adopting rather than always appending is what makes the modifier visible
+    /// at all. A browser resolves the tab icon from the first icon link it can
+    /// decode and does not reconsider because a later one was appended, so on a
+    /// document that ships an icon link of its own — the ordinary case, since a
+    /// placeholder is how a document avoids a `/favicon.ico` request — an
+    /// appended link is silently ignored and the tab keeps the icon the file
+    /// declared. Writing to the element already there is also what every
+    /// hand-rolled version of this does, and it is why they work.
+    ///
+    /// What was adopted is remembered so ``removeNavigationIcon()`` puts it
+    /// back, exactly as the document title is restored rather than blanked.
+    private func installIconLink() throws -> Backend.Node {
+        let head = try backend.documentHead()
+
+        if let adopted = backend.documentIconLinks().first {
+            adoptedNavigationIcon = (
+                href: backend.attributeValue(name: "href", on: adopted),
+                type: backend.attributeValue(name: "type", on: adopted)
+            )
+            navigationIconHandle = adopted
+            return adopted
+        }
+
+        let created = backend.createElement("link")
+        backend.setAttribute(name: "rel", value: "icon", on: created)
+        backend.append(created, to: head)
+        navigationIconHandle = created
+        return created
+    }
+
     private func removeNavigationIcon() {
         guard let navigationIconHandle else { return }
         do {
-            let head = try backend.documentHead()
-            backend.remove(navigationIconHandle, from: head)
+            if let adoptedNavigationIcon {
+                restore(adoptedNavigationIcon, on: navigationIconHandle)
+            } else {
+                let head = try backend.documentHead()
+                backend.remove(navigationIconHandle, from: head)
+            }
             self.navigationIconHandle = nil
+            self.adoptedNavigationIcon = nil
             appliedNavigationIcon = nil
         } catch {
             print("[SwiftWebUIRuntime] navigation icon removal failed: \(error)")
+        }
+    }
+
+    /// Puts an adopted link back the way the document authored it.
+    private func restore(_ attributes: (href: String?, type: String?), on handle: Backend.Node) {
+        if let href = attributes.href {
+            backend.setAttribute(name: "href", value: href, on: handle)
+        } else {
+            backend.removeAttribute(name: "href", from: handle)
+        }
+
+        if let type = attributes.type {
+            backend.setAttribute(name: "type", value: type, on: handle)
+        } else {
+            backend.removeAttribute(name: "type", from: handle)
         }
     }
 

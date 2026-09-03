@@ -93,4 +93,24 @@ protocol BrowserHeadBackend: DOMBackend {
     /// found — the body's scroll lock. Reconciliation must not use it: the
     /// mounted tree, not the DOM, is authoritative about an element's styles.
     func inlineStyleValue(name: String, on node: Node) -> String?
+    /// Reads one attribute back off a node.
+    ///
+    /// Returns `nil` when the node carries no attribute of that name.
+    ///
+    /// Like ``inlineStyleValue(name:on:)`` this exists for document-level side
+    /// effects that must restore what they found — an adopted icon link.
+    /// Reconciliation must not use it: the mounted tree, not the DOM, is
+    /// authoritative about an element's attributes.
+    func attributeValue(name: String, on node: Node) -> String?
+    /// The `link` elements already in the document that declare a browser icon.
+    ///
+    /// In document order, and matching `rel="shortcut icon"` as well as
+    /// `rel="icon"` — `rel` is a space-separated token list.
+    ///
+    /// A navigation icon has to *adopt* one of these rather than append a link
+    /// of its own: a browser resolves the tab icon from the first candidate it
+    /// can decode and does not reconsider when a later one is appended, so a
+    /// document that ships any icon link at all — a placeholder is the usual
+    /// case — would keep it and the modifier would appear to do nothing.
+    func documentIconLinks() -> [Node]
 }

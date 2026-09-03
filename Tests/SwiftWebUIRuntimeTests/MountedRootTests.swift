@@ -113,8 +113,9 @@ extension RuntimeMountTests {
             #expect(backend.head.children.count == 1)
             #expect(backend.head.children[0] === handle)
             #expect(handle.attributes == ["rel": "icon", "href": "/settings.png"])
+            // No `documentHead` here: the link is already known, so a change of
+            // icon is two attribute writes and nothing else.
             #expect(backend.operations == [
-                "documentHead",
                 "setAttribute \(handle.id) href=/settings.png",
                 "removeAttribute \(handle.id) type",
             ])
@@ -139,6 +140,45 @@ extension RuntimeMountTests {
                 "documentHead",
                 "remove \(profileHandle.id) from -1",
             ])
+        }
+
+        /// A document that ships its own icon link is written to, not competed
+        /// with.
+        ///
+        /// A browser resolves the tab icon from the first candidate it can
+        /// decode and does not reconsider when a second one is appended, so a
+        /// root that appended its own would leave the document's placeholder in
+        /// front of it and the modifier would appear to do nothing.
+        @Test func navigationIconAdoptsAnExistingLinkAndRestoresItOnStop() {
+            let backend = FakeDOMBackend()
+            let placeholder = FakeDOMNode(id: 99, tagName: "link")
+            placeholder.attributes = ["rel": "icon", "href": "data:,"]
+            backend.head.children.append(placeholder)
+
+            var icon: NavigationIcon? = .url("/shop.png")
+            let root = MountedRoot(container: backend.root, backend: backend) {
+                LoweredView(
+                    webNode: element("main", children: [.text("Content")]),
+                    documentMetadata: .init(navigationIcon: icon)
+                )
+            }
+
+            root.start()
+            #expect(backend.head.children.count == 1)
+            #expect(backend.head.children[0] === placeholder)
+            #expect(placeholder.attributes == ["rel": "icon", "href": "/shop.png"])
+
+            icon = .svg("<svg viewBox=\"0 0 16 16\"/>")
+            root.invalidate()
+            #expect(backend.head.children.count == 1)
+            #expect(placeholder.attributes["type"] == "image/svg+xml")
+
+            root.stop()
+            // Restored rather than removed, exactly as the document title is:
+            // the element belongs to the document, not to this root.
+            #expect(backend.head.children.count == 1)
+            #expect(backend.head.children[0] === placeholder)
+            #expect(placeholder.attributes == ["rel": "icon", "href": "data:,"])
         }
     }
 }

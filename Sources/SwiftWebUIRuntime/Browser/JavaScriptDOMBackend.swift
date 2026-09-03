@@ -57,6 +57,26 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
         return body
     }
 
+    func attributeValue(name: String, on node: JSObject) -> String? {
+        node.getAttribute!(name).string
+    }
+
+    func documentIconLinks() -> [JSObject] {
+        guard let matches = document.querySelectorAll?("link[rel~=\"icon\"]").object else {
+            return []
+        }
+        guard let count = matches.length.number.map(Int.init) else { return [] }
+
+        var links: [JSObject] = []
+        links.reserveCapacity(count)
+        for index in 0..<count {
+            if let link = matches[index].object {
+                links.append(link)
+            }
+        }
+        return links
+    }
+
     func inlineStyleValue(name: String, on node: JSObject) -> String? {
         guard let value = node.style.object?.getPropertyValue!(name).string, !value.isEmpty else {
             return nil
