@@ -104,6 +104,13 @@ private func productTable(sort: Binding<TableSort?>? = nil) -> Table<[Product]> 
     #expect(nameButton?.tagName == "button")
     #expect(nameButton?.attributes.contains { $0.name == "type" && $0.value == "button" } == true)
     #expect(headerCells[0].attributes.contains { $0.name == "aria-sort" && $0.value == "ascending" })
+
+    // A browser styles its own form controls, so a header button says in as many
+    // words that it wears whatever the header cell wears.
+    let inherited = ["font", "color", "text-transform", "letter-spacing"]
+    #expect(inherited.allSatisfy { name in
+        nameButton?.styles.contains { $0.name == name && $0.value == "inherit" } == true
+    })
     #expect(headerCells[1].attributes.contains { $0.name == "aria-sort" && $0.value == "none" })
 
     // A column with no comparator gets no control at all rather than a dead one.
