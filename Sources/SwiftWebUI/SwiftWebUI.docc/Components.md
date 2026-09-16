@@ -34,6 +34,11 @@ struct ProjectCard: View {
 - ``Image``
 - ``Link``
 
+### Data
+
+- ``Table``
+- ``TableColumn``
+
 ### Containers
 
 - ``Group``

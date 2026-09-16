@@ -67,6 +67,36 @@ WebDocument(
 )
 ```
 
+## Tables
+
+`Table` shows rows as columns, lowering to real `table` markup with a plain
+default look. Sorting is state the application owns: pass a `TableSort` binding
+and every column with something to sort by becomes a header button.
+
+```swift
+struct ProductsTable: View {
+    @State private var sort = TableSort("Name")
+    let products: [Product]
+
+    var body: some View {
+        Table(products, id: { $0.id }, sort: $sort) {
+            TableColumn("Name", value: { $0.name })
+
+            // Sorted on the amount behind the cell, not the text in it.
+            TableColumn("Price", width: .px(96), alignment: .trailing, value: { $0.cents }) { product in
+                Text(product.formattedPrice)
+            }
+        }
+        .stickyHeader()
+        .minWidth(.px(720))
+    }
+}
+```
+
+Column width and alignment belong to the column; everything else is an ordinary
+modifier on the table, which is also the element the defaults are declared on, so
+a modifier overrides them.
+
 ## Architecture
 
 ```text

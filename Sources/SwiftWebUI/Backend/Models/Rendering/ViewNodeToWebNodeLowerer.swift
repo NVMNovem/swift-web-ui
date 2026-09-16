@@ -93,6 +93,8 @@ public struct ViewNodeToWebNodeLowerer {
             )
         case .tabControl(let control):
             return lower(control, modifiers: modifiers, metadata: &metadata)
+        case .table(let table):
+            return lower(table, modifiers: modifiers, metadata: &metadata)
         case .group(let children):
             return lowerGroup(children, modifiers: modifiers, metadata: &metadata)
         case .modified(let modified):
@@ -310,6 +312,168 @@ public struct ViewNodeToWebNodeLowerer {
             modifiers: modifiers,
             children: children
         )
+    }
+
+    /// Lowers ``Table`` to the markup a table actually is.
+    ///
+    /// The rows arrive already ordered, so nothing here decides what a sort means;
+    /// what this owns is the presentation of one — a header cell that is a button
+    /// when its column can be sorted by, the `aria-sort` that tells a screen reader
+    /// which column is the live one, and the indicator beside the active title.
+    ///
+    /// Every default declaration is inline on its element, so an application
+    /// modifier on the table wins by being applied after. The named classes exist
+    /// for the rules inline declarations cannot express, and carry no styling of
+    /// their own.
+    private func lower(
+        _ table: TableNode,
+        modifiers: [ViewModifierNode],
+        metadata: inout ViewDocumentMetadata
+    ) -> WebNode {
+        var children: [WebNode] = []
+
+        if table.showsHeader {
+            let headerCells = table.columns.map { column in
+                headerCell(column, isSticky: table.headerIsSticky, metadata: &metadata)
+            }
+            children.append(.element(.init(
+                tagName: "thead",
+                attributes: [.init(name: "class", value: "swiftwebui-table-header")],
+                children: [.element(.init(tagName: "tr", children: headerCells))]
+            )))
+        }
+
+        let bodyRows = table.rows.map { row -> WebNode in
+            var styles: [WebStyleDeclaration] = []
+            if let background = row.background {
+                styles.append(background.color.map { .init(name: "background-color", value: $0.rawValue) }
+                    ?? .init(name: "background", value: background.rawCSSValue))
+            }
+            let cells = zip(row.cells, table.columns).map { cell, column in
+                WebNode.element(.init(
+                    tagName: "td",
+                    attributes: [.init(name: "class", value: "swiftwebui-table-cell")],
+                    styles: bodyCellStyles(column),
+                    children: flattenedChildren(of: lower(cell, modifiers: [], metadata: &metadata))
+                ))
+            }
+            return .element(.init(
+                tagName: "tr",
+                attributes: [.init(name: "class", value: "swiftwebui-table-row")],
+                styles: styles,
+                children: cells
+            ))
+        }
+        children.append(.element(.init(tagName: "tbody", children: bodyRows)))
+
+        return element(
+            tagName: "table",
+            baseAttributes: [.init(name: "class", value: "swiftwebui-table")],
+            baseStyles: tableStyles(),
+            modifiers: modifiers,
+            children: children
+        )
+    }
+
+    /// One `th`, as a sort button when the column can be sorted by and as plain
+    /// text when it cannot.
+    private func headerCell(
+        _ column: TableNode.Column,
+        isSticky: Bool,
+        metadata: inout ViewDocumentMetadata
+    ) -> WebNode {
+        var attributes = [
+            WebAttribute(name: "class", value: "swiftwebui-table-header-cell"),
+            WebAttribute(name: "scope", value: "col"),
+        ]
+        if column.sortAction != nil {
+            attributes.append(.init(name: "aria-sort", value: ariaSortValue(column.sortOrder)))
+        }
+
+        var children: [WebNode] = []
+        if let sortAction = column.sortAction {
+            var labelChildren: [WebNode] = [.text(column.title)]
+            if let sortOrder = column.sortOrder {
+                labelChildren.append(.element(.init(
+                    tagName: "span",
+                    attributes: [
+                        .init(name: "class", value: "swiftwebui-table-sort-indicator"),
+                        .init(name: "aria-hidden", value: "true"),
+                    ],
+                    children: [.text(sortOrder == .ascending ? "\u{25B2}" : "\u{25BC}")]
+                )))
+            }
+            children.append(.element(.init(
+                tagName: "button",
+                attributes: [
+                    .init(name: "class", value: "swiftwebui-table-sort"),
+                    .init(name: "type", value: "button"),
+                ],
+                styles: sortButtonStyles(column),
+                children: labelChildren,
+                action: sortAction
+            )))
+        } else {
+            children.append(.text(column.title))
+        }
+
+        return .element(.init(
+            tagName: "th",
+            attributes: attributes,
+            styles: headerCellStyles(column, isSticky: isSticky),
+            children: children
+        ))
+    }
+
+    private func tableStyles() -> [WebStyleDeclaration] {
+        [
+            style(Width(.percent(100)).cssDeclaration),
+            style(RawProperty("border-collapse", "collapse").cssDeclaration),
+            .init(name: "text-align", value: "left"),
+        ]
+    }
+
+    private func headerCellStyles(_ column: TableNode.Column, isSticky: Bool) -> [WebStyleDeclaration] {
+        var styles: [WebStyleDeclaration] = [
+            .init(name: "padding", value: "0.5rem 0.75rem"),
+            .init(name: "font-weight", value: "600"),
+            .init(name: "text-align", value: textAlignmentValue(column.alignment)),
+            .init(name: "background-color", value: "var(--swiftwebui-table-header-background, #f6f6f6)"),
+            .init(name: "border-bottom", value: "1px solid var(--swiftwebui-table-border, #e0e0e0)"),
+            .init(name: "white-space", value: "nowrap"),
+        ]
+        if let width = column.width { styles.append(style(Width(width).cssDeclaration)) }
+        if isSticky {
+            styles.append(style(Position(.sticky).cssDeclaration))
+            styles.append(style(Top(SwiftCSS.Length.zero).cssDeclaration))
+            styles.append(style(ZIndex(1).cssDeclaration))
+        }
+        return styles
+    }
+
+    private func bodyCellStyles(_ column: TableNode.Column) -> [WebStyleDeclaration] {
+        [
+            .init(name: "padding", value: "0.5rem 0.75rem"),
+            .init(name: "text-align", value: textAlignmentValue(column.alignment)),
+            .init(name: "vertical-align", value: "middle"),
+            .init(name: "border-bottom", value: "1px solid var(--swiftwebui-table-border, #e0e0e0)"),
+        ]
+    }
+
+    /// A header button that looks like the header text it replaces.
+    private func sortButtonStyles(_ column: TableNode.Column) -> [WebStyleDeclaration] {
+        [
+            .init(name: "display", value: "inline-flex"),
+            .init(name: "align-items", value: "center"),
+            .init(name: "gap", value: "4px"),
+            .init(name: "padding", value: "0"),
+            .init(name: "border", value: "0"),
+            .init(name: "background", value: "none"),
+            .init(name: "color", value: "inherit"),
+            .init(name: "font", value: "inherit"),
+            .init(name: "text-align", value: textAlignmentValue(column.alignment)),
+            .init(name: "cursor", value: "pointer"),
+        ]
     }
 
     private func element(
@@ -661,6 +825,16 @@ private func textTransformValue(_ value: TextTransform) -> String {
     case .uppercase: "uppercase"
     case .lowercase: "lowercase"
     case .capitalize: "capitalize"
+    }
+}
+
+/// What `aria-sort` says about a sortable column: the live one names its
+/// direction, and every other sortable column says it is not the one.
+private func ariaSortValue(_ order: TableSortOrder?) -> String {
+    switch order {
+    case .ascending: "ascending"
+    case .descending: "descending"
+    case .none: "none"
     }
 }
 

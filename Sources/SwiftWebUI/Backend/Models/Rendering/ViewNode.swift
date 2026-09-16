@@ -19,6 +19,7 @@ public indirect enum ViewNode {
     case textArea(TextAreaNode)
     case spacer
     case tabControl(TabControlNode)
+    case table(TableNode)
     case group([ViewNode])
     case modified(ModifiedNode)
 }

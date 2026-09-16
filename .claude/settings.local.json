@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -f \".git/refs/remotes/origin/HEAD 2\" \".git/refs/remotes/origin/HEAD 3\")",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(echo \"EXIT:$?\")"
+    ]
+  }
+}

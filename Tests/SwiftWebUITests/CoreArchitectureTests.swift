@@ -123,6 +123,8 @@ private func textValues(in node: ViewNode) -> [String] {
         []
     case .tabControl(let control):
         control.tabs.flatMap { textValues(in: $0.label) + textValues(in: $0.content) }
+    case .table(let table):
+        table.columns.map(\.title) + table.rows.flatMap { $0.cells.flatMap(textValues) }
     case .group(let children):
         children.flatMap(textValues)
     case .modified(let modified):
