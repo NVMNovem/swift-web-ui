@@ -98,7 +98,16 @@ Div {
 ```
 
 - Column width and alignment belong to ``TableColumn``, because they describe one
-  column rather than the table.
+  column rather than the table. A table that declares any width holds every
+  declared width and shares what is left among the columns with none; a table that
+  declares no width at all lets each column size to its own content.
+  ``Table/columnLayout(_:)`` overrides that choice either way.
+
+  The difference is worth knowing, because a browser's own table layout treats a
+  width as a suggestion: one cell of text that does not wrap can take a column far
+  wider than it was given and squeeze the columns beside it out of the way. Holding
+  the widths is also what lets a cell be cut off — an ellipsis needs a width to be
+  cut against.
 - ``Table/rowBackground(_:)`` paints a row from the row itself. It is the one piece
   of row presentation a cell cannot express, since a cell only covers its column.
 - ``Table/stickyHeader(_:)`` keeps the header in place while rows scroll under it.
@@ -140,3 +149,4 @@ state between rows.
 - ``TableColumnBuilder``
 - ``TableSort``
 - ``TableSortOrder``
+- ``TableColumnLayout``

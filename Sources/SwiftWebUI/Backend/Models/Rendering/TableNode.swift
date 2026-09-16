@@ -59,16 +59,20 @@ public struct TableNode {
     public let showsHeader: Bool
     /// Whether the header stays put while the rows scroll under it.
     public let headerIsSticky: Bool
+    /// How the columns are sized.
+    public let columnLayout: TableColumnLayout
 
     public init(
         columns: [Column],
         rows: [Row],
         showsHeader: Bool,
-        headerIsSticky: Bool
+        headerIsSticky: Bool,
+        columnLayout: TableColumnLayout
     ) {
         self.columns = columns
         self.rows = rows
         self.showsHeader = showsHeader
         self.headerIsSticky = headerIsSticky
+        self.columnLayout = columnLayout
     }
 }

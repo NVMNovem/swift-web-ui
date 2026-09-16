@@ -369,7 +369,7 @@ public struct ViewNodeToWebNodeLowerer {
         return element(
             tagName: "table",
             baseAttributes: [.init(name: "class", value: "swiftwebui-table")],
-            baseStyles: tableStyles(),
+            baseStyles: tableStyles(table.columnLayout),
             modifiers: modifiers,
             children: children
         )
@@ -425,10 +425,11 @@ public struct ViewNodeToWebNodeLowerer {
         ))
     }
 
-    private func tableStyles() -> [WebStyleDeclaration] {
+    private func tableStyles(_ columnLayout: TableColumnLayout) -> [WebStyleDeclaration] {
         [
             style(Width(.percent(100)).cssDeclaration),
             style(RawProperty("border-collapse", "collapse").cssDeclaration),
+            style(RawProperty("table-layout", columnLayout == .fixed ? "fixed" : "auto").cssDeclaration),
             .init(name: "text-align", value: "left"),
         ]
     }

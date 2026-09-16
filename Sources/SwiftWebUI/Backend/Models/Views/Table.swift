@@ -58,6 +58,7 @@ public struct Table<Data: Sequence>: View {
     var rowBackground: ((Row) -> Background?)?
     var showsHeader: Bool = true
     var headerIsSticky: Bool = false
+    var columnLayout: TableColumnLayout?
 
     init(
         data: Data,
@@ -103,8 +104,20 @@ public struct Table<Data: Sequence>: View {
             },
             rows: rows,
             showsHeader: showsHeader,
-            headerIsSticky: headerIsSticky
+            headerIsSticky: headerIsSticky,
+            columnLayout: columnLayout ?? defaultColumnLayout
         ))
+    }
+
+    /// How the columns are sized when the table has not been told.
+    ///
+    /// Declaring a width on a column is a statement that the width matters, and a
+    /// browser's own table layout treats it as a suggestion it may exceed — one
+    /// long unwrapped line in one cell is enough to take a column far wider than
+    /// it was given. So a table with any declared width holds its widths, and a
+    /// table with none, having been told nothing, lets its content decide.
+    private var defaultColumnLayout: TableColumnLayout {
+        columns.contains { $0.width != nil } ? .fixed : .sizedToContent
     }
 
     /// The rows in the order they are to be shown.
@@ -229,6 +242,18 @@ public extension Table {
     func headerHidden(_ hidden: Bool = true) -> Table {
         var table = self
         table.showsHeader = !hidden
+        return table
+    }
+
+    /// Sizes the columns this way rather than the way the declared widths imply.
+    ///
+    /// Use ``TableColumnLayout/sizedToContent`` on a table whose columns declare
+    /// widths but should still grow for their content, and
+    /// ``TableColumnLayout/fixed`` on one that declares none but should share its
+    /// width out evenly.
+    func columnLayout(_ layout: TableColumnLayout) -> Table {
+        var table = self
+        table.columnLayout = layout
         return table
     }
 

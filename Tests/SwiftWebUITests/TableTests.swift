@@ -93,6 +93,34 @@ private func productTable(sort: Binding<TableSort?>? = nil) -> Table<[Product]> 
     #expect(table?.attributes.contains { $0.name == "class" && $0.value == "swiftwebui-table catalogue-table" } == true)
 }
 
+@Test func declaredColumnWidthsHoldAndAreOtherwiseLeftToTheContent() {
+    // This table declares widths, so they are what the columns are.
+    let declared = requireTableElement(productTable())
+    #expect(declared?.styles.contains { $0.name == "table-layout" && $0.value == "fixed" } == true)
+
+    // This one declares none, so nothing has been said about width.
+    let undeclared = requireTableElement(
+        Table(products, id: { $0.id }) {
+            TableColumn("Name", value: { $0.name })
+            TableColumn("Price", value: { $0.cents }) { Text("\($0.cents)") }
+        }
+    )
+    #expect(undeclared?.styles.contains { $0.name == "table-layout" && $0.value == "auto" } == true)
+}
+
+@Test func columnLayoutOverridesWhatTheWidthsImply() {
+    let sizedToContent = requireTableElement(productTable().columnLayout(.sizedToContent))
+    #expect(sizedToContent?.styles.contains { $0.name == "table-layout" && $0.value == "auto" } == true)
+
+    let fixed = requireTableElement(
+        Table(products, id: { $0.id }) {
+            TableColumn("Name", value: { $0.name })
+        }
+        .columnLayout(.fixed)
+    )
+    #expect(fixed?.styles.contains { $0.name == "table-layout" && $0.value == "fixed" } == true)
+}
+
 // MARK: - Sorting
 
 @Test func sortableColumnsBecomeHeaderButtonsAndOthersStayText() {

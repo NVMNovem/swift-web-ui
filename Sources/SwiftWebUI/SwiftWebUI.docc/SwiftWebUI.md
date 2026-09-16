@@ -99,6 +99,7 @@ Normal composition uses fixed-arity generic carriers rather than `AnyView` or vi
 - ``DialogPresentation``
 - ``TableSort``
 - ``TableSortOrder``
+- ``TableColumnLayout``
 
 ### More
 
