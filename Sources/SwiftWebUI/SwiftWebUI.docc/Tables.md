@@ -105,7 +105,13 @@ Div {
   It sticks to the nearest scrolling ancestor, so the table needs to be inside one.
 - ``Table/headerHidden(_:)`` drops the header row.
 - Horizontal scrolling is ordinary layout: a `minWidth` on the table and a
-  container that scrolls.
+  container that scrolls. Mind what is between the two. A panel that is exactly
+  as wide as the screen gives it — `width: 100%` with its overflow hidden or
+  clipped, which is what a rounded surface usually is — cuts the table off at its
+  own edge, and the scrolling container outside it has nothing wider than itself
+  to scroll, so the columns past that edge cannot be reached at all. Let such a
+  panel be sized by its content as well (`min-width: min-content`) so it overflows
+  the scroller rather than swallowing the overflow.
 
 Two colours are read from custom properties, so a theme can set them once
 instead of restyling every cell: `--swiftwebui-table-border` and
