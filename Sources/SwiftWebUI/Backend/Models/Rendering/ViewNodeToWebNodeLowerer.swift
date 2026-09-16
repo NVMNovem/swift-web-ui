@@ -461,6 +461,12 @@ public struct ViewNodeToWebNodeLowerer {
     }
 
     /// A header button that looks like the header text it replaces.
+    ///
+    /// The inherited declarations are not decoration. A browser's own stylesheet
+    /// gives every form control its own font, casing, and spacing, so a header
+    /// styled by an application — small capitals with a little tracking, the
+    /// usual — would keep that styling on the columns it cannot sort by and
+    /// quietly lose it on the ones it can.
     private func sortButtonStyles(_ column: TableNode.Column) -> [WebStyleDeclaration] {
         [
             .init(name: "display", value: "inline-flex"),
@@ -471,6 +477,8 @@ public struct ViewNodeToWebNodeLowerer {
             .init(name: "background", value: "none"),
             .init(name: "color", value: "inherit"),
             .init(name: "font", value: "inherit"),
+            .init(name: "text-transform", value: "inherit"),
+            .init(name: "letter-spacing", value: "inherit"),
             .init(name: "text-align", value: textAlignmentValue(column.alignment)),
             .init(name: "cursor", value: "pointer"),
         ]
