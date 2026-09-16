@@ -42,6 +42,14 @@ HTML/CSS/JS output      click -> State -> reconcile
 
 The logical shared core is physically organized under `Sources/SwiftWebUI/Backend`. `Attributes` contains property wrappers and result builders, `Protocols` contains public protocol boundaries, `Types` contains lightweight semantic/style values, and `Models` groups views, modifiers, styles, and renderer-neutral rendering models. Public views normally have one focused source file each.
 
+Tabular presentation is decided in the same place. `Table` lowers to a `TableNode`
+carrying already-ordered rows and the header state of a sort — which column is
+active, which way it runs, and what clicking a header asks for — and
+`ViewNodeToWebNodeLowerer` turns that into the `table`/`thead`/`tbody` markup and
+the element declarations that give it a default look. Sorting itself is
+application state written back through a binding, so no renderer holds a
+comparator or a sorted copy of the data.
+
 `Models/Rendering` keeps the shared pipeline discoverable as one responsibility: semantic `ViewNode` models, concrete `WebNode` presentation models, document metadata, and `ViewNodeToWebNodeLowerer`. Splitting those model declarations across focused files does not add lowering stages or backend semantics. The static and runtime modules remain separate top-level targets and continue to consume the same `LoweredView` output mechanically.
 
 The `Backend` directory is a source-organization convention, not a fourth architectural layer. There is intentionally no catch-all `Core` source folder.

@@ -7,6 +7,7 @@ DerivedData/
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
+.claude
 Examples/RuntimeCounter/dist/
 Examples/RuntimeCounter/.dist-staging/
 Examples/RuntimeCounter/.dist-previous/
