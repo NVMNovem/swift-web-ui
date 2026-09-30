@@ -81,6 +81,28 @@ cancel work that would otherwise fire against nodes that are already gone.
 
 `RemoteList` remains static-only because it is currently defined by generated fetch/template JavaScript. Static client-state mutation actions remain a static resource feature. The runtime uses child position only as a traversal location; it does not yet define keyed identity, state slots, moves, or hydration. Removed subtrees recursively release retained handlers, while closure-bearing elements conservatively replace their handler registration after rerender because closures have no stable token.
 
+## Models and the environment
+
+State that outlives a view belongs in an `@Observable` class, as it does in SwiftUI.
+``MountedRoot`` runs every build under `withObservationTracking`, so a property a
+`body` read rebuilds the root when it changes. It does not matter whether the model is held in
+`State`, passed as a parameter or read with ``Environment``. Observation reports from
+`willSet`, before the new value is stored, so the rebuild is scheduled for the next
+turn and every change in one turn shares it. A `State` write stays synchronous, and a
+scheduled rebuild that such a write has already overtaken is skipped.
+
+There is no public way to withdraw a tracking registration, so each build leaves one
+behind until something it read changes. A report from any build but the newest is
+ignored. The newest build tracked whatever is still on screen and reports it itself.
+
+``Environment`` holds objects keyed by type. ``View/environment(_:)`` sets them
+around its content's traversal and restores what it found afterwards, in the same way the state
+scope is set around a `body`. A view's ``Environment`` properties are filled in
+immediately before its own `body` runs. At construction the view's ancestors' placements are
+not in effect yet, and filling them in later is what lets an action read the object after the
+traversal has finished. Reflection finds the properties once per view type, and
+view types that declare none are never reflected again.
+
 ## Embedded builder choice
 
 Swift 6.3.3 Embedded crashes or diagnoses unsupported specialization for the parameter-pack result-builder design tested by the project spike. Fixed-arity carriers are an internal compatibility choice; replacing them later does not require a change to ``ViewNode`` or renderer APIs.
