@@ -23,7 +23,11 @@ public extension View {
     /// view's construction: a view is constructed while its *parent's* body runs, so
     /// binding at construction time would give every subview its parent's identity.
     /// `State` therefore binds lazily on first access, which happens here.
+    ///
+    /// ``Environment`` properties are filled in at the same moment and for the same
+    /// reason: the objects this view's ancestors placed are known only now.
     func makeViewNode(in context: ViewContext) -> ViewNode {
+        EnvironmentResolution.resolve(self)
         guard !context.isDetached else {
             let previous = StateSlotStorage.beginScope(nil)
             defer { StateSlotStorage.endScope(previous) }

@@ -5,6 +5,7 @@
 //  Created by Damian Van de Kauter on 20/07/2026.
 //
 
+import Observation
 @_spi(Runtime) @_spi(Rendering) import SwiftWebUI
 
 final class MountedRoot<Backend: BrowserHeadBackend> {
@@ -39,6 +40,12 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     /// Owns the frames and timers that enter and exit transitions run on.
     let transitions: TransitionScheduler<Backend>
     private var isRebuilding = false
+
+    /// Counts builds, so a change reported against an older build can be told
+    /// apart from one against the tree on screen.
+    private var buildGeneration = 0
+    /// The rebuild an observed change has asked for and that has not run yet.
+    private var pendingObservedRebuild: Backend.ScheduledWork?
 
     deinit {
         // Slots hold their boxes with a manual retain, so a discarded root must
@@ -88,6 +95,12 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     }
 
     func stop() {
+        if let pendingObservedRebuild {
+            backend.cancel(pendingObservedRebuild)
+            self.pendingObservedRebuild = nil
+        }
+        // Retires every tracking registration still waiting on a change.
+        buildGeneration &+= 1
         transitions.cancelAll()
         restoreDocumentTitle()
         removeNavigationIcon()
@@ -97,6 +110,11 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     }
 
     /// Rebuilds the presentation tree, reclaiming state for views that disappeared.
+    ///
+    /// The build also runs under observation tracking, so any `@Observable`
+    /// property a `body` read — a model held in `State`, passed in, or read from
+    /// the environment — rebuilds the root when it changes, exactly as a `State`
+    /// write does. See ``observedChange(in:)``.
     private func buildTrackingState() -> LoweredView {
         isRebuilding = true
         stateSlots.beginBuild()
@@ -104,7 +122,34 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
             stateSlots.endBuild()
             isRebuilding = false
         }
-        return build()
+        buildGeneration &+= 1
+        let signal = ObservedChangeSignal(root: self, generation: buildGeneration)
+        return withObservationTracking(build) {
+            signal.fire()
+        }
+    }
+
+    /// Answers a change to something the build of `generation` read.
+    ///
+    /// Observation reports a change from `willSet`, before the new value is
+    /// stored, so rebuilding here would draw the old one. The rebuild is
+    /// scheduled instead, and several changes in one turn share it.
+    ///
+    /// A report against an older build is ignored. There is no public way to
+    /// withdraw a tracking registration, so every build leaves one behind until
+    /// something it read changes. The newest build tracked whatever still
+    /// matters and reports it itself; an older one tracked a tree that is no
+    /// longer on screen.
+    fileprivate func observedChange(in generation: Int) {
+        guard generation == buildGeneration, pendingObservedRebuild == nil else { return }
+        pendingObservedRebuild = backend.schedule(afterMilliseconds: 0) { [weak self] in
+            guard let self else { return }
+            self.pendingObservedRebuild = nil
+            // A rebuild since the change — a `State` write in the same turn —
+            // already read the new value.
+            guard generation == self.buildGeneration else { return }
+            self.invalidate()
+        }
     }
 
     func invalidate() {
@@ -273,5 +318,25 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         for handle in node.topLevelDOMHandles {
             backend.append(handle, to: container)
         }
+    }
+}
+
+/// Carries an observed change from Observation's `@Sendable` callback back to
+/// the root that tracked it.
+///
+/// `@unchecked Sendable` for the reason `ViewInvalidation` is `nonisolated(unsafe)`:
+/// a mounted root lives on the browser's one thread, which is also the thread
+/// every `@Observable` write it can see is made on.
+private final class ObservedChangeSignal<Backend: BrowserHeadBackend>: @unchecked Sendable {
+    private weak var root: MountedRoot<Backend>?
+    private let generation: Int
+
+    init(root: MountedRoot<Backend>, generation: Int) {
+        self.root = root
+        self.generation = generation
+    }
+
+    func fire() {
+        root?.observedChange(in: generation)
     }
 }
