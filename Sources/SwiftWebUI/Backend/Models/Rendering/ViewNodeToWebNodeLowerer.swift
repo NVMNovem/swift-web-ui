@@ -593,6 +593,7 @@ public struct ViewNodeToWebNodeLowerer {
             case .resize(let value): styles.append(style(Resize(value).cssDeclaration))
             case .outline(let value): styles.append(style(Outline(value).cssDeclaration))
             case .scrollMarginTop(let value): styles.append(style(ScrollMarginTop(value).cssDeclaration))
+            case .scrollbarWidth(let value): styles.append(style(ScrollbarWidth(value).cssDeclaration))
             case .cornerRadius(let value): styles.append(style(BorderRadius(value).cssDeclaration))
             case .clipShape(.capsule): styles.append(style(BorderRadius(.px(999)).cssDeclaration))
             case .border(let value): styles.append(style(value.cssDeclaration))

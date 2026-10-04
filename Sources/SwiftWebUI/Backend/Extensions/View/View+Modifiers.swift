@@ -122,6 +122,7 @@ public extension View {
     func resize(_ value: ResizeValue) -> ModifiedView<Self> { modified(.resize(value)) }
     func outline(_ value: OutlineValue) -> ModifiedView<Self> { modified(.outline(value)) }
     func scrollMarginTop(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.scrollMarginTop(value)) }
+    func scrollbarWidth(_ value: ScrollbarWidthValue) -> ModifiedView<Self> { modified(.scrollbarWidth(value)) }
     func cornerRadius(_ value: SwiftCSS.Length) -> ModifiedView<Self> { modified(.cornerRadius(value)) }
     func clipShape(_ shape: ClipShape) -> ModifiedView<Self> { modified(.clipShape(shape)) }
     func border(_ border: SwiftCSS.Border) -> ModifiedView<Self> { modified(.border(border)) }
