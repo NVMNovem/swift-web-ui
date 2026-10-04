@@ -549,6 +549,27 @@ public struct ViewNodeToWebNodeLowerer {
             case .wordBreak(let value): styles.append(style(WordBreak(value).cssDeclaration))
             case .whiteSpace(let value): styles.append(style(WhiteSpace(value).cssDeclaration))
             case .textOverflow(let value): styles.append(style(TextOverflow(value).cssDeclaration))
+            case .lineLimit(let minimum, let maximum):
+                if let maximum {
+                    // SwiftCSS's `line-clamp`. The prefixed form is the one
+                    // browsers implement and it does nothing unless all four of
+                    // its declarations are present; the unprefixed property
+                    // rides along for the day one reads it.
+                    styles.append(style(Display(.webkitBox).cssDeclaration))
+                    styles.append(style(WebkitBoxOrient(.vertical).cssDeclaration))
+                    styles.append(style(WebkitLineClamp(maximum).cssDeclaration))
+                    styles.append(style(LineClamp(maximum).cssDeclaration))
+                    styles.append(style(Overflow(.hidden).cssDeclaration))
+                } else if minimum != nil {
+                    // A minimum alone still needs a block: `min-height` does
+                    // nothing on the inline box text lowers to.
+                    styles.append(style(Display(.block).cssDeclaration))
+                }
+                if let minimum {
+                    // Reserved in the element's own line height, so it holds
+                    // whatever font and `line-height` the text is set in.
+                    styles.append(style(MinHeight(.lh(Double(minimum))).cssDeclaration))
+                }
             case .lineHeight(let value): styles.append(.init(name: "line-height", value: value.rawValue))
             case .textAlign(let value): styles.append(.init(name: "text-align", value: textAlignmentValue(value)))
             case .textDecoration(let value): styles.append(.init(name: "text-decoration", value: textDecorationValue(value)))

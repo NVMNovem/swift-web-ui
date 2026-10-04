@@ -58,6 +58,43 @@ public extension View {
     func wordBreak(_ value: WordBreakValue) -> ModifiedView<Self> { modified(.wordBreak(value)) }
     func whiteSpace(_ value: WhiteSpaceValue) -> ModifiedView<Self> { modified(.whiteSpace(value)) }
     func textOverflow(_ value: TextOverflowValue) -> ModifiedView<Self> { modified(.textOverflow(value)) }
+
+    /// Sets the most lines text may occupy, ending the last in an ellipsis
+    /// where there is more.
+    ///
+    /// SwiftUI's `lineLimit(_:)`. `nil` states no limit and lowers to nothing.
+    ///
+    /// The multi-line counterpart of `whiteSpace(.nowrap)` + `overflow(.hidden)`
+    /// + `textOverflow(.ellipsis)`, which can only truncate one line. A limit
+    /// sets `display` and `overflow` itself — CSS's line clamp does nothing
+    /// without them — so a later `.display(_:)` or `.overflow(_:)` on the same
+    /// view undoes it.
+    func lineLimit(_ number: Int?) -> ModifiedView<Self> { modified(.lineLimit(minimum: nil, maximum: number)) }
+
+    /// Sets the most lines text may occupy, and optionally keeps that many
+    /// lines of height even when the text is shorter.
+    ///
+    /// Reserving is what keeps a row of cards level when one description runs
+    /// to two lines and the next to one.
+    func lineLimit(_ limit: Int, reservesSpace: Bool) -> ModifiedView<Self> {
+        modified(.lineLimit(minimum: reservesSpace ? limit : nil, maximum: limit))
+    }
+
+    /// Keeps at least `limit.lowerBound` lines of height and shows at most
+    /// `limit.upperBound` lines.
+    func lineLimit(_ limit: ClosedRange<Int>) -> ModifiedView<Self> {
+        modified(.lineLimit(minimum: limit.lowerBound, maximum: limit.upperBound))
+    }
+
+    /// Keeps at least `limit.lowerBound` lines of height, with no most.
+    func lineLimit(_ limit: PartialRangeFrom<Int>) -> ModifiedView<Self> {
+        modified(.lineLimit(minimum: limit.lowerBound, maximum: nil))
+    }
+
+    /// Shows at most `limit.upperBound` lines.
+    func lineLimit(_ limit: PartialRangeThrough<Int>) -> ModifiedView<Self> {
+        modified(.lineLimit(minimum: nil, maximum: limit.upperBound))
+    }
     func lineHeight(_ value: SwiftCSS.LineHeightValue) -> ModifiedView<Self> { modified(.lineHeight(value)) }
     func textAlign(_ value: TextAlignment) -> ModifiedView<Self> { modified(.textAlign(value)) }
     func textDecoration(_ value: TextDecoration) -> ModifiedView<Self> { modified(.textDecoration(value)) }

@@ -509,6 +509,51 @@ private func firstTextContent(in node: WebNode?) -> String? {
     ])
 }
 
+@Test func sharedLowererLowersLineLimitToTheWholeLineClampSet() {
+    // `-webkit-line-clamp` only takes effect on a vertical `-webkit-box` whose
+    // overflow is hidden, so the modifier emits all of it rather than leaving
+    // three companions for the caller to remember.
+    let clamp: [WebStyleDeclaration] = [
+        .init(name: "display", value: "-webkit-box"),
+        .init(name: "-webkit-box-orient", value: "vertical"),
+        .init(name: "-webkit-line-clamp", value: "2"),
+        .init(name: "line-clamp", value: "2"),
+        .init(name: "overflow", value: "hidden"),
+    ]
+
+    #expect(requireElement(lower(Text("Body").lineLimit(2)))?.styles == clamp)
+    #expect(requireElement(lower(Text("Body").lineLimit(...2)))?.styles == clamp)
+    #expect(requireElement(lower(Text("Body").lineLimit(2, reservesSpace: false)))?.styles == clamp)
+}
+
+@Test func sharedLowererLowersLineLimitMinimumsToLineHeightUnits() {
+    let clamp: [WebStyleDeclaration] = [
+        .init(name: "display", value: "-webkit-box"),
+        .init(name: "-webkit-box-orient", value: "vertical"),
+        .init(name: "-webkit-line-clamp", value: "3"),
+        .init(name: "line-clamp", value: "3"),
+        .init(name: "overflow", value: "hidden"),
+    ]
+
+    // A range reserves its lower bound and clamps at its upper.
+    #expect(requireElement(lower(Text("Body").lineLimit(2...3)))?.styles
+        == clamp + [.init(name: "min-height", value: "2lh")])
+
+    // Reserving space is a range whose two ends are the same number.
+    #expect(requireElement(lower(Text("Body").lineLimit(3, reservesSpace: true)))?.styles
+        == clamp + [.init(name: "min-height", value: "3lh")])
+
+    // A minimum alone clamps nothing, and needs a block for `min-height`.
+    #expect(requireElement(lower(Text("Body").lineLimit(2...)))?.styles == [
+        .init(name: "display", value: "block"),
+        .init(name: "min-height", value: "2lh"),
+    ])
+}
+
+@Test func sharedLowererLowersNoLineLimitToNothing() {
+    #expect(requireElement(lower(Text("Body").lineLimit(nil)))?.styles == [])
+}
+
 @Test func sharedLowererPreservesCanonicalWhiteSpaceAndTextOverflowValues() {
     let whiteSpace: [(WhiteSpaceValue, String)] = [
         (.normal, "normal"),
