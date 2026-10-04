@@ -66,6 +66,7 @@ public enum ViewModifierNode {
     case resize(ResizeValue)
     case outline(OutlineValue)
     case scrollMarginTop(SwiftCSS.Length)
+    case scrollbarWidth(ScrollbarWidthValue)
     case cornerRadius(SwiftCSS.Length)
     case clipShape(ClipShape)
     case border(SwiftCSS.Border)

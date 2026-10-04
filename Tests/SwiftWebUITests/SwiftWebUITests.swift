@@ -537,6 +537,7 @@ extension ButtonStyleToken {
         .resize(.vertical)
         .outline(.none)
         .scrollMarginTop(.px(84))
+        .scrollbarWidth(.none)
     )
     let css = rendered.cssString()
 
@@ -557,6 +558,7 @@ extension ButtonStyleToken {
     #expect(css.contains("resize: vertical"))
     #expect(css.contains("outline: none"))
     #expect(css.contains("scroll-margin-top: 84px"))
+    #expect(css.contains("scrollbar-width: none"))
 }
 
 @Test func lowLevelLayoutAndVisualModifierClassHashingIsDeterministic() {

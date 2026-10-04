@@ -88,6 +88,7 @@ Div {
 .resize(.vertical)
 .outline(.none)
 .scrollMarginTop(.px(84))
+.scrollbarWidth(.none)
 ```
 
 SwiftWebUI stores these calls as modifier data and lowers them through SwiftCSS
@@ -97,7 +98,7 @@ properties and values such as `GridTemplateColumns`, `JustifyContentValue`,
 `AlignItemsValue`, `AlignSelfValue`, `FlexGrow`, `FlexShrink`, `FlexBasis`, `WordBreakValue`,
 `WhiteSpaceValue`, `TextOverflowValue`,
 `PointerEventsValue`, `CursorValue`, `PositionValue`, `Top`, `Inset`, `ZIndex`,
-`ResizeValue`, `OutlineValue`, and `ScrollMarginTop`. Edge-specific borders
+`ResizeValue`, `OutlineValue`, `ScrollMarginTop`, and `ScrollbarWidthValue`. Edge-specific borders
 lower through the per-side properties `BorderTop`, `BorderRight`,
 `BorderBottom`, and `BorderLeft`, with `.all` collapsing to the `Border`
 shorthand. String-accepting modifiers such as `.gridTemplateColumns(...)`,
