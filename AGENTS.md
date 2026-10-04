@@ -30,6 +30,19 @@
 - Future SwiftMailUI must not depend on SwiftWebUI.
 - Never implement missing CSS properties, CSS values, or CSS rendering logic in SwiftWebUI. If a required CSS feature is missing from SwiftCSS, stop and clearly report what needs to be added to SwiftCSS first.
 
+# API Direction: SwiftUI Outside, HTML and CSS Inside
+
+SwiftWebUI makes building for the web read like SwiftUI. The public API matches SwiftUI; what it lowers to is ordinary HTML and CSS from SwiftHTML and SwiftCSS. See "API direction" in ARCHITECTURE.md.
+
+- Before adding a view or modifier, check whether SwiftUI has the concept. If it does, use SwiftUI's name, argument labels and overloads: `lineLimit(_:)` with `Int?`, `ClosedRange`, `PartialRangeFrom`, `PartialRangeThrough` and `reservesSpace:` — not `lineClamp(_:)`.
+- Store SwiftUI-shaped intent in `ViewModifierNode`; translate it to declarations only in `ViewNodeToWebNodeLowerer`.
+- Lower to plain HTML and CSS through SwiftHTML and SwiftCSS types. Do not reach for JavaScript, measurement or a custom layout pass to imitate SwiftUI.
+- If the HTML element, attribute, CSS property or CSS value is missing, add it to SwiftHTML or SwiftCSS first, under its real HTML/CSS name (`WebkitLineClamp`, `Length.lh`). Those packages mirror the web; only SwiftWebUI mirrors SwiftUI.
+- When one SwiftUI modifier needs several declarations to work, the modifier emits all of them. Do not leave companions for the caller to remember.
+- Match SwiftUI's behaviour. Where the browser differs, document the difference on the declaration; if the difference is large, do not borrow SwiftUI's name for it.
+- Where SwiftUI has no equivalent (`objectFit`, `gridTemplateColumns`, `pointerEvents`), name the API for the web concept. Do not invent SwiftUI-sounding names.
+- Existing CSS-named modifiers stay. When adding a SwiftUI equivalent beside one, make the SwiftUI form the documented default and keep the CSS-named one for what only it can express.
+
 # README Example Maintenance
 
 When public API changes add, remove, rename, or significantly improve user-facing SwiftWebUI features, review README.md.

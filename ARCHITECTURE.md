@@ -78,6 +78,51 @@ The fixed arity is a Swift 6.3.3 Embedded compiler workaround. Parameter packs w
 
 `AnyView`, `[AnyView]`, `any View`, `[any View]`, and dynamic view casts are not part of normal traversal.
 
+## API direction: SwiftUI outside, HTML and CSS inside
+
+SwiftWebUI exists so that building for the web reads like SwiftUI. That is a
+statement about the **public API**, and it has a second half about what is
+underneath it:
+
+```text
+what an application writes        Text(details).lineLimit(2)        SwiftUI's name and shape
+what the lowerer emits            Display(.webkitBox), WebkitLineClamp(2), …   SwiftCSS
+what the browser receives         display: -webkit-box; -webkit-line-clamp: 2  plain CSS
+```
+
+- **A new view or modifier takes SwiftUI's name, argument labels and overloads
+  wherever SwiftUI has the concept.** `lineLimit(_:)` with `Int?`, a closed
+  range, the two partial ranges and `reservesSpace:` — not `lineClamp(_:)`,
+  which names the CSS property a reader should not have to know. Somebody who
+  knows SwiftUI should be able to guess the call before reading the
+  documentation.
+- **Its meaning is plain HTML and CSS, stated through SwiftHTML and SwiftCSS.**
+  No canvas, no layout engine, no JavaScript measuring text: `lineLimit` is a
+  line clamp because that is how a browser limits lines. Where the element,
+  attribute, property or value is missing from those packages it is added there
+  first — SwiftWebUI never spells a CSS property as a string to get around it.
+- **The translation happens once, in `ViewNodeToWebNodeLowerer`.** The modifier
+  stores SwiftUI-shaped intent in `ViewModifierNode` (`lineLimit(minimum:maximum:)`),
+  and the lowerer is the only place that knows which declarations that takes.
+  One SwiftUI modifier is often several declarations that only work together;
+  emitting the set is the modifier's job, not the caller's.
+- **Match SwiftUI's behaviour, and say where the web cannot.** Where CSS gives a
+  different result the modifier keeps SwiftUI's name only if the difference is
+  small and documented on the declaration — `lineLimit` sets `display` and
+  `overflow`, so a later `.display(_:)` undoes it, and that is written on it. A
+  name that would promise behaviour the browser does not deliver is worse than
+  an honest CSS-shaped one.
+- **Where SwiftUI has no such concept, the API is named for the web one.**
+  `objectFit`, `gridTemplateColumns`, `whiteSpace`, `pointerEvents`, `zIndex`
+  and `semanticRole` are the web's own ideas and stay under the web's names.
+  Inventing a SwiftUI-sounding name for something SwiftUI does not have helps
+  nobody guess it.
+- **The CSS-named modifiers that exist are not deprecated by this.** Much of
+  the current surface (`display`, `flexGrow`, `overflow`, `textOverflow`, …)
+  predates this direction and stays as the lower-level layer. When a SwiftUI
+  equivalent is added beside one, the SwiftUI name becomes the documented way
+  and the CSS-named one remains for what it alone can say.
+
 ## Ownership rules
 
 SwiftHTML owns HTML nodes, attributes, escaping, and HTML string rendering. SwiftCSS owns CSS properties, values, declarations, nodes, and CSS string rendering. SwiftWebUI must not duplicate either system.
@@ -150,6 +195,7 @@ straightforward public API under the selected Wasm SDK.
 - `WebNode` cannot carry DOM state, and content hashes or child position are not stable semantic identity.
 - Keyed reconciliation requires explicit user or domain identity.
 - Missing HTML primitives belong in SwiftHTML; missing CSS primitives belong in SwiftCSS.
+- New public views and modifiers follow SwiftUI's name, labels and overloads where SwiftUI has the concept, and lower to SwiftHTML/SwiftCSS primitives; see "API direction".
 - Do not reintroduce SwiftWebUI `Border` or `Shadow` wrappers.
 - Public API and architecture changes require README, DocC, and architecture documentation updates.
 - Core changes must pass the Swift 6.3.3 Embedded target build.

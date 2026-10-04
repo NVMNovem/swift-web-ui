@@ -42,6 +42,7 @@ public enum ViewModifierNode {
     case wordBreak(WordBreakValue)
     case whiteSpace(WhiteSpaceValue)
     case textOverflow(TextOverflowValue)
+    case lineLimit(minimum: Int?, maximum: Int?)
     case lineHeight(SwiftCSS.LineHeightValue)
     case textAlign(TextAlignment)
     case textDecoration(TextDecoration)

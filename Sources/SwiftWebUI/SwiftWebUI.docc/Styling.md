@@ -76,6 +76,7 @@ Div {
 .wordBreak(.breakWord)
 .whiteSpace(.nowrap)
 .textOverflow(.ellipsis)
+.lineLimit(2)
 .border(.bottom, "1px solid #eee")
 .backdropFilter("blur(18px)")
 .pointerEvents(.none)
@@ -118,6 +119,31 @@ Text(name)
 Prefer this to shortening the string in Swift. Only the browser knows the
 rendered width of a name in the reader's font at the reader's size, so a
 Swift-side truncation is a guess that CSS does not have to make.
+
+### Limiting lines of text
+
+`text-overflow` cannot end a second line in an ellipsis. `lineLimit(_:)` can,
+and it takes what SwiftUI's takes:
+
+```swift
+Text(description).lineLimit(2)                      // at most two lines
+Text(description).lineLimit(2, reservesSpace: true) // always two lines tall
+Text(description).lineLimit(1...3)                  // one to three lines
+Text(description).lineLimit(2...)                   // at least two lines tall
+Text(description).lineLimit(...3)                   // at most three lines
+Text(description).lineLimit(nil)                    // no limit
+```
+
+A most lowers to SwiftCSS's line clamp — `display: -webkit-box`,
+`-webkit-box-orient: vertical`, `-webkit-line-clamp`, `line-clamp` and
+`overflow: hidden`. The prefixed form is the one every browser implements, and
+it does nothing unless all of it is present. A least lowers to `min-height` in
+`lh`, the element's own line height, so the reserved space is right whatever
+font the text is set in.
+
+Because a limit sets `display` and `overflow` itself, do not follow it with
+`.display(_:)` or `.overflow(_:)` on the same view. `lineLimit(nil)` lowers to
+nothing; it does not cancel a limit stated earlier on the same view.
 
 ### Enter and exit transitions
 
