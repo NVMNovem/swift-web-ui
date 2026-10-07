@@ -14,6 +14,10 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/NVMNovem/swift-css", from: "1.0.6"),
         .package(url: "https://github.com/NVMNovem/swift-html", from: "1.0.0"),
+        // TEMPORARY: a local checkout, because the Embedded-compatible resolver is
+        // not in a tagged swift-localization release yet. Replace with a version
+        // requirement on https://github.com/NVMNovem/swift-localization before merging.
+        .package(path: "../../SwiftLocalization/swift-localization"),
         .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.56.1"),
     ],
     targets: [
@@ -21,6 +25,7 @@ let package = Package(
             name: "SwiftWebUI",
             dependencies: [
                 .product(name: "SwiftCSS", package: "swift-css"),
+                .product(name: "SwiftLocalization", package: "swift-localization"),
             ],
             exclude: ["SwiftWebUI.docc"]
         ),

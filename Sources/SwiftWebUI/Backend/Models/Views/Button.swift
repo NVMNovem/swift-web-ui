@@ -7,20 +7,53 @@
 
 public struct Button: View {
     public typealias Body = Never
-    public let label: ViewNode
+    enum Label {
+        case node(ViewNode)
+        case localized(LocalizedResource)
+    }
+
+    let labelStorage: Label
+
     /// The action, wrapped so that it runs with the environment objects that were in
     /// effect where the button was created. That is what lets it read an
     /// ``Environment`` property of the view that wrote it.
     public let action: (() -> Void)?
 
-    /// Creates a button whose label is a single run of text.
+    /// The lowered label. A localized title is shown here as its default value; it
+    /// resolves against the catalog when the control itself is lowered.
+    public var label: ViewNode {
+        label(in: LocalizationEnvironment())
+    }
+
+    func label(in localization: LocalizationEnvironment) -> ViewNode {
+        switch labelStorage {
+        case .node(let node): node
+        case .localized(let resource): Text(resource).makeViewNode(in: ViewContext.detached.localized(localization))
+        }
+    }
+
+    /// Creates a button whose title is looked up in the localization catalog.
+    ///
+    /// A string literal or interpolation selects this initializer, as it does for
+    /// ``Text``. The title is resolved when the button is lowered, so a
+    /// ``View/locale(_:)`` or ``View/localizationCatalog(_:)`` applied anywhere around
+    /// the button takes effect.
+    public init(_ titleKey: LocalizedResource, action: (() -> Void)? = nil) {
+        self.labelStorage = .localized(titleKey)
+        self.action = action.map(EnvironmentStorage.capturing)
+    }
+
+    /// Creates a button whose label is a string value, shown without localizing it.
     ///
     /// The label is built in a detached ``ViewContext``, so a `@State` value
     /// declared while producing it does not bind to the mounted root's slot
     /// store and silently falls back to private storage. Declare state on the
     /// enclosing view instead.
-    public init(_ label: String, action: (() -> Void)? = nil) {
-        self.label = Text(label).makeViewNode(in: .detached)
+    // Disfavored, as in SwiftUI, so that a string literal selects the localized
+    // initializer rather than this one.
+    @_disfavoredOverload
+    public init<S: StringProtocol>(_ label: S, action: (() -> Void)? = nil) {
+        self.labelStorage = .node(Text(label).makeViewNode(in: .detached))
         self.action = action.map(EnvironmentStorage.capturing)
     }
 
@@ -38,12 +71,12 @@ public struct Button: View {
         action: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) {
-        self.label = content().makeViewNode(in: .detached)
+        self.labelStorage = .node(content().makeViewNode(in: .detached))
         self.action = action.map(EnvironmentStorage.capturing)
     }
 
     public var body: Never { fatalError("Button primitive body unavailable") }
     public func makeViewNode(in context: ViewContext) -> ViewNode {
-        .button(.init(label: label, action: action.map(ActionIntent.closure)))
+        .button(.init(label: label(in: context.localization), action: action.map(ActionIntent.closure)))
     }
 }

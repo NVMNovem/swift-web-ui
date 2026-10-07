@@ -32,13 +32,21 @@ public extension View {
         guard !context.isDetached else {
             let previous = StateSlotStorage.beginScope(nil)
             defer { StateSlotStorage.endScope(previous) }
-            return EnvironmentStorage.lowering(evaluate: { body }, lower: { $0.makeViewNode(in: context) })
+            return EnvironmentStorage.lowering(
+                locale: context.localization.effectiveLocale,
+                evaluate: { body },
+                lower: { $0.makeViewNode(in: context) }
+            )
         }
         let scoped = context.appending(.body)
         StateSlotStorage.markVisited(scoped.path)
         let previous = StateSlotStorage.beginScope(scoped.path)
         defer { StateSlotStorage.endScope(previous) }
-        return EnvironmentStorage.lowering(evaluate: { body }, lower: { $0.makeViewNode(in: scoped) })
+        return EnvironmentStorage.lowering(
+            locale: scoped.localization.effectiveLocale,
+            evaluate: { body },
+            lower: { $0.makeViewNode(in: scoped) }
+        )
     }
 
     /// Lowers the view from the root of a fresh traversal.
