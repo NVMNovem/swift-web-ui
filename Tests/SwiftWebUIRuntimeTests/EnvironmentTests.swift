@@ -45,6 +45,46 @@ private struct MaybeTally: View {
     }
 }
 
+/// Reads the model only inside a key handler.
+private struct TallyKeys: View {
+    @Environment(Tally.self) private var tally
+
+    var body: some View {
+        Text("keys").onKeyDown("Enter") { tally.count += 10 }
+    }
+}
+
+/// Reads an optional model only inside an action.
+private struct MaybeTallyButton: View {
+    @Environment(Tally.self) private var tally: Tally?
+
+    var body: some View {
+        Button("?") { tally?.count += 100 }
+    }
+}
+
+/// Hands a closure that reads its own environment to a child placed under a nearer
+/// object of the same type.
+private struct OuterReader: View {
+    @Environment(Tally.self) private var tally
+    let inner: Tally
+
+    var body: some View {
+        VStack {
+            Text(tally.name)
+            Relay(name: { tally.name }).environment(inner)
+        }
+    }
+}
+
+private struct Relay: View {
+    let name: () -> String
+
+    var body: some View {
+        Text("relayed \(name())")
+    }
+}
+
 private struct Screen: View {
     var body: some View {
         VStack {
@@ -140,6 +180,71 @@ extension RuntimeMountTests {
             root.start()
 
             #expect(texts(backend.root) == ["none", "has tally"])
+        }
+
+        @Test func aKeyHandlerReadsItAfterTheTraversal() {
+            let tally = Tally()
+            let backend = FakeDOMBackend()
+            let root = makeRoot({ TallyKeys().environment(tally) }, backend: backend)
+            defer { root.stop() }
+            root.start()
+
+            func keyed(_ node: FakeDOMNode) -> FakeDOMNode? {
+                if node.keyActionKeys.contains("Enter") { return node }
+                return node.children.lazy.compactMap(keyed).first
+            }
+            keyed(backend.root)?.pressKey("Enter")
+            #expect(tally.count == 10)
+        }
+
+        @Test func anActionReadsAnOptionalObjectItsBodyNeverRead() {
+            let tally = Tally()
+            let backend = FakeDOMBackend()
+            let root = makeRoot({
+                VStack {
+                    MaybeTallyButton()
+                    MaybeTallyButton().environment(tally)
+                }
+            }, backend: backend)
+            defer { root.stop() }
+            root.start()
+
+            // The first button has no object and does nothing; the second finds its own.
+            buttons(backend.root)[0].action?()
+            #expect(tally.count == 0)
+            buttons(backend.root)[1].action?()
+            #expect(tally.count == 100)
+        }
+
+        @Test func anActionSeesTheObjectsOfTheViewThatWroteIt() {
+            let outer = Tally(name: "outer")
+            let inner = Tally(name: "inner")
+            let backend = FakeDOMBackend()
+            let root = makeRoot({
+                VStack {
+                    TallyButton()
+                    TallyButton().environment(inner)
+                }
+                .environment(outer)
+            }, backend: backend)
+            defer { root.stop() }
+            root.start()
+
+            buttons(backend.root)[0].action?()
+            #expect((outer.count, inner.count) == (1, 0))
+            buttons(backend.root)[1].action?()
+            #expect((outer.count, inner.count) == (1, 1))
+        }
+
+        @Test func aClosureCalledFurtherDownKeepsItsOwnViewsObjects() {
+            let outer = Tally(name: "outer")
+            let inner = Tally(name: "inner")
+            let backend = FakeDOMBackend()
+            let root = makeRoot({ OuterReader(inner: inner).environment(outer) }, backend: backend)
+            defer { root.stop() }
+            root.start()
+
+            #expect(texts(backend.root) == ["outer", "relayed outer"])
         }
 
         @Test func nothingLeaksOutOfATraversal() {

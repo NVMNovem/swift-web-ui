@@ -13,6 +13,10 @@ public struct Button: View {
     }
 
     let labelStorage: Label
+
+    /// The action, wrapped so that it runs with the environment objects that were in
+    /// effect where the button was created. That is what lets it read an
+    /// ``Environment`` property of the view that wrote it.
     public let action: (() -> Void)?
 
     /// The lowered label. A localized title is shown here as its default value; it
@@ -36,7 +40,7 @@ public struct Button: View {
     /// the button takes effect.
     public init(_ titleKey: LocalizedResource, action: (() -> Void)? = nil) {
         self.labelStorage = .localized(titleKey)
-        self.action = action
+        self.action = action.map(EnvironmentStorage.capturing)
     }
 
     /// Creates a button whose label is a string value, shown without localizing it.
@@ -50,7 +54,7 @@ public struct Button: View {
     @_disfavoredOverload
     public init<S: StringProtocol>(_ label: S, action: (() -> Void)? = nil) {
         self.labelStorage = .node(Text(label).makeViewNode(in: .detached))
-        self.action = action
+        self.action = action.map(EnvironmentStorage.capturing)
     }
 
     /// Creates a button whose label is arbitrary content.
@@ -68,7 +72,7 @@ public struct Button: View {
         @ViewBuilder content: () -> Content
     ) {
         self.labelStorage = .node(content().makeViewNode(in: .detached))
-        self.action = action
+        self.action = action.map(EnvironmentStorage.capturing)
     }
 
     public var body: Never { fatalError("Button primitive body unavailable") }

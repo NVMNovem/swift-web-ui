@@ -97,11 +97,14 @@ ignored. The newest build tracked whatever is still on screen and reports it its
 
 ``Environment`` holds objects keyed by type. ``View/environment(_:)`` sets them
 around its content's traversal and restores what it found afterwards, in the same way the state
-scope is set around a `body`. A view's ``Environment`` properties are filled in
-immediately before its own `body` runs. At construction the view's ancestors' placements are
-not in effect yet, and filling them in later is what lets an action read the object after the
-traversal has finished. Reflection finds the properties once per view type, and
-view types that declare none are never reflected again.
+scope is set around a `body`. A view's ``Environment`` properties answer when they are
+read, not when the view is constructed: at construction the view's ancestors' placements are
+not in effect yet. A read while a `body` getter runs takes the objects in effect and remembers
+them; a closure called later reads what was remembered. ``Button`` and
+``View/onKeyDown(_:perform:)`` capture the objects in effect where the action was written and
+restore them while it runs, which is what lets an action read an object its view's `body`
+never touched, after the traversal has finished. No reflection is involved, so the mechanism
+is the same in Embedded Swift.
 
 ## Embedded builder choice
 
