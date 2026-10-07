@@ -2,6 +2,7 @@
 
 - SwiftHTML owns HTML nodes, attributes, escaping, and rendering.
 - SwiftCSS owns CSS properties, values, declarations, and rendering.
+- SwiftLocalization owns localization keys, typed arguments, locale identifiers, catalogs, plural rules, and resolution. It must never depend on SwiftWebUI. SwiftWebUI decides which views take a localization key and resolves them during view lowering from `ViewContext`; do not keep the locale or catalog in shared static storage, and do not put them in `WebNode`.
 - SwiftWebUI owns the Embedded-compatible shared View DSL, concrete ViewNode, WebNode, ViewNodeToWebNodeLowerer, modifiers, semantic UI styling, state, binding, and action intent.
 - SwiftWebUIStatic owns mechanical WebNode-to-SwiftHTML/SwiftCSS lowering, rendered resources, generated JavaScript, WebDocument, and preview/export helpers.
 - SwiftWebUIRuntime owns mechanical WebNode-to-DOM lowering, event registration, invalidation, and the browser bridge.

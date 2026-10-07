@@ -7,3 +7,7 @@
 
 // Re-export SwiftCSS so users only need `import SwiftWebUI`.
 @_exported import SwiftCSS
+
+// Re-export SwiftLocalization so `LocalizedResource`, `LocaleIdentifier`, and
+// `LocalizationCatalog` are available wherever views are written.
+@_exported import SwiftLocalization

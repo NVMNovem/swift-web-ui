@@ -32,7 +32,7 @@ SwiftHTML/SwiftCSS       browser DOM
 HTML/CSS/JS output      click -> State -> reconcile
 ```
 
-`SwiftWebUI` is the existing public import and is the Embedded-compatible shared core. It depends on SwiftCSS for Embedded-compatible value and declaration types, but it does not depend on SwiftHTML or Foundation. It contains no HTML serialization, filesystem access, generated JavaScript, static resource registry, or DOM object.
+`SwiftWebUI` is the existing public import and is the Embedded-compatible shared core. It depends on SwiftCSS for Embedded-compatible value and declaration types and on SwiftLocalization for localized text, but it does not depend on SwiftHTML or Foundation. It contains no HTML serialization, filesystem access, generated JavaScript, static resource registry, or DOM object.
 
 `SwiftWebUIStatic` depends on the core, SwiftHTML, and SwiftCSS. It may use Foundation where document export needs URLs or filesystem access. It re-exports `SwiftWebUI` so static applications normally need one import.
 
@@ -135,6 +135,16 @@ The shared core owns:
 - the renderer boundary and concrete `ViewNode`.
 - concrete `WebNode` body presentation, document metadata, and the single `ViewNodeToWebNodeLowerer` semantic pass.
 
+Localization is split the same way. SwiftLocalization owns keys, typed interpolation
+arguments, locale identifiers, catalogs, plural rules, and resolution, and knows nothing
+about SwiftWebUI. The shared core owns which views take a localization key (`Text`,
+and the titles of `Button` and `Link`), the `locale(_:)`, `localizationCatalog(_:)` and
+`localizationResolver(_:)` modifiers, and the moment of resolution: while a view is
+lowered to `ViewNode`, from the localization carried in `ViewContext`. `TextNode` and
+`WebNode` hold resolved strings only, so neither renderer knows about locales or
+catalogs. The localization is deliberately not kept in shared static storage, so that
+renders in different locales cannot observe each other.
+
 The static module owns:
 
 - mechanical `WebNode` to concrete SwiftHTML/SwiftCSS lowering;
@@ -195,6 +205,7 @@ straightforward public API under the selected Wasm SDK.
 - `WebNode` cannot carry DOM state, and content hashes or child position are not stable semantic identity.
 - Keyed reconciliation requires explicit user or domain identity.
 - Missing HTML primitives belong in SwiftHTML; missing CSS primitives belong in SwiftCSS.
+- Missing localization behaviour (formats, plural rules, catalog features) belongs in SwiftLocalization, which must stay independent of SwiftWebUI. Localized text is resolved during view lowering from `ViewContext`; renderers and `WebNode` must not carry locales or catalogs.
 - New public views and modifiers follow SwiftUI's name, labels and overloads where SwiftUI has the concept, and lower to SwiftHTML/SwiftCSS primitives; see "API direction".
 - Do not reintroduce SwiftWebUI `Border` or `Shadow` wrappers.
 - Public API and architecture changes require README, DocC, and architecture documentation updates.
