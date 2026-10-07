@@ -5,8 +5,7 @@ Package.resolved
 xcuserdata/
 DerivedData/
 **/.docc-build/
-.swiftpm/configuration/registries.json
-.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.swiftpm
 .netrc
 .claude
 Examples/RuntimeCounter/dist/
