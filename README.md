@@ -67,6 +67,42 @@ WebDocument(
 )
 ```
 
+## Localization
+
+A string literal in `Text`, `Button` or `Link` is a localization key, as in SwiftUI; a
+`String` value is shown verbatim. Catalogs come from
+[SwiftLocalization](https://github.com/NVMNovem/swift-localization), which `SwiftWebUI`
+re-exports.
+
+```swift
+struct CartSummary: View {
+    let count: Int
+    let customer: String
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text("cart.title")           // catalog key
+            Text("\(count) items")       // "%lld items", pluralized per locale
+            Text(customer)               // a value: never localized
+            Button("Order") {}
+        }
+    }
+}
+
+let rendered = HTMLRenderer().renderView(
+    CartSummary(count: 3, customer: "Ada")
+        .localizationCatalog(.localizable)   // generated from Localizable.xcstrings
+        .locale("nl-BE")
+)
+```
+
+Add `SwiftLocalizationPlugin` to the target that holds `Localizable.xcstrings` to get
+`LocalizationCatalog.localizable`. Without a catalog, or for a key it does not have,
+the literal renders as written. The locale is always explicit: neither the process nor
+the browser locale is read. A view reads the locale in effect with
+`@Environment(LocaleIdentifier.self)`. See the Localization article in the DocC documentation for
+the current limitations.
+
 ## Tables
 
 `Table` shows rows as columns, lowering to real `table` markup with a plain

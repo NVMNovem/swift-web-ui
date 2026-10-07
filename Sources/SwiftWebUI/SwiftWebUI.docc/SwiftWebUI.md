@@ -103,6 +103,7 @@ Normal composition uses fixed-arity generic carriers rather than `AnyView` or vi
 
 ### More
 
+- <doc:Localization>
 - <doc:AdvancedTopics>
 - <doc:ContributorGuide>
 - <doc:BuildingYourFirstPage>

@@ -14,6 +14,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/NVMNovem/swift-css", from: "1.0.6"),
         .package(url: "https://github.com/NVMNovem/swift-html", from: "1.0.0"),
+        .package(url: "https://github.com/NVMNovem/swift-localization", from: "0.0.2"),
         .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.56.1"),
     ],
     targets: [
@@ -21,6 +22,7 @@ let package = Package(
             name: "SwiftWebUI",
             dependencies: [
                 .product(name: "SwiftCSS", package: "swift-css"),
+                .product(name: "SwiftLocalization", package: "swift-localization"),
             ],
             exclude: ["SwiftWebUI.docc"]
         ),

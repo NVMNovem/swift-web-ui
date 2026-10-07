@@ -22,16 +22,29 @@ public struct ViewContext: Sendable {
     /// to a private box.
     public let isDetached: Bool
 
+    /// The locale and catalog that localized text in this subtree resolves with.
+    let localization: LocalizationEnvironment
+
     public static let root = ViewContext(path: .root)
     public static let detached = ViewContext(path: .root, isDetached: true)
 
     public init(path: ViewIdentityPath = .root, isDetached: Bool = false) {
+        self.init(path: path, isDetached: isDetached, localization: LocalizationEnvironment())
+    }
+
+    init(path: ViewIdentityPath, isDetached: Bool, localization: LocalizationEnvironment) {
         self.path = path
         self.isDetached = isDetached
+        self.localization = localization
     }
 
     public func appending(_ component: ViewPathComponent) -> ViewContext {
-        ViewContext(path: path.appending(component), isDetached: isDetached)
+        ViewContext(path: path.appending(component), isDetached: isDetached, localization: localization)
+    }
+
+    /// The same position in the tree with a different localization.
+    func localized(_ localization: LocalizationEnvironment) -> ViewContext {
+        ViewContext(path: path, isDetached: isDetached, localization: localization)
     }
 
     /// Descends into positional child `index`.
