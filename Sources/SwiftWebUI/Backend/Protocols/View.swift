@@ -24,20 +24,21 @@ public extension View {
     /// binding at construction time would give every subview its parent's identity.
     /// `State` therefore binds lazily on first access, which happens here.
     ///
-    /// ``Environment`` properties are filled in at the same moment and for the same
-    /// reason: the objects this view's ancestors placed are known only now.
+    /// ``Environment`` properties answer at the same moment and for the same reason:
+    /// the objects this view's ancestors placed are known only now. The `body` getter
+    /// and the lowering of its result are marked while they run so that a read is
+    /// recognised as this view reading its own environment.
     func makeViewNode(in context: ViewContext) -> ViewNode {
-        EnvironmentResolution.resolve(self)
         guard !context.isDetached else {
             let previous = StateSlotStorage.beginScope(nil)
             defer { StateSlotStorage.endScope(previous) }
-            return body.makeViewNode(in: context)
+            return EnvironmentStorage.lowering(evaluate: { body }, lower: { $0.makeViewNode(in: context) })
         }
         let scoped = context.appending(.body)
         StateSlotStorage.markVisited(scoped.path)
         let previous = StateSlotStorage.beginScope(scoped.path)
         defer { StateSlotStorage.endScope(previous) }
-        return body.makeViewNode(in: scoped)
+        return EnvironmentStorage.lowering(evaluate: { body }, lower: { $0.makeViewNode(in: scoped) })
     }
 
     /// Lowers the view from the root of a fresh traversal.

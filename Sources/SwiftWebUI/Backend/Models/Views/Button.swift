@@ -8,6 +8,9 @@
 public struct Button: View {
     public typealias Body = Never
     public let label: ViewNode
+    /// The action, wrapped so that it runs with the environment objects that were in
+    /// effect where the button was created. That is what lets it read an
+    /// ``Environment`` property of the view that wrote it.
     public let action: (() -> Void)?
 
     /// Creates a button whose label is a single run of text.
@@ -18,7 +21,7 @@ public struct Button: View {
     /// enclosing view instead.
     public init(_ label: String, action: (() -> Void)? = nil) {
         self.label = Text(label).makeViewNode(in: .detached)
-        self.action = action
+        self.action = action.map(EnvironmentStorage.capturing)
     }
 
     /// Creates a button whose label is arbitrary content.
@@ -36,7 +39,7 @@ public struct Button: View {
         @ViewBuilder content: () -> Content
     ) {
         self.label = content().makeViewNode(in: .detached)
-        self.action = action
+        self.action = action.map(EnvironmentStorage.capturing)
     }
 
     public var body: Never { fatalError("Button primitive body unavailable") }
