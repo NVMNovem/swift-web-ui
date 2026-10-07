@@ -32,8 +32,8 @@
 /// view is being lowered. A closure the view hands to a descendant therefore still reads
 /// the view's own objects, even under a nearer placement of the same type.
 ///
-/// Code that runs after the traversal reads what was remembered. An action closure is the important
-/// case: ``Button`` and ``View/onKeyDown(_:perform:)`` capture the objects in effect
+/// Code that runs after the traversal reads what was remembered. An action closure is
+/// the important case: ``Button`` and ``View/onKeyDown(_:perform:)`` capture the objects in effect
 /// where the closure was written and put them back while it runs, so an action can read a
 /// property its view's `body` never touched.
 ///
@@ -44,6 +44,15 @@
 ///
 /// ```swift
 /// @Environment(Basket.self) private var basket: Basket?
+/// ```
+///
+/// ## The locale
+///
+/// The locale that localized text resolves in is read the same way, and follows the same
+/// rules, although it is a value and not an object:
+///
+/// ```swift
+/// @Environment(LocaleIdentifier.self) private var locale
 /// ```
 @propertyWrapper
 public struct Environment<Value> {
@@ -68,6 +77,29 @@ public struct Environment<Value> {
     public init<Object: AnyObject>(_ type: Object.Type) where Value == Object? {
         typeName = EnvironmentStorage.name(of: type)
         lookup = { .some($0.object(of: type)) }
+    }
+
+    /// Reads the locale that localized text resolves in.
+    ///
+    /// ```swift
+    /// struct PriceLabel: View {
+    ///     @Environment(LocaleIdentifier.self) private var locale
+    ///
+    ///     var body: some View {
+    ///         Text(verbatim: format(price, for: locale))
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// It is the locale placed with ``View/locale(_:)``. With none placed it is the
+    /// source language of the catalog placed with ``View/localizationCatalog(_:)``, and
+    /// with no catalog either it is `und`, so the read never fails.
+    ///
+    /// This is SwiftUI's `@Environment(\.locale)`. It is keyed by type because key
+    /// paths are unavailable in Embedded Swift.
+    public init(_ type: LocaleIdentifier.Type) where Value == LocaleIdentifier {
+        typeName = "LocaleIdentifier"
+        lookup = { $0.locale ?? .undetermined }
     }
 
     public var wrappedValue: Value {
@@ -100,10 +132,19 @@ public struct Environment<Value> {
 public struct EnvironmentObjects {
     private var storage: [ObjectIdentifier: AnyObject] = [:]
 
+    /// The locale in effect for the composed view being lowered. `nil` outside one.
+    private(set) var locale: LocaleIdentifier?
+
     public init() {}
 
     public func object<Object: AnyObject>(of type: Object.Type) -> Object? {
         storage[ObjectIdentifier(type)] as? Object
+    }
+
+    func settingLocale(_ locale: LocaleIdentifier) -> EnvironmentObjects {
+        var copy = self
+        copy.locale = locale
+        return copy
     }
 
     func inserting<Object: AnyObject>(_ object: Object) -> EnvironmentObjects {
@@ -150,10 +191,24 @@ enum EnvironmentStorage {
     /// The two steps are told apart so that an ``Environment`` read can distinguish a
     /// view reading its own environment, in `evaluate`, from a closure of that view
     /// being called while its descendants are lowered, in `lower`.
-    static func lowering<Body>(evaluate: () -> Body, lower: (Body) -> ViewNode) -> ViewNode {
+    ///
+    /// `locale` is the locale this view's text resolves in. It is made readable for the
+    /// duration, which is the only moment the traversal's ``ViewContext`` and the
+    /// storage a `body` can reach are both at hand. Only composed views pass through
+    /// here, so lowering primitives alone still touches no shared storage.
+    static func lowering<Body>(
+        locale: LocaleIdentifier,
+        evaluate: () -> Body,
+        lower: (Body) -> ViewNode
+    ) -> ViewNode {
         nextLowering &+= 1
         lowerings.append(nextLowering)
-        defer { lowerings.removeLast() }
+        let outer = active
+        active = outer.settingLocale(locale)
+        defer {
+            active = outer
+            lowerings.removeLast()
+        }
 
         let previous = isEvaluatingBody
         isEvaluatingBody = true

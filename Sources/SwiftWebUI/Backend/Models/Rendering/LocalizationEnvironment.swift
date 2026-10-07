@@ -21,12 +21,18 @@ struct LocalizationEnvironment: Sendable {
     /// Formats default values when no catalog has been placed.
     private static let fallback = LocalizationResolver(catalog: LocalizationCatalog(sourceLanguage: .undetermined))
 
+    /// The locale text resolves in: the one placed, or else the catalog's source
+    /// language, or else `und` when there is no catalog either.
+    var effectiveLocale: LocaleIdentifier {
+        locale ?? resolver?.catalog.sourceLanguage ?? .undetermined
+    }
+
     /// The text of `resource` for this environment.
     ///
     /// Without a catalog, or when the catalog cannot answer, this is the
     /// resource's default value with its arguments formatted.
     func string(for resource: LocalizedResource) -> String {
         let resolver = resolver ?? Self.fallback
-        return resolver.string(for: resource, locale: locale ?? resolver.catalog.sourceLanguage)
+        return resolver.string(for: resource, locale: effectiveLocale)
     }
 }

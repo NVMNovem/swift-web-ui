@@ -21,6 +21,8 @@ public extension View {
     /// resolves in the catalog's source language; the process and browser locale are
     /// never consulted implicitly.
     ///
+    /// A view reads the locale in effect with `@Environment(LocaleIdentifier.self)`.
+    ///
     /// This is SwiftUI's `.environment(\.locale, _:)`. It is spelled as a modifier
     /// because key paths are unavailable in Embedded Swift.
     func locale(_ locale: LocaleIdentifier) -> LocalizationWriter<Self> {

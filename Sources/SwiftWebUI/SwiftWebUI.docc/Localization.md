@@ -54,6 +54,27 @@ because key paths are unavailable in Embedded Swift.
 )
 ```
 
+## Reading the locale
+
+A view reads the locale in effect to format something itself, or to choose content:
+
+```swift
+struct PriceLabel: View {
+    @Environment(LocaleIdentifier.self) private var locale
+    let cents: Int
+
+    var body: some View {
+        Text(verbatim: formatPrice(cents, for: locale))
+    }
+}
+```
+
+The value is the locale placed with ``View/locale(_:)``; with none placed, the source
+language of the catalog; with no catalog either, `und`. It is set in one place — the
+modifier — and read anywhere below it, including in a ``Button`` action. This is
+SwiftUI's `@Environment(\.locale)`, keyed by type because key paths are unavailable in
+Embedded Swift.
+
 ## How it resolves
 
 A localized text is resolved while its view is lowered to a ``ViewNode``; the node holds
@@ -61,13 +82,17 @@ the final string. The locale and catalog travel down the traversal in ``ViewCont
 not in shared storage. Static and runtime rendering therefore produce the same text, and
 changing the locale is an ordinary re-render.
 
+The readable locale is the exception: a `body` has no access to ``ViewContext``, so
+each composed view's locale is copied from the context into the scoped storage that
+``Environment`` reads, for as long as that view is lowered. Text resolution does not
+depend on that storage, and lowering primitives alone does not touch it.
+
 ## Limitations
 
 - Content that a primitive lowers eagerly — the content closure of ``Button`` and
   ``Link``, a ``Tab`` label — is lowered before a localization is known and shows
   default values. Their string-literal titles are localized; ``Tab`` titles, table
   column titles, placeholders and navigation titles are not localized yet.
-- There is no way to read the current locale from a view yet.
 - Numbers are shown with plain digits. Grouping and localized digits need a
   `LocalizedNumberFormatter`, supplied through ``View/localizationResolver(_:)``.
 - The runtime does not detect the browser's language; pass the locale you want.
@@ -82,6 +107,7 @@ changing the locale is an ordinary re-render.
 
 ### Choosing a language
 
+- ``Environment``
 - ``View/locale(_:)``
 - ``View/localizationCatalog(_:)``
 - ``View/localizationResolver(_:)``

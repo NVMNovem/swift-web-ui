@@ -99,7 +99,8 @@ let rendered = HTMLRenderer().renderView(
 Add `SwiftLocalizationPlugin` to the target that holds `Localizable.xcstrings` to get
 `LocalizationCatalog.localizable`. Without a catalog, or for a key it does not have,
 the literal renders as written. The locale is always explicit: neither the process nor
-the browser locale is read. See the Localization article in the DocC documentation for
+the browser locale is read. A view reads the locale in effect with
+`@Environment(LocaleIdentifier.self)`. See the Localization article in the DocC documentation for
 the current limitations.
 
 ## Tables

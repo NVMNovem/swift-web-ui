@@ -142,8 +142,11 @@ and the titles of `Button` and `Link`), the `locale(_:)`, `localizationCatalog(_
 `localizationResolver(_:)` modifiers, and the moment of resolution: while a view is
 lowered to `ViewNode`, from the localization carried in `ViewContext`. `TextNode` and
 `WebNode` hold resolved strings only, so neither renderer knows about locales or
-catalogs. The localization is deliberately not kept in shared static storage, so that
-renders in different locales cannot observe each other.
+catalogs. The localization that text resolves from is deliberately not kept in shared
+static storage, so that renders in different locales cannot observe each other. The
+effective locale is copied from `ViewContext` into the environment storage while a
+composed view is lowered, only so that the view can read it with
+`@Environment(LocaleIdentifier.self)`; resolution never reads it back from there.
 
 The static module owns:
 
