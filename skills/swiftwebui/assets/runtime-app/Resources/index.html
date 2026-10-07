@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>App</title>
+    <link rel="stylesheet" href="/styles.css">
+
+    <!-- The bundle imports the WASI shim by bare specifier, and without a
+         bundler a browser needs to be told where that is. Scripts/build.sh
+         vendors the package into dist/vendor/. -->
+    <script type="importmap">
+    {
+        "imports": {
+            "@bjorn3/browser_wasi_shim": "/vendor/browser_wasi_shim/dist/index.js"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- SwiftWebUIRuntime.mount(_:in: "app") replaces what is in here. -->
+    <div id="app">
+        <p class="app-loading">Loading…</p>
+    </div>
+
+    <!-- Rooted paths, so the page still boots when a host answers a deep URL
+         with this document. -->
+    <script type="module">
+        import { init } from "/index.js";
+
+        try {
+            await init();
+        } catch (error) {
+            console.error("The application failed to start:", error);
+            document.getElementById("app").textContent = "Loading failed. Reload to try again.";
+        }
+    </script>
+</body>
+</html>
