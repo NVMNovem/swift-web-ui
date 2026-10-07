@@ -156,7 +156,7 @@ public extension View {
     ///
     /// Browser-runtime only. Static rendering emits no key handler.
     func onKeyDown(_ key: String, perform: @escaping () -> Void) -> ModifiedView<Self> {
-        modified(.onKeyDown(key: key, action: .closure(perform)))
+        modified(.onKeyDown(key: key, action: .closure(EnvironmentStorage.capturing(perform))))
     }
 
     /// Transitions this element as it arrives and as it leaves.
