@@ -1,0 +1,67 @@
+/*
+ * Not the place to style elements: how a thing looks is a modifier on its view.
+ * This file holds only what an inline declaration cannot say:
+ *
+ *   1. custom properties — the palette the Theme tokens name
+ *   2. at-rules          — @media for dark mode, breakpoints, reduced motion
+ *   3. selectors         — :hover, :focus-visible, and the element resets
+ */
+
+:root {
+    color-scheme: light dark;
+
+    --site-background: #ffffff;
+    --site-surface: #f5f5f7;
+    --site-border: #e2e2e7;
+    --site-text: #1d1d1f;
+    --site-text-secondary: #6e6e73;
+    --site-accent: #0a66d8;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --site-background: #111113;
+        --site-surface: #1c1c1f;
+        --site-border: #2e2e33;
+        --site-text: #f5f5f7;
+        --site-text-secondary: #a1a1a6;
+        --site-accent: #4c9bff;
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--site-background);
+    color: var(--site-text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p {
+    margin: 0;
+}
+
+a {
+    color: var(--site-accent);
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+:focus-visible {
+    outline: 2px solid var(--site-accent);
+    outline-offset: 2px;
+}
+
+/* A modifier cannot vary with the viewport, so a breakpoint is a class here.
+   !important outranks the declaration the modifier generated. */
+@media (max-width: 640px) {
+    .site-card-grid {
+        grid-template-columns: 1fr !important;
+    }
+}

@@ -133,6 +133,18 @@ Column width and alignment belong to the column; everything else is an ordinary
 modifier on the table, which is also the element the defaults are declared on, so
 a modifier overrides them.
 
+## Agent skill
+
+`skills/swiftwebui` is an [Agent Skill](https://agentskills.io) that teaches an AI
+coding agent to build a site with SwiftWebUI: which module to use, what exists in
+place of the SwiftUI API that does not, and two starter projects — a static site
+and a WebAssembly app — that build as they are. Install it where the agent looks
+for skills, for example:
+
+```sh
+cp -R skills/swiftwebui ~/.claude/skills/swiftwebui
+```
+
 ## Architecture
 
 ```text
