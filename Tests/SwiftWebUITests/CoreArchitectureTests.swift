@@ -129,5 +129,7 @@ private func textValues(in node: ViewNode) -> [String] {
         children.flatMap(textValues)
     case .modified(let modified):
         textValues(in: modified.content)
+    case .keyed(_, let content):
+        textValues(in: content)
     }
 }

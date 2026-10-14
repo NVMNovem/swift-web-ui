@@ -349,6 +349,7 @@ private func text(in node: WebNode) -> String? {
     case .text(let content): content
     case .element(let element): element.children.compactMap(text(in:)).first
     case .fragment(let children): children.compactMap(text(in:)).first
+    case .keyed(_, let child): text(in: child)
     case .empty: nil
     }
 }

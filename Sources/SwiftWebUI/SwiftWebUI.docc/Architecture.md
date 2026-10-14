@@ -79,7 +79,7 @@ positionally any more, and a later render mounts a fresh one rather than
 reclaiming it. ``MountedRoot`` owns the frames and timers so a torn-down root can
 cancel work that would otherwise fire against nodes that are already gone.
 
-`RemoteList` remains static-only because it is currently defined by generated fetch/template JavaScript. Static client-state mutation actions remain a static resource feature. The runtime uses child position only as a traversal location; it does not yet define keyed identity, state slots, moves, or hydration. Removed subtrees recursively release retained handlers, while closure-bearing elements conservatively replace their handler registration after rerender because closures have no stable token.
+`RemoteList` remains static-only because it is currently defined by generated fetch/template JavaScript. Static client-state mutation actions remain a static resource feature. The runtime uses child position only as a traversal location; keyed `ForEach` rows reach it as `WebNode.keyed` and are matched by that identity, with moves; it does not yet define hydration. Removed subtrees recursively release retained handlers, while closure-bearing elements conservatively replace their handler registration after rerender because closures have no stable token.
 
 ## Models and the environment
 

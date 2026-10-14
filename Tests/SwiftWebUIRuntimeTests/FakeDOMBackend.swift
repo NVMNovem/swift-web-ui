@@ -222,6 +222,8 @@ final class FakeDOMBackend: BrowserHeadBackend {
 
     func insert(_ child: FakeDOMNode, into parent: FakeDOMNode, before reference: FakeDOMNode?) {
         operations.append("insert \(child.id) into \(parent.id) before \(reference?.id.description ?? "nil")")
+        // Like `Node.insertBefore`, inserting a node that is already in the document moves it.
+        parent.children.removeAll { $0 === child }
         if let reference, let index = parent.children.firstIndex(where: { $0 === reference }) {
             parent.children.insert(child, at: index)
         } else {

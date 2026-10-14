@@ -44,13 +44,13 @@ public struct ForEach<Data: Sequence, Content: View>: View {
     public func makeViewNode(in context: ViewContext) -> ViewNode {
         var nodes: [ViewNode] = []
         for (index, element) in data.enumerated() {
-            let elementContext: ViewContext
             if let identify {
-                elementContext = context.appending(.identified(identify(element)))
+                let token = identify(element)
+                let row = content(element).makeViewNode(in: context.appending(.identified(token)))
+                nodes.append(.keyed(token, row))
             } else {
-                elementContext = context.child(index)
+                nodes.append(content(element).makeViewNode(in: context.child(index)))
             }
-            nodes.append(content(element).makeViewNode(in: elementContext))
         }
         return .group(nodes)
     }

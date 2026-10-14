@@ -15,6 +15,11 @@ enum DOMPatch: @unchecked Sendable, Equatable {
     case removeStyle(path: NodePath, name: String)
     case insertChild(parent: NodePath, index: Int, node: WebNode)
     case removeChild(parent: NodePath, index: Int)
+    /// Moves an already mounted child, keeping its DOM nodes, state and registrations.
+    ///
+    /// `to` is the child's index once it has been taken out of `from`, which is where it ends
+    /// up in the list.
+    case moveChild(parent: NodePath, from: Int, to: Int)
     case replaceNode(path: NodePath, node: WebNode)
     case replaceAction(path: NodePath, action: ActionIntent?)
     case replaceKeyActions(path: NodePath, actions: [KeyAction])
@@ -41,6 +46,8 @@ extension DOMPatch {
             lp == rp && li == ri && webNodesEqual(ln, rn)
         case (.removeChild(let lp, let li), .removeChild(let rp, let ri)):
             lp == rp && li == ri
+        case (.moveChild(let lp, let lf, let lt), .moveChild(let rp, let rf, let rt)):
+            lp == rp && lf == rf && lt == rt
         case (.replaceNode(let lp, let ln), .replaceNode(let rp, let rn)):
             lp == rp && webNodesEqual(ln, rn)
         case (.replaceAction(let lp, let la), .replaceAction(let rp, let ra)):
@@ -67,6 +74,8 @@ private func webNodesEqual(_ lhs: WebNode, _ rhs: WebNode) -> Bool {
     case (.text(let lhs), .text(let rhs)): lhs == rhs
     case (.fragment(let lhs), .fragment(let rhs)):
         lhs.count == rhs.count && zip(lhs, rhs).allSatisfy { webNodesEqual($0.0, $0.1) }
+    case (.keyed(let lhsKey, let lhs), .keyed(let rhsKey, let rhs)):
+        lhsKey == rhsKey && webNodesEqual(lhs, rhs)
     case (.element(let lhs), .element(let rhs)):
         lhs.tagName == rhs.tagName
             && lhs.attributes == rhs.attributes
@@ -118,6 +127,8 @@ extension DOMPatch: CustomStringConvertible {
             "insertChild parent=\(parent.indices) index=\(index)"
         case .removeChild(let parent, let index):
             "removeChild parent=\(parent.indices) index=\(index)"
+        case .moveChild(let parent, let from, let to):
+            "moveChild parent=\(parent.indices) from=\(from) to=\(to)"
         case .replaceNode(let path, _):
             "replaceNode path=\(path.indices)"
         case .replaceAction(let path, let action):

@@ -57,7 +57,7 @@ struct ProfilePage: View {
 
 SwiftWebUI state is not SwiftUI state. Binding-backed controls preserve initial value and identity in ``ViewNode``. `SwiftWebUIStatic` converts supported intent into data attributes and a generated tab runtime.
 
-`SwiftWebUIRuntime` installs one renderer-neutral invalidation callback. Mutating ``State`` or its projected ``Binding`` invokes that callback, rebuilds and lowers the root ``ViewNode``, diffs the previous and new `WebNode`, and applies positional patches to a runtime-only mounted tree. Unchanged browser elements remain mounted. This reconciler still does not provide child moves, multiple roots, or production lifecycle semantics.
+`SwiftWebUIRuntime` installs one renderer-neutral invalidation callback. Mutating ``State`` or its projected ``Binding`` invokes that callback, rebuilds and lowers the root ``ViewNode``, diffs the previous and new `WebNode`, and applies positional patches to a runtime-only mounted tree. Unchanged browser elements remain mounted. Children of a keyed `ForEach` are moved rather than rewritten; this reconciler still does not provide multiple roots or production lifecycle semantics.
 
 ### State slots
 

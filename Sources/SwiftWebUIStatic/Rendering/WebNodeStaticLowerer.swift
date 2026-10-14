@@ -53,6 +53,8 @@ struct WebNodeStaticLowerer {
             return [.text(content)]
         case .fragment(let children):
             return children.flatMap { lower($0, context: &context) }
+        case .keyed(_, let child):
+            return lower(child, context: &context)
         case .element(let webElement):
             // A modal dialog lives in the browser's top layer, which a static
             // document has no way to enter. Emitting a closed `dialog` instead

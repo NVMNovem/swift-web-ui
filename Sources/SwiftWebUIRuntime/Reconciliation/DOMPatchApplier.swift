@@ -144,6 +144,8 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
             try insertChild(webNode, at: index, parentPath: parentPath, root: mountedRoot)
         case .removeChild(let parentPath, let index):
             try removeChild(at: index, parentPath: parentPath, root: mountedRoot)
+        case .moveChild(let parentPath, let from, let to):
+            try moveChild(from: from, to: to, parentPath: parentPath, root: mountedRoot)
         case .replaceNode(let path, let webNode):
             try replaceNode(at: path, with: webNode, root: &mountedRoot)
         case .focus(let path):
@@ -182,6 +184,36 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
         }
         mounter.flush(pending)
         children.insert(mounted, at: index)
+        context.node.children = children
+    }
+
+    /// Moves a mounted child within its parent without remounting it.
+    ///
+    /// The DOM nodes are re-inserted, which moves them, so element identity survives. A browser
+    /// may drop focus from a node that is moved while focused; a mounted element's own state
+    /// (registrations, presentation, transition) is untouched.
+    private func moveChild(from: Int, to: Int, parentPath: NodePath, root: Node) throws {
+        var context = try context(at: parentPath, in: root)
+        guard isContainer(context.node) else {
+            throw DOMPatchApplicationError.expectedContainer(parentPath)
+        }
+        let domParent = childDOMParent(for: context.node, inherited: context.domParent)
+        var children = context.node.children
+        guard children.indices.contains(from) else {
+            throw DOMPatchApplicationError.invalidPath(parentPath.appending(from))
+        }
+        let moved = children.remove(at: from)
+        guard to >= 0, to <= children.count else {
+            throw DOMPatchApplicationError.invalidPath(parentPath.appending(to))
+        }
+        var reference = children[to...].lazy.compactMap(\.firstDOMHandle).first
+        if reference == nil, case .fragment = context.node {
+            reference = nextDOMHandle(after: parentPath, in: root)
+        }
+        for handle in moved.topLevelDOMHandles {
+            backend.insert(handle, into: domParent, before: reference)
+        }
+        children.insert(moved, at: to)
         context.node.children = children
     }
 

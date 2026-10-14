@@ -36,6 +36,8 @@ struct DOMMounter<Backend: BrowserHeadBackend> {
             return .empty
         case .text(let value):
             return .text(.init(handle: backend.createTextNode(value), value: value))
+        case .keyed(let key, let child):
+            return .fragment(.init(children: [mount(child, pending: &pending)], key: key))
         case .fragment(let children):
             var mountedChildren: [Node] = []
             mountedChildren.reserveCapacity(children.count)

@@ -118,8 +118,14 @@ final class MountedElementNode<Handle, ActionRegistration> {
 
 final class MountedFragmentNode<Handle, ActionRegistration> {
     var children: [MountedNode<Handle, ActionRegistration>]
+    /// The key of a ``WebNode/keyed(_:_:)`` this fragment was mounted from, if any.
+    ///
+    /// A keyed child mounts as a one-child fragment so a path through it stays addressable
+    /// like any other and the DOM gains no wrapper element.
+    let key: String?
 
-    init(children: [MountedNode<Handle, ActionRegistration>]) {
+    init(children: [MountedNode<Handle, ActionRegistration>], key: String? = nil) {
         self.children = children
+        self.key = key
     }
 }
