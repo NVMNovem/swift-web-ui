@@ -13,3 +13,15 @@ public enum ViewIdentityToken: Hashable, Sendable {
     case int(Int)
     case string(String)
 }
+
+extension ViewIdentityToken {
+    /// The token as the renderer-neutral key carried by ``WebNode/keyed(_:_:)``.
+    ///
+    /// The case is part of the key, so `.int(1)` and `.string("1")` never collide.
+    var webKey: String {
+        switch self {
+        case .int(let value): "i:\(value)"
+        case .string(let value): "s:\(value)"
+        }
+    }
+}

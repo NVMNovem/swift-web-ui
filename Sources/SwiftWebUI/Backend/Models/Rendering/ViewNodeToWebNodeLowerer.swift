@@ -103,6 +103,8 @@ public struct ViewNodeToWebNodeLowerer {
                 modifiers: modified.modifiers + modifiers,
                 metadata: &metadata
             )
+        case .keyed(let token, let content):
+            return .keyed(token.webKey, lower(content, modifiers: modifiers, metadata: &metadata))
         }
     }
 

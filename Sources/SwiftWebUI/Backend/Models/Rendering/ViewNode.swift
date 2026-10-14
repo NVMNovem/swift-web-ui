@@ -22,6 +22,8 @@ public indirect enum ViewNode {
     case table(TableNode)
     case group([ViewNode])
     case modified(ModifiedNode)
+    /// One element of a keyed collection, carrying the identity its siblings are matched by.
+    case keyed(ViewIdentityToken, ViewNode)
 }
 
 extension ViewNode {

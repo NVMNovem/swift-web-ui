@@ -61,11 +61,32 @@ explicit `reconciliation fallback` message before the temporary full-root recove
 ordinary text, attribute, style, action, insertion, removal, and replacement patches
 never use that fallback.
 
+## Keyed diff
+
+A `ForEach` created with `id:` (or over `Identifiable` elements) lowers each row to
+`WebNode.keyed(key, node)`. The key is the explicit identity the caller supplied, never
+derived from content. A keyed node mounts as a one-child fragment carrying its key, so
+no wrapper element reaches the DOM and a path through it is addressed like any other:
+the row's own node is child 0.
+
+When either side of a children list holds a keyed child, the differ matches children by
+identity instead of by position. A keyed child matches the child with the same key; an
+unkeyed child matches the unkeyed child with the same ordinal among its unkeyed siblings,
+so a header next to a list stays where it is. A repeated key among siblings cannot be
+matched, so that list falls back to positional diffing.
+
+Structure is patched before content: unmatched old children are removed (highest index
+first), then each position is filled left to right by `moveChild` of an existing child or
+`insertChild` of a new one, and only then are surviving children diffed at their final
+index. A move re-inserts the child's DOM nodes, which keeps the elements, their
+registrations and their state; a browser may drop focus from a node that is moved while
+focused. Moves are not minimal: they are one per child that is not already in place when
+the walk reaches it.
+
 ## Current limits
 
-This slice intentionally has no DOM-level moves, middle insertion with preserved
-sibling identity, list reordering, transitions, animations, hydration, multiple mounted
-roots, component lifecycle callbacks, or fine-grained state dependency tracking. Every
+This slice intentionally has no transitions between moves, animations, hydration, multiple
+mounted roots, component lifecycle callbacks, or fine-grained state dependency tracking. Every
 state write rebuilds and re-diffs the whole root; writes are not coalesced. Position
 must not be treated as permanent semantic identity, and identity must never be inferred
 from text, tags, rendered hashes, or content hashes.
@@ -74,7 +95,7 @@ View identity for *state* is already keyed, and is a separate concern from this
 positional DOM differ: `ViewIdentityPath` is built during lowering and decides which
 `@State` box a rebuilt view resolves to. See <doc:StateAndBindings>.
 
-The next reconciliation step is explicitly keyed repeated content:
+Keyed repeated content flows like this:
 
 ```text
 ForEach element ID
@@ -89,4 +110,4 @@ state preserved across reordering
 ```
 
 That work requires user or domain identity to flow through the shared presentation;
-it is not implemented by this positional reconciler.
+it now does, as described under Keyed diff.

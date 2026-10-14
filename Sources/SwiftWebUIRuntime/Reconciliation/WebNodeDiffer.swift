@@ -84,6 +84,13 @@ struct WebNodeDiffer {
             )
         case (.fragment(let oldChildren), .fragment(let newChildren)):
             diffChildren(old: oldChildren, new: newChildren, parent: path, into: &patches)
+        case (.keyed(let oldKey, let oldChild), .keyed(let newKey, let newChild)):
+            // A keyed node mounts as a one-child fragment, so its content is child 0.
+            if oldKey == newKey {
+                diff(old: oldChild, new: newChild, path: path.appending(0), into: &patches)
+            } else {
+                patches.append(.replaceNode(path: path, node: new))
+            }
         default:
             patches.append(.replaceNode(path: path, node: new))
         }
@@ -95,6 +102,19 @@ struct WebNodeDiffer {
         parent: NodePath,
         into patches: inout [DOMPatch]
     ) {
+        if let oldIdentities = identities(of: old),
+           let newIdentities = identities(of: new),
+           oldIdentities.contains(where: \.isKeyed) || newIdentities.contains(where: \.isKeyed) {
+            diffKeyedChildren(
+                old: old,
+                new: new,
+                oldIdentities: oldIdentities,
+                newIdentities: newIdentities,
+                parent: parent,
+                into: &patches
+            )
+            return
+        }
         let sharedCount = min(old.count, new.count)
         for index in 0..<sharedCount {
             diff(old: old[index], new: new[index], path: parent.appending(index), into: &patches)
@@ -107,6 +127,84 @@ struct WebNodeDiffer {
             for index in stride(from: old.count - 1, through: new.count, by: -1) {
                 patches.append(.removeChild(parent: parent, index: index))
             }
+        }
+    }
+
+    /// How a child is matched against the other tree's children.
+    private enum ChildIdentity: Hashable {
+        /// The explicit key of a keyed collection element.
+        case key(String)
+        /// An unkeyed child, matched by how many unkeyed children precede it.
+        case ordinal(Int)
+
+        var isKeyed: Bool {
+            if case .key = self { true } else { false }
+        }
+    }
+
+    /// The identity of every child, or `nil` when a key repeats among siblings.
+    ///
+    /// A repeated key cannot tell which child is which, so such a list falls back to positional
+    /// matching instead of guessing; that is the behaviour an unkeyed list already has.
+    private func identities(of children: [WebNode]) -> [ChildIdentity]? {
+        var result: [ChildIdentity] = []
+        result.reserveCapacity(children.count)
+        var seen: Set<ChildIdentity> = []
+        var ordinal = 0
+        for child in children {
+            let identity: ChildIdentity
+            if case .keyed(let key, _) = child {
+                identity = .key(key)
+            } else {
+                identity = .ordinal(ordinal)
+                ordinal += 1
+            }
+            guard seen.insert(identity).inserted else { return nil }
+            result.append(identity)
+        }
+        return result
+    }
+
+    /// Reconciles children by identity, so a reordered row keeps its DOM nodes and its state.
+    ///
+    /// Structure first, content second. Every removal, move and insertion is emitted before any
+    /// content patch, so the content patches can address each surviving child by its final index.
+    /// Unmatched old children go first, highest index first, so no removal shifts another.
+    private func diffKeyedChildren(
+        old: [WebNode],
+        new: [WebNode],
+        oldIdentities: [ChildIdentity],
+        newIdentities: [ChildIdentity],
+        parent: NodePath,
+        into patches: inout [DOMPatch]
+    ) {
+        var oldIndexByIdentity: [ChildIdentity: Int] = [:]
+        for (index, identity) in oldIdentities.enumerated() { oldIndexByIdentity[identity] = index }
+        let surviving = Set(newIdentities)
+
+        var current = oldIdentities
+        for index in stride(from: old.count - 1, through: 0, by: -1) where !surviving.contains(oldIdentities[index]) {
+            patches.append(.removeChild(parent: parent, index: index))
+            current.remove(at: index)
+        }
+
+        var inserted: Set<Int> = []
+        for (index, identity) in newIdentities.enumerated() {
+            if index < current.count, current[index] == identity { continue }
+            if let from = current.firstIndex(of: identity) {
+                patches.append(.moveChild(parent: parent, from: from, to: index))
+                current.remove(at: from)
+                current.insert(identity, at: index)
+            } else {
+                patches.append(.insertChild(parent: parent, index: index, node: new[index]))
+                current.insert(identity, at: index)
+                inserted.insert(index)
+            }
+        }
+
+        for (index, identity) in newIdentities.enumerated() where !inserted.contains(index) {
+            guard let oldIndex = oldIndexByIdentity[identity] else { continue }
+            diff(old: old[oldIndex], new: new[index], path: parent.appending(index), into: &patches)
         }
     }
 

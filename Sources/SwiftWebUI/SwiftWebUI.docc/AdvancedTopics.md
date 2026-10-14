@@ -14,7 +14,7 @@ Work with renderer boundaries and future runtime infrastructure.
 
 ## Runtime work
 
-`SwiftWebUIRuntime` consumes the same `WebNode` as static rendering, attaches closure actions, and positionally reconciles a runtime-only mounted tree. Its next architectural work is explicit keyed `ForEach` identity and state-slot ownership; moves and hydration remain out of scope. Generated JavaScript in the static module is not the runtime renderer.
+`SwiftWebUIRuntime` consumes the same `WebNode` as static rendering, attaches closure actions, and positionally reconciles a runtime-only mounted tree. Rows of a keyed `ForEach` are matched by identity, so insertion, removal and reordering keep their DOM nodes and state; hydration remains out of scope. Generated JavaScript in the static module is not the runtime renderer.
 
 ## Topics
 
