@@ -205,6 +205,33 @@ import Testing
         #expect(differ.diff(old: element(), new: element()) == [])
     }
 
+    @Test func addingADragSourceReplacesItsRegistration() {
+        let source = DragSource { ItemProvider(object: "card") }
+        let patches = differ.diff(old: element(), new: element(dragSource: source))
+        #expect(patches == [.replaceDragSource(path: NodePath(), source: source)])
+    }
+
+    @Test func removingADragSourceReplacesItWithNothing() {
+        let source = DragSource { ItemProvider(object: "card") }
+        let patches = differ.diff(old: element(dragSource: source), new: element())
+        #expect(patches == [.replaceDragSource(path: NodePath(), source: nil)])
+    }
+
+    @Test func aDropTargetIsHandedOverOnEveryRerenderThatCarriesOne() {
+        // Its handlers are closures with no identity, so a rerender cannot be
+        // shown to carry the same one.
+        let old = DropTarget(of: [.plainText], delegate: AcceptingDropDelegate())
+        let new = DropTarget(of: [.plainText], delegate: AcceptingDropDelegate())
+        #expect(differ.diff(old: element(dropTarget: old), new: element(dropTarget: new))
+            == [.replaceDropTarget(path: NodePath(), target: new)])
+        #expect(differ.diff(old: element(dropTarget: old), new: element())
+            == [.replaceDropTarget(path: NodePath(), target: nil)])
+    }
+
+    @Test func anElementWithoutDragAndDropEitherSideProducesNoDragPatch() {
+        #expect(differ.diff(old: element(), new: element()) == [])
+    }
+
     @Test func droppingTheLastKeyHandlerEmptiesTheRegistrations() {
         let patches = differ.diff(
             old: element(keyActions: [.init(key: "Escape", action: .closure {})]),
@@ -266,4 +293,8 @@ import Testing
         ) == [.setTransitionPhases(path: NodePath(), phases: nil)])
     }
 
+}
+
+private struct AcceptingDropDelegate: DropDelegate {
+    func performDrop(info: DropInfo) -> Bool { true }
 }

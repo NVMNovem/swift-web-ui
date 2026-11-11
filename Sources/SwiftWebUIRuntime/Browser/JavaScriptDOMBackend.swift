@@ -7,6 +7,7 @@
 
 #if arch(wasm32)
 import JavaScriptKit
+@_spi(Rendering) import SwiftWebUI
 
 final class JavaScriptDOMBackend: BrowserHeadBackend {
     typealias Node = JSObject
@@ -147,6 +148,127 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
 
     func removeKeyAction(from node: JSObject, registration: JSClosure) {
         node.onkeydown = .null
+    }
+
+    func setDragAction(
+        _ representations: @escaping () -> [ItemRepresentation],
+        on node: JSObject
+    ) -> JSClosure {
+        let handler = JSClosure { arguments in
+            guard let transfer = arguments.first?.dataTransfer.object else { return .undefined }
+            for representation in representations() {
+                _ = transfer.setData!(representation.contentType.identifier, representation.value)
+            }
+            return .undefined
+        }
+        node.ondragstart = .object(handler)
+        return handler
+    }
+
+    func removeDragAction(from node: JSObject, registration: JSClosure) {
+        node.ondragstart = .null
+    }
+
+    func setDropAction(
+        _ handler: @escaping (DragEventPhase, DropInfo) -> DropOperation?,
+        on node: JSObject
+    ) -> JSClosure {
+        // One closure serves all four events. It reads the element from
+        // `currentTarget` rather than capturing `node`, which would tie the node
+        // and its own handler into a cycle neither garbage collector can see.
+        let listener = JSClosure { arguments in
+            guard
+                let event = arguments.first?.object,
+                let element = event.currentTarget.object,
+                let phase = Self.dragEventPhase(of: event, on: element)
+            else {
+                return .undefined
+            }
+            let transfer = event.dataTransfer.object
+            let types = transfer.map(Self.transferTypes) ?? []
+            let info = DropInfo(
+                location: Self.location(of: event, in: element),
+                contentTypes: types.compactMap { UTType(mimeType: $0) },
+                representations: phase == .drop ? Self.representations(of: types, in: transfer) : nil
+            )
+            guard let operation = handler(phase, info), operation.acceptsDrop else {
+                return .undefined
+            }
+            _ = event.preventDefault!()
+            _ = event.stopPropagation!()
+            if phase != .drop {
+                transfer?.dropEffect = .string(operation == .move ? "move" : "copy")
+            }
+            return .undefined
+        }
+        node.ondragenter = .object(listener)
+        node.ondragover = .object(listener)
+        node.ondragleave = .object(listener)
+        node.ondrop = .object(listener)
+        return listener
+    }
+
+    func removeDropAction(from node: JSObject, registration: JSClosure) {
+        node.ondragenter = .null
+        node.ondragover = .null
+        node.ondragleave = .null
+        node.ondrop = .null
+    }
+
+    /// The phase a drag event stands for, or `nil` for a `dragleave` that only
+    /// moved between the element's own descendants.
+    private static func dragEventPhase(of event: JSObject, on element: JSObject) -> DragEventPhase? {
+        switch event.type.string {
+        case "dragenter":
+            return .enter
+        case "dragover":
+            return .over
+        case "dragleave":
+            if let entered = event.relatedTarget.object, element.contains!(entered).boolean == true {
+                return nil
+            }
+            return .leave
+        case "drop":
+            return .drop
+        default:
+            return nil
+        }
+    }
+
+    /// The formats a drag carries. `Files` is listed too, and is not a MIME type.
+    private static func transferTypes(of transfer: JSObject) -> [String] {
+        guard let types = transfer.types.object, let count = types.length.number.map(Int.init) else {
+            return []
+        }
+        var result: [String] = []
+        result.reserveCapacity(count)
+        for index in 0..<count {
+            if let type = types[index].string {
+                result.append(type)
+            }
+        }
+        return result
+    }
+
+    private static func representations(of types: [String], in transfer: JSObject?) -> [ItemRepresentation] {
+        guard let transfer else { return [] }
+        var result: [ItemRepresentation] = []
+        for type in types {
+            guard let contentType = UTType(mimeType: type), let value = transfer.getData!(type).string else {
+                continue
+            }
+            result.append(.init(contentType: contentType, value: value))
+        }
+        return result
+    }
+
+    /// The pointer's position relative to the element's border box.
+    private static func location(of event: JSObject, in element: JSObject) -> Point {
+        guard let bounds = element.getBoundingClientRect!().object else { return .zero }
+        return Point(
+            x: (event.clientX.number ?? 0) - (bounds.left.number ?? 0),
+            y: (event.clientY.number ?? 0) - (bounds.top.number ?? 0)
+        )
     }
 
     func presentDialog(_ node: JSObject, modal: Bool) {

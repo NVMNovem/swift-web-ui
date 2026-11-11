@@ -18,6 +18,8 @@ final class FakeDOMNode {
     var keyAction: ((String) -> Void)?
     var keyActionKeys: [String] = []
     var dismissAction: (() -> Void)?
+    var dragAction: (() -> [ItemRepresentation])?
+    var dropAction: ((DragEventPhase, DropInfo) -> DropOperation?)?
     var isPresented = false
     var isModal = false
     var children: [FakeDOMNode] = []
@@ -34,6 +36,18 @@ final class FakeDOMNode {
     func pressKey(_ key: String) {
         guard keyActionKeys.contains(key) else { return }
         keyAction?(key)
+    }
+
+    /// Starts a drag the way the browser would, returning what was written to it.
+    func startDrag() -> [ItemRepresentation]? {
+        dragAction?()
+    }
+
+    /// Delivers a drag event the way the browser would, returning the operation the
+    /// page answered with, or `nil` when it left the event alone.
+    @discardableResult
+    func deliverDrag(_ phase: DragEventPhase, _ info: DropInfo) -> DropOperation? {
+        dropAction?(phase, info)
     }
 
     init(id: Int, tagName: String? = nil, text: String? = nil) {
@@ -190,6 +204,38 @@ final class FakeDOMBackend: BrowserHeadBackend {
         node.keyActionKeys = []
     }
 
+    func setDragAction(
+        _ representations: @escaping () -> [ItemRepresentation],
+        on node: FakeDOMNode
+    ) -> Int {
+        defer { nextRegistration += 1 }
+        operations.append("setDragAction \(node.id) \(nextRegistration)")
+        node.dragAction = representations
+        return nextRegistration
+    }
+
+    func removeDragAction(from node: FakeDOMNode, registration: Int) {
+        operations.append("removeDragAction \(node.id) \(registration)")
+        releasedRegistrations.append(registration)
+        node.dragAction = nil
+    }
+
+    func setDropAction(
+        _ handler: @escaping (DragEventPhase, DropInfo) -> DropOperation?,
+        on node: FakeDOMNode
+    ) -> Int {
+        defer { nextRegistration += 1 }
+        operations.append("setDropAction \(node.id) \(nextRegistration)")
+        node.dropAction = handler
+        return nextRegistration
+    }
+
+    func removeDropAction(from node: FakeDOMNode, registration: Int) {
+        operations.append("removeDropAction \(node.id) \(registration)")
+        releasedRegistrations.append(registration)
+        node.dropAction = nil
+    }
+
     func presentDialog(_ node: FakeDOMNode, modal: Bool) {
         operations.append("presentDialog \(node.id) modal=\(modal)")
         node.isPresented = true
@@ -312,7 +358,9 @@ func element(
     keyActions: [KeyAction] = [],
     presentation: DialogPresentation? = nil,
     dismissAction: ActionIntent? = nil,
-    transitionPhases: TransitionPhases? = nil
+    transitionPhases: TransitionPhases? = nil,
+    dragSource: DragSource? = nil,
+    dropTarget: DropTarget? = nil
 ) -> WebNode {
     .element(.init(
         tagName: tag,
@@ -324,6 +372,8 @@ func element(
         keyActions: keyActions,
         presentation: presentation,
         dismissAction: dismissAction,
-        transitionPhases: transitionPhases
+        transitionPhases: transitionPhases,
+        dragSource: dragSource,
+        dropTarget: dropTarget
     ))
 }

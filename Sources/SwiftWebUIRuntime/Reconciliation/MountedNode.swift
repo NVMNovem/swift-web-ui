@@ -76,6 +76,15 @@ final class MountedElementNode<Handle, ActionRegistration> {
     var keyActionRegistrations: [ActionRegistration]
     /// The handler for the browser dismissing this element on its own.
     var dismissRegistration: ActionRegistration?
+    /// The `dragstart` handler of a drag source.
+    var dragRegistration: ActionRegistration?
+    /// The drag event handler of a drop destination.
+    var dropRegistration: ActionRegistration?
+    /// The drop destination's progress through the current drag.
+    ///
+    /// Outlives the ``DropTarget`` it drives: reconciliation replaces the target
+    /// in place so a rerender mid-drag does not end the drag.
+    var dropSession: DropTargetSession?
     /// How the browser is currently showing this element, if at all.
     var presentation: DialogPresentation?
     /// Whether this element currently holds the document's scroll lock.
@@ -101,7 +110,10 @@ final class MountedElementNode<Handle, ActionRegistration> {
         keyActionRegistrations: [ActionRegistration] = [],
         dismissRegistration: ActionRegistration? = nil,
         presentation: DialogPresentation? = nil,
-        transitionPhases: TransitionPhases? = nil
+        transitionPhases: TransitionPhases? = nil,
+        dragRegistration: ActionRegistration? = nil,
+        dropRegistration: ActionRegistration? = nil,
+        dropSession: DropTargetSession? = nil
     ) {
         self.handle = handle
         self.tagName = tagName
@@ -113,6 +125,9 @@ final class MountedElementNode<Handle, ActionRegistration> {
         self.dismissRegistration = dismissRegistration
         self.presentation = presentation
         self.transitionPhases = transitionPhases
+        self.dragRegistration = dragRegistration
+        self.dropRegistration = dropRegistration
+        self.dropSession = dropSession
     }
 }
 

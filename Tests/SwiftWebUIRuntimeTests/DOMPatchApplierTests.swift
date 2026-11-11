@@ -253,6 +253,84 @@ import Testing
         #expect(enters == 1)
     }
 
+    @Test func replacingADragSourceReleasesTheOldRegistrationFirst() throws {
+        let backend = FakeDOMBackend()
+        var tree = mounted(element(dragSource: DragSource { ItemProvider(object: "old") }), backend: backend)
+        let node = backend.root.children[0]
+        backend.operations.removeAll()
+
+        try applier(backend).apply(
+            [.replaceDragSource(path: NodePath(), source: DragSource { ItemProvider(object: "new") })],
+            to: &tree
+        )
+
+        #expect(backend.operations == ["removeDragAction \(node.id) 1", "setDragAction \(node.id) 2"])
+        #expect(node.startDrag()?.first?.value == "new")
+
+        try applier(backend).apply([.replaceDragSource(path: NodePath(), source: nil)], to: &tree)
+        #expect(node.startDrag() == nil)
+    }
+
+    @Test func replacingADropTargetKeepsTheDragInProgress() throws {
+        let backend = FakeDOMBackend()
+        var drops: [String] = []
+        var tree = mounted(
+            element(dropTarget: DropTarget(of: [.plainText], delegate: ClosureDropDelegate { drops.append("old") })),
+            backend: backend
+        )
+        let node = backend.root.children[0]
+        let text = DropInfo(location: .zero, contentTypes: [.plainText])
+        #expect(node.deliverDrag(.enter, text) == .copy)
+        backend.operations.removeAll()
+
+        try applier(backend).apply(
+            [.replaceDropTarget(
+                path: NodePath(),
+                target: DropTarget(of: [.plainText], delegate: ClosureDropDelegate { drops.append("new") })
+            )],
+            to: &tree
+        )
+
+        // The same registration and session: the drag is still in progress, and
+        // lands on the new target.
+        #expect(backend.operations.isEmpty)
+        #expect(node.deliverDrag(.drop, text) == .copy)
+        #expect(drops == ["new"])
+    }
+
+    @Test func removingADropTargetReleasesItsRegistration() throws {
+        let backend = FakeDOMBackend()
+        var tree = mounted(
+            element(dropTarget: DropTarget(of: [.plainText], delegate: ClosureDropDelegate {})),
+            backend: backend
+        )
+        let node = backend.root.children[0]
+        backend.operations.removeAll()
+
+        try applier(backend).apply([.replaceDropTarget(path: NodePath(), target: nil)], to: &tree)
+
+        #expect(backend.operations == ["removeDropAction \(node.id) 1"])
+        #expect(node.dropAction == nil)
+    }
+
+    @Test func removingAnElementReleasesItsDragAndDropRegistrations() throws {
+        let backend = FakeDOMBackend()
+        var tree = mounted(
+            element(children: [
+                element(
+                    dragSource: DragSource { ItemProvider(object: "card") },
+                    dropTarget: DropTarget(of: [.plainText], delegate: ClosureDropDelegate {})
+                ),
+            ]),
+            backend: backend
+        )
+        backend.releasedRegistrations.removeAll()
+
+        try applier(backend).apply([.removeChild(parent: NodePath(), index: 0)], to: &tree)
+
+        #expect(backend.releasedRegistrations.sorted() == [1, 2])
+    }
+
     @Test func replacingKeyActionsReleasesTheOldRegistrationFirst() throws {
         let backend = FakeDOMBackend()
         var tree = mounted(
@@ -463,5 +541,14 @@ import Testing
             scrollLock: scrollLock ?? ScrollLock(backend: backend),
             transitions: transitions ?? TransitionScheduler(backend: backend)
         )
+    }
+}
+
+private struct ClosureDropDelegate: DropDelegate {
+    let onDrop: () -> Void
+
+    func performDrop(info: DropInfo) -> Bool {
+        onDrop()
+        return true
     }
 }

@@ -55,6 +55,18 @@ is a registration rather than a piece of reconciled state:
 the mounter installs one scoped handler per element, and every registration is
 released alongside the click registration when a subtree goes away.
 
+Drag and drop follows the key path, with one exception. A drag source is a
+registration: ``ViewModifierNode/onDrag(_:)`` becomes `WebElementNode.dragSource`
+plus a `draggable` attribute, and the runtime installs a `dragstart` handler that
+writes each representation into the drag. A drop destination,
+``ViewModifierNode/onDrop(_:)``, becomes `WebElementNode.dropTarget`, which carries
+the semantics a renderer must not repeat — which content types are welcome, and
+that no proposal means a copy — so the runtime only turns browser events into
+calls. The exception is that a drag spans many events and usually rerenders the
+page on the way in, so the runtime keeps one session per destination and points
+it at each rerender's new target instead of replacing the registration, which
+would forget that a drag was in progress.
+
 Stopping the page behind a presented view from scrolling is a document-level side
 effect rather than element state, so it lives entirely in SwiftWebUIRuntime as a
 reference count held by the mounted root. It has no ``ViewModifierNode`` case and

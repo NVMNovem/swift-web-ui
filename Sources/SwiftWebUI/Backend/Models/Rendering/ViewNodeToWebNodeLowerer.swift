@@ -505,6 +505,8 @@ public struct ViewNodeToWebNodeLowerer {
         var requestsFocus = false
         var keyActions: [KeyAction] = []
         var transitionPhases: TransitionPhases?
+        var dragSource: DragSource?
+        var dropTarget: DropTarget?
 
         for attribute in baseAttributes {
             collect(attribute, attributes: &attributes, classNames: &classNames, identifier: &identifier)
@@ -611,6 +613,15 @@ public struct ViewNodeToWebNodeLowerer {
             case .defaultFocus: requestsFocus = true
             case .onKeyDown(let key, let keyAction): keyActions.append(.init(key: key, action: keyAction))
             case .transitionPhases(let phases): transitionPhases = phases
+            case .onDrag(let source):
+                // Modifiers arrive innermost first; as in SwiftUI, the one nearest
+                // the view wins.
+                if dragSource == nil { dragSource = source }
+                // A drag source is a native HTML one: without the attribute the
+                // browser never starts a drag on most elements.
+                attributes.append(.init(name: "draggable", value: "true"))
+            case .onDrop(let target):
+                if dropTarget == nil { dropTarget = target }
             }
         }
 
@@ -626,7 +637,9 @@ public struct ViewNodeToWebNodeLowerer {
             keyActions: keyActions,
             presentation: presentation,
             dismissAction: dismissAction,
-            transitionPhases: transitionPhases
+            transitionPhases: transitionPhases,
+            dragSource: dragSource,
+            dropTarget: dropTarget
         ))
     }
 

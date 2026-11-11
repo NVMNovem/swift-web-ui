@@ -77,6 +77,8 @@ public enum ViewModifierNode {
     case buttonStyle(ButtonStyleToken)
     case defaultFocus
     case onKeyDown(key: String, action: ActionIntent)
+    case onDrag(DragSource)
+    case onDrop(DropTarget)
     case transitionPhases(TransitionPhases)
     case setState(ClientStateMutation)
 }

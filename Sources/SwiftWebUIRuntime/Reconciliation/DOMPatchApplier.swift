@@ -72,6 +72,8 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
                 element.actionRegistration = nil
             }
             releaseKeyActions(of: element)
+            releaseDragSource(of: element)
+            releaseDropTarget(of: element)
             if let registration = element.dismissRegistration {
                 backend.removeDismissAction(from: element.handle, registration: registration)
                 element.dismissRegistration = nil
@@ -138,6 +140,22 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
         case .setDialogPresentation(let path, let presentation):
             let element = try element(at: path, in: mountedRoot)
             mounter.present(presentation, on: element)
+        case .replaceDragSource(let path, let source):
+            let element = try element(at: path, in: mountedRoot)
+            releaseDragSource(of: element)
+            element.dragRegistration = mounter.registerDragSource(source, on: element.handle)
+        case .replaceDropTarget(let path, let target):
+            let element = try element(at: path, in: mountedRoot)
+            if let target, let session = element.dropSession {
+                // Keep the session: a drag may be in progress, and the rerender
+                // is quite possibly the one that drag's own entry caused.
+                session.target = target
+            } else {
+                releaseDropTarget(of: element)
+                let drop = mounter.registerDropTarget(target, on: element.handle)
+                element.dropRegistration = drop?.registration
+                element.dropSession = drop?.session
+            }
         case .setTransitionPhases(let path, let phases):
             try element(at: path, in: mountedRoot).transitionPhases = phases
         case .insertChild(let parentPath, let index, let webNode):
@@ -163,6 +181,21 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
             backend.removeKeyAction(from: element.handle, registration: registration)
         }
         element.keyActionRegistrations = []
+    }
+
+    private func releaseDragSource(of element: MountedElementNode<Backend.Node, Backend.ActionRegistration>) {
+        if let registration = element.dragRegistration {
+            backend.removeDragAction(from: element.handle, registration: registration)
+            element.dragRegistration = nil
+        }
+    }
+
+    private func releaseDropTarget(of element: MountedElementNode<Backend.Node, Backend.ActionRegistration>) {
+        if let registration = element.dropRegistration {
+            backend.removeDropAction(from: element.handle, registration: registration)
+            element.dropRegistration = nil
+        }
+        element.dropSession = nil
     }
 
     private func insertChild(_ webNode: WebNode, at index: Int, parentPath: NodePath, root: Node) throws {
