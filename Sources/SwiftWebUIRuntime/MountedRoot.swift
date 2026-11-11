@@ -5,7 +5,7 @@
 //  Created by Damian Van de Kauter on 20/07/2026.
 //
 
-import Observation
+import SwiftObservation
 @_spi(Runtime) @_spi(Rendering) import SwiftWebUI
 
 final class MountedRoot<Backend: BrowserHeadBackend> {
@@ -46,8 +46,11 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     private var buildGeneration = 0
     /// The rebuild an observed change has asked for and that has not run yet.
     private var pendingObservedRebuild: Backend.ScheduledWork?
+    /// How callbacks that may outlive this root reach it. See ``WeakReference``.
+    private let weakSelf = WeakReference<MountedRoot>()
 
     deinit {
+        weakSelf.clear()
         // Slots hold their boxes with a manual retain, so a discarded root must
         // release them even if `stop()` was never called.
         stateSlots.releaseAll()
@@ -68,6 +71,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         self.originalDocumentTitle = backend.documentTitle
         self.scrollLock = ScrollLock(backend: backend)
         self.transitions = TransitionScheduler(backend: backend)
+        weakSelf.set(self)
     }
 
     convenience init(
@@ -123,7 +127,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
             isRebuilding = false
         }
         buildGeneration &+= 1
-        let signal = ObservedChangeSignal(root: self, generation: buildGeneration)
+        let signal = ObservedChangeSignal(root: weakSelf, generation: buildGeneration)
         return withObservationTracking(build) {
             signal.fire()
         }
@@ -142,8 +146,8 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     /// longer on screen.
     fileprivate func observedChange(in generation: Int) {
         guard generation == buildGeneration, pendingObservedRebuild == nil else { return }
-        pendingObservedRebuild = backend.schedule(afterMilliseconds: 0) { [weak self] in
-            guard let self else { return }
+        pendingObservedRebuild = backend.schedule(afterMilliseconds: 0) { [weakSelf] in
+            guard let self = weakSelf.object else { return }
             self.pendingObservedRebuild = nil
             // A rebuild since the change — a `State` write in the same turn —
             // already read the new value.
@@ -263,7 +267,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     ///
     /// What was adopted is remembered so ``removeNavigationIcon()`` puts it
     /// back, exactly as the document title is restored rather than blanked.
-    private func installIconLink() throws -> Backend.Node {
+    private func installIconLink() throws(BrowserHeadBackendError) -> Backend.Node {
         let head = try backend.documentHead()
 
         if let adopted = backend.documentIconLinks().first {
@@ -328,15 +332,15 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
 /// a mounted root lives on the browser's one thread, which is also the thread
 /// every `@Observable` write it can see is made on.
 private final class ObservedChangeSignal<Backend: BrowserHeadBackend>: @unchecked Sendable {
-    private weak var root: MountedRoot<Backend>?
+    private let root: WeakReference<MountedRoot<Backend>>
     private let generation: Int
 
-    init(root: MountedRoot<Backend>, generation: Int) {
+    init(root: WeakReference<MountedRoot<Backend>>, generation: Int) {
         self.root = root
         self.generation = generation
     }
 
     func fire() {
-        root?.observedChange(in: generation)
+        root.object?.observedChange(in: generation)
     }
 }

@@ -57,10 +57,6 @@ final class FakeDOMNode {
     }
 }
 
-enum FakeDOMBackendError: Error {
-    case resourceInstallationFailed
-}
-
 final class FakeDOMBackend: BrowserHeadBackend {
     typealias Node = FakeDOMNode
     typealias ActionRegistration = Int
@@ -95,12 +91,12 @@ final class FakeDOMBackend: BrowserHeadBackend {
         documentTitle = title
     }
 
-    func documentHead() throws -> FakeDOMNode {
+    func documentHead() throws(BrowserHeadBackendError) -> FakeDOMNode {
         operations.append("documentHead")
         return head
     }
 
-    func documentBody() throws -> FakeDOMNode {
+    func documentBody() throws(BrowserHeadBackendError) -> FakeDOMNode {
         operations.append("documentBody")
         if failDocumentBody {
             throw BrowserHeadBackendError.documentBodyUnavailable
@@ -144,9 +140,9 @@ final class FakeDOMBackend: BrowserHeadBackend {
         node.text = content
     }
 
-    func setResourceText(_ content: String, on node: FakeDOMNode) throws {
+    func setResourceText(_ content: String, on node: FakeDOMNode) throws(BrowserHeadBackendError) {
         if failResourceTextInstallation {
-            throw FakeDOMBackendError.resourceInstallationFailed
+            throw BrowserHeadBackendError.resourceInstallationFailed
         }
         operations.append("setResourceText \(node.id) \(content)")
         node.text = content

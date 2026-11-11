@@ -10,7 +10,7 @@ struct RuntimeStylesheetInstaller<Backend: BrowserHeadBackend> {
 
     func install(
         _ resources: RuntimeResources
-    ) throws -> InstalledRuntimeResources<Backend.Node> {
+    ) throws(BrowserHeadBackendError) -> InstalledRuntimeResources<Backend.Node> {
         guard !resources.stylesheets.isEmpty else {
             return InstalledRuntimeResources()
         }

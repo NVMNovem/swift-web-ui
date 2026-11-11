@@ -92,6 +92,8 @@ protocol DOMBackend: AnyObject {
 enum BrowserHeadBackendError: Error, CustomStringConvertible {
     case documentHeadUnavailable
     case documentBodyUnavailable
+    /// The browser refused a stylesheet's text.
+    case resourceInstallationFailed
 
     var description: String {
         switch self {
@@ -99,6 +101,8 @@ enum BrowserHeadBackendError: Error, CustomStringConvertible {
             "the browser document has no head element"
         case .documentBodyUnavailable:
             "the browser document has no body element"
+        case .resourceInstallationFailed:
+            "the browser refused a stylesheet's text"
         }
     }
 }
@@ -106,9 +110,9 @@ enum BrowserHeadBackendError: Error, CustomStringConvertible {
 protocol BrowserHeadBackend: DOMBackend {
     var documentTitle: String { get }
     func setDocumentTitle(_ title: String)
-    func documentHead() throws -> Node
-    func documentBody() throws -> Node
-    func setResourceText(_ content: String, on node: Node) throws
+    func documentHead() throws(BrowserHeadBackendError) -> Node
+    func documentBody() throws(BrowserHeadBackendError) -> Node
+    func setResourceText(_ content: String, on node: Node) throws(BrowserHeadBackendError)
     /// Reads one inline style declaration back off a node.
     ///
     /// Returns `nil` when the node carries no inline declaration of that name.

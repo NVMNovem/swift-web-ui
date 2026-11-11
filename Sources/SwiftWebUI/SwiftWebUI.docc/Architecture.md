@@ -118,6 +118,11 @@ restore them while it runs, which is what lets an action read an object its view
 never touched, after the traversal has finished. No reflection is involved, so the mechanism
 is the same in Embedded Swift.
 
+The runtime imports Observation through `SwiftObservation` from swift-observation. It is
+Apple's `Observation` on every platform that has it, and an implementation of the same API
+in Embedded Swift, where Apple's module does not exist. `SwiftWebUIRuntime` re-exports it,
+so a model is written with `@Observable` either way and needs no import of its own.
+
 ## Embedded builder choice
 
 Swift 6.3.3 Embedded crashes or diagnoses unsupported specialization for the parameter-pack result-builder design tested by the project spike. Fixed-arity carriers are an internal compatibility choice; replacing them later does not require a change to ``ViewNode`` or renderer APIs.

@@ -160,7 +160,7 @@ extension DOMPatch: CustomStringConvertible {
                 "replaceAction path=\(path.indices) action=present"
             }
         case .replaceKeyActions(let path, let actions):
-            "replaceKeyActions path=\(path.indices) keys=[\(actions.map(\.key).joined(separator: ", "))]"
+            "replaceKeyActions path=\(path.indices) keys=[\(actions.map{ $0.key }.joined(separator: ", "))]"
         case .setDialogPresentation(let path, let presentation):
             "setDialogPresentation path=\(path.indices) presentation=\(presentation)"
         case .replaceDismissAction(let path, let action):

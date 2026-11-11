@@ -58,7 +58,7 @@ struct DOMMounter<Backend: BrowserHeadBackend> {
             for child in webElement.children {
                 children.append(mount(child, pending: &pending))
             }
-            for child in children.flatMap(\.topLevelDOMHandles) {
+            for child in children.flatMap{ $0.topLevelDOMHandles } {
                 backend.append(child, to: handle)
             }
             let drop = registerDropTarget(webElement.dropTarget, on: handle)

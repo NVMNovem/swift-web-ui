@@ -137,7 +137,7 @@ extension RuntimeMountTests {
             let backend = FakeDOMBackend()
             backend.failResourceTextInstallation = true
 
-            #expect(throws: FakeDOMBackendError.self) {
+            #expect(throws: BrowserHeadBackendError.resourceInstallationFailed) {
                 try installer(backend).install(.init(stylesheets: [
                     .external("first.css"),
                     .inline("broken"),
