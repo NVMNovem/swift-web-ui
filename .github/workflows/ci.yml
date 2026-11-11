@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  SWIFT_VERSION: 6.3.3
+
+jobs:
+  macos:
+    name: macOS build & test
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - uses: actions/cache@v4
+        with:
+          path: .build
+          key: macos-spm-${{ hashFiles('Package.swift') }}
+          restore-keys: macos-spm-
+
+      - name: Build
+        run: swift build --build-tests
+
+      - name: Test
+        run: swift test --skip-build
+
+  linux:
+    name: Linux build & test
+    runs-on: ubuntu-latest
+    container: swift:6.3.3-noble
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: swift --version
+
+      - uses: actions/cache@v4
+        with:
+          path: .build
+          key: linux-spm-${{ hashFiles('Package.swift') }}
+          restore-keys: linux-spm-
+
+      - name: Build
+        run: swift build --build-tests
+
+      - name: Test
+        run: swift test --skip-build
+
+  wasm:
+    name: WASM ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    container: swift:6.3.3-noble
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Core must stay Embedded Swift compatible (see AGENTS.md).
+          - name: embedded (SwiftWebUI)
+            sdk: wasm-embedded
+            target: SwiftWebUI
+          # The browser runtime, built against the full WASI SDK.
+          - name: runtime (SwiftWebUIRuntime)
+            sdk: wasm
+            target: SwiftWebUIRuntime
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Swift SDK for WebAssembly
+        run: |
+          apt-get update -qq && apt-get install -y -qq curl >/dev/null
+          bundle="swift-${SWIFT_VERSION}-RELEASE_wasm.artifactbundle.tar.gz"
+          curl -fsSL -o "/tmp/${bundle}" \
+            "https://download.swift.org/swift-${SWIFT_VERSION}-release/wasm-sdk/swift-${SWIFT_VERSION}-RELEASE/${bundle}"
+          swift sdk install "/tmp/${bundle}"
+          swift sdk list
+
+      - uses: actions/cache@v4
+        with:
+          path: .build
+          key: wasm-${{ matrix.sdk }}-${{ matrix.target }}-spm-${{ hashFiles('Package.swift') }}
+          restore-keys: wasm-${{ matrix.sdk }}-${{ matrix.target }}-spm-
+
+      - name: Build
+        run: >
+          swift build
+          --target ${{ matrix.target }}
+          --swift-sdk swift-${SWIFT_VERSION}-RELEASE_${{ matrix.sdk }}
