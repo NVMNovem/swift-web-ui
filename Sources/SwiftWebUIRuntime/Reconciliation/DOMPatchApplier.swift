@@ -50,7 +50,7 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
         DOMMounter(backend: backend, scrollLock: scrollLock, transitions: transitions)
     }
 
-    func apply(_ patches: [DOMPatch], to mountedRoot: inout Node) throws {
+    func apply(_ patches: [DOMPatch], to mountedRoot: inout Node) throws(DOMPatchApplicationError) {
         for patch in patches {
             if loggingEnabled {
                 print("[SwiftWebUIRuntime] \(patch)")
@@ -88,7 +88,7 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
         }
     }
 
-    private func apply(_ patch: DOMPatch, to mountedRoot: inout Node) throws {
+    private func apply(_ patch: DOMPatch, to mountedRoot: inout Node) throws(DOMPatchApplicationError) {
         switch patch {
         case .setText(let path, let value):
             guard case .text(let text) = try node(at: path, in: mountedRoot) else {
@@ -198,7 +198,7 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
         element.dropSession = nil
     }
 
-    private func insertChild(_ webNode: WebNode, at index: Int, parentPath: NodePath, root: Node) throws {
+    private func insertChild(_ webNode: WebNode, at index: Int, parentPath: NodePath, root: Node) throws(DOMPatchApplicationError) {
         var context = try context(at: parentPath, in: root)
         guard isContainer(context.node) else {
             throw DOMPatchApplicationError.expectedContainer(parentPath)
@@ -208,7 +208,7 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
         guard index >= 0, index <= children.count else {
             throw DOMPatchApplicationError.invalidPath(parentPath.appending(index))
         }
-        let reference = children[index...].lazy.compactMap(\.firstDOMHandle).first
+        let reference = children[index...].lazy.compactMap{ $0.firstDOMHandle }.first
         let mounter = mounter
         var pending = DOMMounter<Backend>.PendingInsertionEffects()
         let mounted = mounter.mount(webNode, pending: &pending)
@@ -225,7 +225,7 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
     /// The DOM nodes are re-inserted, which moves them, so element identity survives. A browser
     /// may drop focus from a node that is moved while focused; a mounted element's own state
     /// (registrations, presentation, transition) is untouched.
-    private func moveChild(from: Int, to: Int, parentPath: NodePath, root: Node) throws {
+    private func moveChild(from: Int, to: Int, parentPath: NodePath, root: Node) throws(DOMPatchApplicationError) {
         var context = try context(at: parentPath, in: root)
         guard isContainer(context.node) else {
             throw DOMPatchApplicationError.expectedContainer(parentPath)
@@ -239,7 +239,7 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
         guard to >= 0, to <= children.count else {
             throw DOMPatchApplicationError.invalidPath(parentPath.appending(to))
         }
-        var reference = children[to...].lazy.compactMap(\.firstDOMHandle).first
+        var reference = children[to...].lazy.compactMap{ $0.firstDOMHandle }.first
         if reference == nil, case .fragment = context.node {
             reference = nextDOMHandle(after: parentPath, in: root)
         }
@@ -250,7 +250,7 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
         context.node.children = children
     }
 
-    private func removeChild(at index: Int, parentPath: NodePath, root: Node) throws {
+    private func removeChild(at index: Int, parentPath: NodePath, root: Node) throws(DOMPatchApplicationError) {
         var context = try context(at: parentPath, in: root)
         guard isContainer(context.node) else {
             throw DOMPatchApplicationError.expectedContainer(parentPath)
@@ -290,7 +290,7 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
         }
     }
 
-    private func replaceNode(at path: NodePath, with webNode: WebNode, root: inout Node) throws {
+    private func replaceNode(at path: NodePath, with webNode: WebNode, root: inout Node) throws(DOMPatchApplicationError) {
         let context = try context(at: path, in: root)
         let mounter = mounter
         var pending = DOMMounter<Backend>.PendingInsertionEffects()
@@ -326,7 +326,7 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
             guard let parent = try? node(at: parentPath, in: root) else { return nil }
             let siblings = parent.children
             if index + 1 < siblings.count,
-               let handle = siblings[(index + 1)...].lazy.compactMap(\.firstDOMHandle).first {
+               let handle = siblings[(index + 1)...].lazy.compactMap{ $0.firstDOMHandle }.first {
                 return handle
             }
             if case .element = parent {
@@ -353,18 +353,18 @@ final class DOMPatchApplier<Backend: BrowserHeadBackend> {
         }
     }
 
-    private func element(at path: NodePath, in root: Node) throws -> MountedElementNode<Backend.Node, Backend.ActionRegistration> {
+    private func element(at path: NodePath, in root: Node) throws(DOMPatchApplicationError) -> MountedElementNode<Backend.Node, Backend.ActionRegistration> {
         guard case .element(let element) = try node(at: path, in: root) else {
             throw DOMPatchApplicationError.expectedElement(path)
         }
         return element
     }
 
-    private func node(at path: NodePath, in root: Node) throws -> Node {
+    private func node(at path: NodePath, in root: Node) throws(DOMPatchApplicationError) -> Node {
         try context(at: path, in: root).node
     }
 
-    private func context(at path: NodePath, in root: Node) throws -> (node: Node, domParent: Backend.Node) {
+    private func context(at path: NodePath, in root: Node) throws(DOMPatchApplicationError) -> (node: Node, domParent: Backend.Node) {
         var current = root
         var domParent = container
         var traversed: [Int] = []

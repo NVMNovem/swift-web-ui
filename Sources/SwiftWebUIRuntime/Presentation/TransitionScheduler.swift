@@ -15,9 +15,17 @@ final class TransitionScheduler<Backend: DOMBackend> {
     private let backend: Backend
     private var pending: [Int: Backend.ScheduledWork] = [:]
     private var nextID = 0
+    /// How scheduled work reaches this scheduler without keeping it alive.
+    /// See ``WeakReference``.
+    private let weakSelf = WeakReference<TransitionScheduler>()
 
     init(backend: Backend) {
         self.backend = backend
+        weakSelf.set(self)
+    }
+
+    deinit {
+        weakSelf.clear()
     }
 
     /// Whether anything is still waiting to run.
@@ -69,10 +77,10 @@ final class TransitionScheduler<Backend: DOMBackend> {
         { [self] body in
             nextID += 1
             let id = nextID
-            pending[id] = enqueue { [weak self] in
+            pending[id] = enqueue { [weakSelf] in
                 // Dropped before running, so a cancel that lands in the same
                 // turn cannot cancel work that has already fired.
-                self?.pending[id] = nil
+                weakSelf.object?.pending[id] = nil
                 body()
             }
         }

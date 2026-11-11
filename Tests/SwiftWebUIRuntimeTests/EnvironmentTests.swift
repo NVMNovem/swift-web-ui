@@ -5,7 +5,7 @@
 //  Created by Damian Van de Kauter on 29/09/2026.
 //
 
-import Observation
+import SwiftObservation
 import Testing
 @_spi(Runtime) @_spi(Rendering) import SwiftWebUI
 @testable import SwiftWebUIRuntime

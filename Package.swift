@@ -15,11 +15,27 @@ let package = Package(
         .plugin(name: "SwiftWebUIBundlePlugin", targets: ["SwiftWebUIBundlePlugin"]),
         .plugin(name: "SwiftWebUIServePlugin", targets: ["SwiftWebUIServePlugin"]),
     ],
+    traits: [
+        .trait(
+            name: "EmbeddedObservation",
+            description: "Use swift-observation's own implementation instead of Apple's Observation on every platform, as Embedded Swift always does. For testing it on a host."
+        ),
+    ],
     dependencies: [
         .package(url: "https://github.com/NVMNovem/swift-css", from: "1.0.6"),
         .package(url: "https://github.com/NVMNovem/swift-html", from: "1.0.0"),
         .package(url: "https://github.com/NVMNovem/swift-localization", from: "0.0.2"),
         .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.56.1"),
+        // `@Observable` and `withObservationTracking` that also build in Embedded Swift.
+        // Apple's `Observation` everywhere else.
+        .package(
+            url: "https://github.com/NVMNovem/swift-observation",
+            branch: "claude/project-thread-xl22mx",
+            traits: [
+                .defaults,
+                .trait(name: "EmbeddedObservation", condition: .when(traits: ["EmbeddedObservation"])),
+            ]
+        ),
     ],
     targets: [
         .target(
@@ -42,6 +58,7 @@ let package = Package(
             name: "SwiftWebUIRuntime",
             dependencies: [
                 "SwiftWebUI",
+                .product(name: "SwiftObservation", package: "swift-observation"),
                 .product(name: "JavaScriptKit", package: "JavaScriptKit"),
                 // `App.main()` installs it, so an application does not have to.
                 .product(name: "JavaScriptEventLoop", package: "JavaScriptKit"),
@@ -106,6 +123,7 @@ let package = Package(
             dependencies: [
                 "SwiftWebUI",
                 "SwiftWebUIRuntime",
+                .product(name: "SwiftObservation", package: "swift-observation"),
             ]
         ),
     ],

@@ -6,6 +6,9 @@
 //
 
 @_spi(Runtime) @_spi(Rendering) import SwiftWebUI
+// `@Observable` for application models: Apple's Observation where it exists, and
+// swift-observation's own in Embedded Swift.
+@_exported import SwiftObservation
 
 #if arch(wasm32)
 nonisolated(unsafe) private var mountedRoot: AnyObject?

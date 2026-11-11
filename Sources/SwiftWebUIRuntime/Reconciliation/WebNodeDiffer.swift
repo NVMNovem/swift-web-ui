@@ -112,7 +112,7 @@ struct WebNodeDiffer {
     ) {
         if let oldIdentities = identities(of: old),
            let newIdentities = identities(of: new),
-           oldIdentities.contains(where: \.isKeyed) || newIdentities.contains(where: \.isKeyed) {
+           oldIdentities.contains(where: { $0.isKeyed }) || newIdentities.contains(where: { $0.isKeyed }) {
             diffKeyedChildren(
                 old: old,
                 new: new,

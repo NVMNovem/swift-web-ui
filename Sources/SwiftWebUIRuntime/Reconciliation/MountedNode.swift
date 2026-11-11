@@ -36,7 +36,7 @@ indirect enum MountedNode<Handle, ActionRegistration> {
         case .text(let text): text.handle
         case .element(let element): element.handle
         case .fragment(let fragment):
-            fragment.children.lazy.compactMap(\.firstDOMHandle).first
+            fragment.children.lazy.compactMap{ $0.firstDOMHandle }.first
         }
     }
 
@@ -45,7 +45,7 @@ indirect enum MountedNode<Handle, ActionRegistration> {
         case .empty: []
         case .text(let text): [text.handle]
         case .element(let element): [element.handle]
-        case .fragment(let fragment): fragment.children.flatMap(\.topLevelDOMHandles)
+        case .fragment(let fragment): fragment.children.flatMap{ $0.topLevelDOMHandles }
         }
     }
 }

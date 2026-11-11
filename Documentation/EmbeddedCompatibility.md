@@ -20,6 +20,15 @@ SwiftWebUIStatic -> SwiftHTML/CSS   SwiftWebUIRuntime -> DOM
 
 Both `WebNode` and `ViewNodeToWebNodeLowerer` are in the Embedded-compatible core. `SwiftWebUIRuntime` is a separate JavaScriptKit backend and is not part of the core Embedded build.
 
+## Runtime
+
+`SwiftWebUIRuntime` is written to build in Embedded Swift too. CI builds it with `swift-6.3.3-RELEASE_wasm-embedded` and `JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM=true`, which is how JavaScriptKit selects its Embedded variant. What that took:
+
+- **Observation.** Apple's `Observation` module does not exist in Embedded Swift. The runtime imports `SwiftObservation` from [swift-observation](https://github.com/NVMNovem/swift-observation), which re-exports Apple's module wherever it exists and supplies its own `@Observable`, `ObservationRegistrar` and `withObservationTracking` in Embedded Swift. Application models are written the same way in both. The `EmbeddedObservation` package trait switches a host build to the Embedded implementation, so `swift test --traits EmbeddedObservation` runs the runtime tests against it.
+- **Typed throws.** Embedded Swift 6.3 has no `any Error`. `DOMPatchApplier` throws `DOMPatchApplicationError`, and the document-head operations throw `BrowserHeadBackendError`.
+- **No `weak`.** Callbacks that may outlive a `MountedRoot` or a `TransitionScheduler` reach it through `WeakReference`, which the object clears in its own `deinit`. That is sound because the runtime runs on the browser's one thread.
+- **No key paths.** Closures such as `{ $0.firstDOMHandle }` replace key-path literals.
+
 Runtime stylesheet declarations and browser-head installation also remain in the
 separate `SwiftWebUIRuntime` target. They contain browser URLs or inline CSS text but
 no filesystem paths or JavaScriptKit objects. Static asset discovery and copying are

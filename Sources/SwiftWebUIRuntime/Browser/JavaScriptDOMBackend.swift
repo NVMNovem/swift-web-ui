@@ -44,14 +44,14 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
         document.title = .string(title)
     }
 
-    func documentHead() throws -> JSObject {
+    func documentHead() throws(BrowserHeadBackendError) -> JSObject {
         guard let head = document.head.object else {
             throw BrowserHeadBackendError.documentHeadUnavailable
         }
         return head
     }
 
-    func documentBody() throws -> JSObject {
+    func documentBody() throws(BrowserHeadBackendError) -> JSObject {
         guard let body = document.body.object else {
             throw BrowserHeadBackendError.documentBodyUnavailable
         }
@@ -97,7 +97,7 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
         node.nodeValue = .string(content)
     }
 
-    func setResourceText(_ content: String, on node: JSObject) throws {
+    func setResourceText(_ content: String, on node: JSObject) throws(BrowserHeadBackendError) {
         node.textContent = .string(content)
     }
 
