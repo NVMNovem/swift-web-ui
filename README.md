@@ -67,6 +67,39 @@ WebDocument(
 )
 ```
 
+## Running in the browser
+
+An application that runs in the browser is an `App` with a `Page`:
+
+```swift
+import SwiftWebUI
+import SwiftWebUIRuntime
+
+@main
+struct ShopApp: App {
+    var body: some Scene {
+        Page {
+            RootView()
+        }
+        .stylesheet(.external("styles.css"))
+    }
+}
+```
+
+`Page` is the web's `WindowGroup`. `App` supplies `main()`: it installs the JavaScript
+event loop, creates the application and mounts the page into `#app`. Two commands turn
+the package into a deployable `dist/`:
+
+```sh
+swift package --swift-sdk <wasm sdk> js -c release       # JavaScriptKit: compile
+swift package --allow-writing-to-package-directory web   # SwiftWebUI: assemble
+```
+
+`swift package web` copies `Resources/`, generates an `index.html` with a loading
+screen and loader unless the application brings its own, places the WASI shim, and
+reports the bundle's size. See [Getting started in the browser](Documentation/GettingStarted.md)
+and `Examples/Starter`.
+
 ## Localization
 
 A string literal in `Text`, `Button` or `Link` is a localization key, as in SwiftUI; a
@@ -181,4 +214,4 @@ SwiftWebUI views are lowered into a concrete internal view tree. A single semant
 
 `SwiftWebUIRuntime` remains experimental. `@State` works in subviews at any depth: the mounted root owns the storage and keys it on each view's structural identity, so a rebuilt view resolves to the same state. Give `ForEach` an `id:` (or `Identifiable` elements) when rows own state, otherwise rows are keyed by position. Keyed rows are reconciled by identity, so inserting, removing or reordering them moves their existing DOM nodes instead of rewriting them; an unkeyed list is still positional.
 
-For detailed boundaries, compatibility constraints, reconciliation design, and runtime status, see [Architecture](ARCHITECTURE.md), [Embedded compatibility](Documentation/EmbeddedCompatibility.md), [Reconciliation](Documentation/Reconciliation.md), and [Runtime renderer](Documentation/RuntimePOC.md).
+For detailed boundaries, compatibility constraints, reconciliation design, and runtime status, see [Architecture](ARCHITECTURE.md), [Embedded compatibility](Documentation/EmbeddedCompatibility.md), [Reconciliation](Documentation/Reconciliation.md), [Runtime renderer](Documentation/RuntimePOC.md), and [Getting started in the browser](Documentation/GettingStarted.md).

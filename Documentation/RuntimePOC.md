@@ -77,6 +77,23 @@ available for authored CSS text. Typed SwiftCSS stylesheet trees are deferred: t
 current public SwiftCSS APIs do not improve this focused ownership boundary enough to
 justify another traversal/rendering path in the runtime.
 
+An application normally does not call `mount` itself. It declares an `App` whose
+`body` is a `Page`, and `App.main()` installs the JavaScript event loop and mounts the
+page with its stylesheets:
+
+```swift
+@main
+struct ShopApp: App {
+    var body: some Scene {
+        Page { RootView() }
+            .stylesheet(.external("style.css"))
+    }
+}
+```
+
+See [Getting started in the browser](GettingStarted.md) for the package and the two
+commands that build and assemble it.
+
 ## Implemented runtime guarantees
 
 - an Embedded-compatible SwiftWebUI `View` can lower to `ViewNode` in a Wasm browser build;
