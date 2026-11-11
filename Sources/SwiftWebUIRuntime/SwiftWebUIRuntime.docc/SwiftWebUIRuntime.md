@@ -2,6 +2,11 @@
 
 A deliberately small browser runtime proof of concept for SwiftWebUI.
 
+Start an application by conforming a `@main` type to ``App`` and returning a ``Page``
+from its `body`; see <doc:StartingAnApplication>. ``App`` supplies `main()`, which
+installs the JavaScript event loop and mounts the page. ``mount(_:in:configuration:)``
+is the lower-level call underneath it.
+
 Use ``mount(_:in:configuration:)`` to lower a concrete SwiftWebUI `View` through `ViewNode` and
 the shared renderer-neutral `WebNode` presentation, materialize that presentation
 as browser DOM objects, and incrementally reconcile the mounted tree after a `State`
@@ -64,6 +69,13 @@ Use ``SwiftWebUIRuntimeConfiguration`` to opt in to patch logging. Paths in that
 output describe the current mounted-tree location and are not stable identity.
 
 ## Topics
+
+### Starting an application
+
+- <doc:StartingAnApplication>
+- ``App``
+- ``Scene``
+- ``Page``
 
 ### Mounting
 

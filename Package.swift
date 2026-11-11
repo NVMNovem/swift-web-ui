@@ -10,6 +10,10 @@ let package = Package(
         .library(name: "SwiftWebUI", targets: ["SwiftWebUI"]),
         .library(name: "SwiftWebUIStatic", targets: ["SwiftWebUIStatic"]),
         .library(name: "SwiftWebUIRuntime", targets: ["SwiftWebUIRuntime"]),
+        // `swift package web` and `swift package web-serve`, for packages that depend
+        // on this one.
+        .plugin(name: "SwiftWebUIBundlePlugin", targets: ["SwiftWebUIBundlePlugin"]),
+        .plugin(name: "SwiftWebUIServePlugin", targets: ["SwiftWebUIServePlugin"]),
     ],
     dependencies: [
         .package(url: "https://github.com/NVMNovem/swift-css", from: "1.0.6"),
@@ -39,11 +43,55 @@ let package = Package(
             dependencies: [
                 "SwiftWebUI",
                 .product(name: "JavaScriptKit", package: "JavaScriptKit"),
+                // `App.main()` installs it, so an application does not have to.
+                .product(name: "JavaScriptEventLoop", package: "JavaScriptKit"),
             ],
             exclude: ["SwiftWebUIRuntime.docc"],
             swiftSettings: [
                 .enableExperimentalFeature("Extern"),
             ]
+        ),
+        // The host tool behind the two command plugins. It assembles what stands around
+        // a WebAssembly bundle and is never linked into one, so Foundation is fine here.
+        .executableTarget(
+            name: "SwiftWebUIBundler",
+            dependencies: [
+                "SwiftWebUIStatic",
+                .product(name: "SwiftHTML", package: "swift-html"),
+            ]
+        ),
+        .plugin(
+            name: "SwiftWebUIBundlePlugin",
+            capability: .command(
+                intent: .custom(
+                    verb: "web",
+                    description: "Assemble a deployable browser application from the JavaScriptKit build output."
+                ),
+                permissions: [
+                    .writeToPackageDirectory(reason: "Writes the assembled application to the dist directory."),
+                ]
+            ),
+            dependencies: ["SwiftWebUIBundler"]
+        ),
+        .plugin(
+            name: "SwiftWebUIServePlugin",
+            capability: .command(
+                intent: .custom(
+                    verb: "web-serve",
+                    description: "Serve the assembled browser application on this machine."
+                ),
+                permissions: [
+                    .allowNetworkConnections(
+                        scope: .local(ports: []),
+                        reason: "Serves the assembled application on a local port."
+                    ),
+                ]
+            ),
+            dependencies: ["SwiftWebUIBundler"]
+        ),
+        .testTarget(
+            name: "SwiftWebUIBundlerTests",
+            dependencies: ["SwiftWebUIBundler"]
         ),
         .testTarget(
             name: "SwiftWebUITests",

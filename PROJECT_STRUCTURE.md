@@ -497,6 +497,8 @@ Sources/SwiftWebUI
 
 Views and modifiers use focused files so public declarations remain discoverable. Renderer-neutral semantic and presentation models are grouped under `Models/Rendering`; this includes `ViewNode`, `WebNode`, and the single semantic lowerer between them. Static document/resource work belongs to `SwiftWebUIStatic`, and browser mounting/reconciliation belongs to `SwiftWebUIRuntime`.
 
+The application entry point (`App`, `Scene`, `Page`) is in `Sources/SwiftWebUIRuntime/Application`. `Sources/SwiftWebUIBundler` is the host executable behind the `swift package web` and `swift package web-serve` command plugins in `Plugins/`; it is never part of a WebAssembly bundle. `Examples/Starter` is the smallest application that uses all of it.
+
 The logical architecture remains `View` → `ViewNode` → `WebNode` → static/runtime consumers. Do not infer an ownership change from the physical `Backend` organization, and do not recreate a catch-all `Core` folder for shared-module source files.
 
 ## AI Contributor Rules

@@ -38,6 +38,33 @@ HTML/CSS/JS output      click -> State -> reconcile
 
 `SwiftWebUIRuntime` is the browser runtime slice. It depends on the core and JavaScriptKit, installs application-declared external or inline stylesheets into the browser document head, initially mounts `WebNode` into a runtime-only `MountedNode` tree, diffs later `WebNode` values, and mechanically applies `DOMPatch` mutations while retaining browser node identity. It supports one mounted root, positional child reconciliation, and keyed child reconciliation (insert, remove and move) for `ForEach` rows that carry explicit identity, and owns the `StateSlotStore` that keeps `@State` alive across rebuilds for subviews at any depth. It deliberately does not yet define hydration, routing, or async work.
 
+## Application entry point and build tooling
+
+`SwiftWebUIRuntime` also owns the application's entry point. `App` supplies `main()`,
+`Scene` is what an application's `body` returns, and `Page` is the one scene there is:
+a view tree mounted into a named element, with the stylesheets installed before it.
+They live in the runtime target and not in the core because starting an application
+means installing JavaScriptKit's event loop and touching the document. `Scene` reaches
+the concrete page through a protocol requirement rather than an existential, so the
+entry point stays within what Embedded Swift compiles. `mount(_:in:)` remains the
+lower-level API underneath.
+
+Two command plugins serve packages that depend on this one, both backed by the
+`SwiftWebUIBundler` host executable:
+
+- `swift package web` assembles a deployable directory from JavaScriptKit's
+  `swift package js` output: the application's `Resources/`, the WASI shim, and an
+  `index.html` rendered through `SwiftWebUIStatic.WebDocument` unless the application
+  supplies one.
+- `swift package web-serve` serves that directory locally.
+
+The bundler runs on the build machine and is never linked into a WebAssembly bundle,
+so it may use Foundation. It does not compile anything: compiling to WebAssembly stays
+JavaScriptKit's job, because a SwiftPM plugin cannot start a second SwiftPM build of
+the same package while its own holds the build directory. This is the "application
+build tooling" the ownership rules below refer to, offered as a default; an
+application remains free to assemble its output itself.
+
 ## Source organization
 
 The logical shared core is physically organized under `Sources/SwiftWebUI/Backend`. `Attributes` contains property wrappers and result builders, `Protocols` contains public protocol boundaries, `Types` contains lightweight semantic/style values, and `Models` groups views, modifiers, styles, and renderer-neutral rendering models. Public views normally have one focused source file each.
@@ -172,6 +199,7 @@ supplies the markup around it.
 The runtime proof-of-concept module owns:
 
 - browser-facing `RuntimeResources` and ordered stylesheet installation;
+- the application entry point: `App`, `Scene` and `Page`;
 - reconciled browser document title and icon updates from shared view metadata;
 - installed stylesheet handles retained by the single application root, outside reconciliation;
 - browser element lookup and mounting;
