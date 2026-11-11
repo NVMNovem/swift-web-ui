@@ -1,5 +1,10 @@
 # SwiftWebUI
 
+[![CI](https://github.com/NVMNovem/swift-web-ui/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/NVMNovem/swift-web-ui/actions/workflows/ci.yml)
+[![Swift 6.2+](https://img.shields.io/badge/Swift-6.2%2B-F05138?logo=swift&logoColor=white)](https://swift.org)
+[![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20WebAssembly-blue)](#)
+[![Embedded Swift](https://img.shields.io/badge/Embedded%20Swift-compatible-8A2BE2)](https://www.swift.org/documentation/embedded/)
+
 SwiftWebUI is a SwiftUI-like web view DSL with an Embedded-compatible core. Views lower through concrete `ViewNode` and `WebNode` trees; static HTML/CSS output and browser DOM rendering consume the same semantic `WebNode` presentation.
 
 ## Example
