@@ -30,7 +30,7 @@ let package = Package(
         // Apple's `Observation` everywhere else.
         .package(
             url: "https://github.com/NVMNovem/swift-observation",
-            branch: "claude/project-thread-xl22mx",
+            from: "0.1.0",
             traits: [
                 .defaults,
                 .trait(name: "EmbeddedObservation", condition: .when(traits: ["EmbeddedObservation"])),
