@@ -61,6 +61,7 @@ struct DOMMounter<Backend: BrowserHeadBackend> {
             for child in children.flatMap(\.topLevelDOMHandles) {
                 backend.append(child, to: handle)
             }
+            let drop = registerDropTarget(webElement.dropTarget, on: handle)
             let element = Element(
                 handle: handle,
                 tagName: webElement.tagName,
@@ -70,7 +71,10 @@ struct DOMMounter<Backend: BrowserHeadBackend> {
                 actionRegistration: register(webElement.action, on: handle),
                 keyActionRegistrations: registerKeyActions(webElement.keyActions, on: handle),
                 dismissRegistration: registerDismissAction(webElement.dismissAction, on: handle),
-                transitionPhases: webElement.transitionPhases
+                transitionPhases: webElement.transitionPhases,
+                dragRegistration: registerDragSource(webElement.dragSource, on: handle),
+                dropRegistration: drop?.registration,
+                dropSession: drop?.session
             )
             if webElement.transitionPhases != nil {
                 pending.enters.append(element)
@@ -193,5 +197,25 @@ struct DOMMounter<Backend: BrowserHeadBackend> {
         }
         guard !keys.isEmpty else { return [] }
         return [backend.setKeyAction(keys: keys, action: { closures[$0]?() }, on: handle)]
+    }
+
+    /// Installs the `dragstart` handler of a drag source.
+    func registerDragSource(
+        _ source: DragSource?,
+        on handle: Backend.Node
+    ) -> Backend.ActionRegistration? {
+        guard let source else { return nil }
+        return backend.setDragAction({ source.representations() }, on: handle)
+    }
+
+    /// Installs the drag event handler of a drop destination, with a fresh session.
+    func registerDropTarget(
+        _ target: DropTarget?,
+        on handle: Backend.Node
+    ) -> (registration: Backend.ActionRegistration, session: DropTargetSession)? {
+        guard let target else { return nil }
+        let session = DropTargetSession(target: target)
+        let registration = backend.setDropAction({ session.handle($0, info: $1) }, on: handle)
+        return (registration, session)
     }
 }

@@ -26,6 +26,11 @@ enum DOMPatch: @unchecked Sendable, Equatable {
     case setDialogPresentation(path: NodePath, presentation: DialogPresentation)
     case replaceDismissAction(path: NodePath, action: ActionIntent?)
     case setTransitionPhases(path: NodePath, phases: TransitionPhases?)
+    case replaceDragSource(path: NodePath, source: DragSource?)
+    /// Points an element's drop handling at a new target, or ends it.
+    ///
+    /// Applying it keeps an existing drop session, so a drag in progress survives.
+    case replaceDropTarget(path: NodePath, target: DropTarget?)
     case focus(path: NodePath)
 }
 
@@ -60,6 +65,10 @@ extension DOMPatch {
             lp == rp && actionsEquivalent(la, ra)
         case (.setTransitionPhases(let lp, let lv), .setTransitionPhases(let rp, let rv)):
             lp == rp && lv == rv
+        case (.replaceDragSource(let lp, let ls), .replaceDragSource(let rp, let rs)):
+            lp == rp && (ls == nil) == (rs == nil)
+        case (.replaceDropTarget(let lp, let lt), .replaceDropTarget(let rp, let rt)):
+            lp == rp && dropTargetsEquivalent(lt, rt)
         case (.focus(let lp), .focus(let rp)):
             lp == rp
         default:
@@ -89,6 +98,8 @@ private func webNodesEqual(_ lhs: WebNode, _ rhs: WebNode) -> Bool {
             && lhs.presentation == rhs.presentation
             && actionsEquivalent(lhs.dismissAction, rhs.dismissAction)
             && lhs.transitionPhases == rhs.transitionPhases
+            && (lhs.dragSource == nil) == (rhs.dragSource == nil)
+            && dropTargetsEquivalent(lhs.dropTarget, rhs.dropTarget)
     default: false
     }
 }
@@ -100,6 +111,17 @@ private func webNodesEqual(_ lhs: WebNode, _ rhs: WebNode) -> Bool {
 private func keyActionsEquivalent(_ lhs: [KeyAction], _ rhs: [KeyAction]) -> Bool {
     lhs.count == rhs.count
         && zip(lhs, rhs).allSatisfy { $0.0.key == $0.1.key && actionsEquivalent($0.0.action, $0.1.action) }
+}
+
+/// Compares drop targets by the content types they accept.
+///
+/// Their handlers are closures, so like click actions they have no identity to compare.
+private func dropTargetsEquivalent(_ lhs: DropTarget?, _ rhs: DropTarget?) -> Bool {
+    switch (lhs, rhs) {
+    case (nil, nil): true
+    case (let lhs?, let rhs?): lhs.supportedContentTypes == rhs.supportedContentTypes
+    default: false
+    }
 }
 
 private func actionsEquivalent(_ lhs: ActionIntent?, _ rhs: ActionIntent?) -> Bool {
@@ -152,6 +174,14 @@ extension DOMPatch: CustomStringConvertible {
                 "setTransitionPhases path=\(path.indices) enter=\(quoted(phases.enter)) exit=\(quoted(phases.exit)) duration=\(phases.durationMilliseconds)"
             } else {
                 "setTransitionPhases path=\(path.indices) phases=nil"
+            }
+        case .replaceDragSource(let path, let source):
+            "replaceDragSource path=\(path.indices) source=\(source == nil ? "nil" : "present")"
+        case .replaceDropTarget(let path, let target):
+            if let target {
+                "replaceDropTarget path=\(path.indices) types=[\(target.supportedContentTypes.map { $0.identifier }.joined(separator: ", "))]"
+            } else {
+                "replaceDropTarget path=\(path.indices) target=nil"
             }
         case .focus(let path):
             "focus path=\(path.indices)"

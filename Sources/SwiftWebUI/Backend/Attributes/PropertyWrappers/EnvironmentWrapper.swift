@@ -227,6 +227,21 @@ enum EnvironmentStorage {
         return { with(objects, action) }
     }
 
+    /// Wraps a function so that it runs with the objects in effect right now.
+    ///
+    /// The one-argument form of ``capturing(_:)``, for handlers that are handed
+    /// something — a drop's `DropInfo` — and answer something back.
+    static func capturing<Input, Output>(_ body: @escaping (Input) -> Output) -> (Input) -> Output {
+        let objects = active
+        return { input in with(objects) { body(input) } }
+    }
+
+    /// Wraps a producer so that it runs with the objects in effect right now.
+    static func capturing<Output>(_ body: @escaping () -> Output) -> () -> Output {
+        let objects = active
+        return { with(objects, body) }
+    }
+
     /// A type's name for a diagnostic. Embedded Swift cannot describe a type.
     static func name<T>(of type: T.Type) -> String {
         #if hasFeature(Embedded)

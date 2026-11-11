@@ -181,6 +181,8 @@ The runtime proof-of-concept module owns:
 - JavaScriptKit DOM materialization and per-element click-handler retention/release;
 - moving focus for elements that requested it, after they are in the document;
 - per-element scoped key-down handler retention/release;
+- per-element drag source and drop destination handlers, with a drop session that
+  survives rerenders so a drag in progress is not forgotten;
 - the document body's scroll lock, as a counter held by the single mounted root;
 - reconciled dialog presentation, and the close handler that writes dismissal back to the view tree;
 - enter and exit transition scheduling, and the leaving DOM nodes that outlive their mounted counterparts;

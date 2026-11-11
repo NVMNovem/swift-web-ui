@@ -27,6 +27,10 @@ public struct WebElementNode: @unchecked Sendable {
     public let dismissAction: ActionIntent?
     /// The classes this element wears while arriving and while leaving.
     public let transitionPhases: TransitionPhases?
+    /// What this element hands over when a drag starts on it.
+    public let dragSource: DragSource?
+    /// How this element takes part in drops.
+    public let dropTarget: DropTarget?
 
     public init(
         tagName: String,
@@ -39,7 +43,9 @@ public struct WebElementNode: @unchecked Sendable {
         keyActions: [KeyAction] = [],
         presentation: DialogPresentation? = nil,
         dismissAction: ActionIntent? = nil,
-        transitionPhases: TransitionPhases? = nil
+        transitionPhases: TransitionPhases? = nil,
+        dragSource: DragSource? = nil,
+        dropTarget: DropTarget? = nil
     ) {
         self.tagName = tagName
         self.attributes = attributes.lastDeclarationPerName()
@@ -52,5 +58,7 @@ public struct WebElementNode: @unchecked Sendable {
         self.presentation = presentation
         self.dismissAction = dismissAction
         self.transitionPhases = transitionPhases
+        self.dragSource = dragSource
+        self.dropTarget = dropTarget
     }
 }

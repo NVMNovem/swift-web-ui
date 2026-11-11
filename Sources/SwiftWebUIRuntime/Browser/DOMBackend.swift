@@ -5,6 +5,8 @@
 //  Created by Damian Van de Kauter on 20/07/2026.
 //
 
+@_spi(Rendering) import SwiftWebUI
+
 protocol DOMBackend: AnyObject {
     associatedtype Node
     associatedtype ActionRegistration
@@ -33,6 +35,28 @@ protocol DOMBackend: AnyObject {
         on node: Node
     ) -> ActionRegistration
     func removeKeyAction(from node: Node, registration: ActionRegistration)
+    /// Makes `node` a drag source: when a drag starts on it, `representations` is
+    /// asked for the content and each one is written to the drag under its MIME type.
+    func setDragAction(
+        _ representations: @escaping () -> [ItemRepresentation],
+        on node: Node
+    ) -> ActionRegistration
+    func removeDragAction(from node: Node, registration: ActionRegistration)
+    /// Makes `node` a drop destination.
+    ///
+    /// The backend reports `dragenter`, `dragover`, `drop`, and a `dragleave` that
+    /// takes the drag out of `node` altogether, each with a ``DropInfo`` whose
+    /// location is relative to `node`. Only a `drop` carries the dragged content.
+    ///
+    /// When `handler` returns an operation that accepts the drop, the backend
+    /// cancels the event's default, stops it reaching enclosing destinations, and
+    /// shows the operation as the drop effect. Otherwise it leaves the event alone,
+    /// and the browser refuses the drop.
+    func setDropAction(
+        _ handler: @escaping (DragEventPhase, DropInfo) -> DropOperation?,
+        on node: Node
+    ) -> ActionRegistration
+    func removeDropAction(from node: Node, registration: ActionRegistration)
     /// Shows `node` as a dialog, in the top layer when `modal` is `true`.
     ///
     /// The node must already be in the document.

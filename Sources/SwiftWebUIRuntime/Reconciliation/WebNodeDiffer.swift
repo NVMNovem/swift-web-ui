@@ -60,6 +60,14 @@ struct WebNodeDiffer {
             if actionsRequireReplacement(old: oldElement.dismissAction, new: newElement.dismissAction) {
                 patches.append(.replaceDismissAction(path: path, action: newElement.dismissAction))
             }
+            // Drag and drop handlers are closures, so like click actions they are
+            // replaced whenever either side has one.
+            if oldElement.dragSource != nil || newElement.dragSource != nil {
+                patches.append(.replaceDragSource(path: path, source: newElement.dragSource))
+            }
+            if oldElement.dropTarget != nil || newElement.dropTarget != nil {
+                patches.append(.replaceDropTarget(path: path, target: newElement.dropTarget))
+            }
             if oldElement.transitionPhases != newElement.transitionPhases {
                 patches.append(.setTransitionPhases(path: path, phases: newElement.transitionPhases))
             }

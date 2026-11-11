@@ -21,6 +21,12 @@ supports one mounted root, positional reconciliation, and keyed reconciliation o
 children, node replacements, and closure-action registrations update mechanically;
 runtime client-state mutation actions remain future work.
 
+Drag sources and drop destinations from `onDrag` and `onDrop` use the browser's
+HTML drag and drop events. A destination keeps one drop session for as long as it
+is mounted, and a rerender points that session at the new drop target rather than
+replacing it, so a drag that changes state on its way in is still accepted when it
+is released.
+
 Use ``mount(_:in:resources:configuration:)`` with ``RuntimeResources`` to install
 application stylesheets before the initial DOM tree. External URLs are resolved by
 the browser relative to the served document; inline CSS is preserved in a `style`

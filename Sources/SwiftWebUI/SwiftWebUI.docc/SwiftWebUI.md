@@ -89,6 +89,7 @@ Normal composition uses fixed-arity generic carriers rather than `AnyView` or vi
 - <doc:Presentation>
 - <doc:Tabs>
 - <doc:Forms>
+- <doc:DragAndDrop>
 - ``State``
 - ``Binding``
 - ``ActionIntent``

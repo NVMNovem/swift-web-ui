@@ -133,6 +133,26 @@ Column width and alignment belong to the column; everything else is an ordinary
 modifier on the table, which is also the element the defaults are declared on, so
 a modifier overrides them.
 
+## Drag and drop
+
+`onDrag` and `onDrop` take SwiftUI's arguments and lower to the browser's own
+HTML drag and drop. Content travels as text keyed by MIME type, so `ItemProvider`
+holds strings and `UTType` names MIME types (`.plainText` is `text/plain`).
+Browser-runtime only.
+
+```swift
+Text(card.title)
+    .onDrag { ItemProvider(object: card.id) }
+
+VStack { ForEach(done, id: { $0 }) { Text($0) } }
+    .onDrop(of: [.plainText], isTargeted: $isTargeted) { providers in
+        providers.first?.loadObject(ofClass: String.self) { id in
+            if let id { done.append(id) }
+        }
+        return true
+    }
+```
+
 ## Architecture
 
 ```text
