@@ -240,6 +240,11 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
     }
 
     /// The formats a drag carries. `Files` is listed too, and is not a MIME type.
+    ///
+    /// Not optimized, for the same CopyPropagation crash as `documentIconLinks()`:
+    /// both read a JavaScript array's `length` and then index it. It runs once
+    /// per drop event.
+    @_optimize(none)
     private static func transferTypes(of transfer: JSObject) -> [String] {
         guard let types = transfer.types.object, let count = types.length.number.map(Int.init) else {
             return []
