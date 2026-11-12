@@ -2,6 +2,10 @@
 
 import PackageDescription
 
+// An Embedded Swift build (JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM=true) needs
+// the stdlib's Unicode tables, which Embedded Swift keeps in their own library.
+let embedded = Context.environment["JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM"] == "true"
+
 // The smallest SwiftWebUI application that runs in a browser.
 //
 // Copy this directory to start a site, and replace the path dependency with
@@ -25,7 +29,10 @@ let package = Package(
                 .product(name: "SwiftWebUI", package: "swift-web-ui"),
                 .product(name: "SwiftWebUIRuntime", package: "swift-web-ui"),
                 .product(name: "JavaScriptKit", package: "JavaScriptKit"),
-            ]
+            ],
+            linkerSettings: embedded
+                ? [.linkedLibrary("swiftUnicodeDataTables", .when(platforms: [.wasi]))]
+                : []
         ),
     ],
     swiftLanguageModes: [.v6]

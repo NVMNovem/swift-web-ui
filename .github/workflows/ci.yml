@@ -144,8 +144,6 @@ jobs:
           key: wasm-embedded-starter-spm-${{ hashFiles('Package.swift', 'Examples/Starter/Package.swift') }}
           restore-keys: wasm-embedded-starter-spm-
 
-      # Embedded Swift keeps the stdlib's Unicode tables, which String
-      # comparison and grapheme breaking need, in their own library.
       - name: Build
         working-directory: Examples/Starter
         env:
@@ -155,4 +153,3 @@ jobs:
           -c release
           --product Starter
           --swift-sdk swift-${SWIFT_VERSION}-RELEASE_wasm-embedded
-          -Xlinker -lswiftUnicodeDataTables
