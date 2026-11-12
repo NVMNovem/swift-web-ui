@@ -117,3 +117,39 @@ jobs:
           swift build
           --target ${{ matrix.target }}
           --swift-sdk swift-${SWIFT_VERSION}-RELEASE_${{ matrix.sdk }}
+
+  # A whole application, in release, in Embedded Swift. Building the targets
+  # alone, in debug, misses what only shows once an app's views specialize the
+  # runtime's generic code: an untyped throw in `mount`, and a Swift 6.3.3
+  # optimizer crash that -O alone triggers.
+  embedded-app:
+    name: WASM embedded app (Starter, release)
+    runs-on: ubuntu-latest
+    container: swift:6.3.3-noble
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Swift SDK for WebAssembly
+        run: |
+          apt-get update -qq && apt-get install -y -qq curl >/dev/null
+          bundle="swift-${SWIFT_VERSION}-RELEASE_wasm.artifactbundle.tar.gz"
+          curl -fsSL -o "/tmp/${bundle}" \
+            "https://download.swift.org/swift-${SWIFT_VERSION}-release/wasm-sdk/swift-${SWIFT_VERSION}-RELEASE/${bundle}"
+          swift sdk install "/tmp/${bundle}"
+
+      - uses: actions/cache@v4
+        with:
+          path: Examples/Starter/.build
+          key: wasm-embedded-starter-spm-${{ hashFiles('Package.swift', 'Examples/Starter/Package.swift') }}
+          restore-keys: wasm-embedded-starter-spm-
+
+      - name: Build
+        working-directory: Examples/Starter
+        env:
+          JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM: "true"
+        run: >
+          swift build
+          -c release
+          --product Starter
+          --swift-sdk swift-${SWIFT_VERSION}-RELEASE_wasm-embedded

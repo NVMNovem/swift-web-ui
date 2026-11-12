@@ -239,8 +239,16 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
             return
         }
 
-        do {
-            let handle = try navigationIconHandle ?? installIconLink()
+        do throws(BrowserHeadBackendError) {
+            // Not `navigationIconHandle ?? installIconLink()`: `??` takes a
+            // rethrowing autoclosure, which makes the error `any Error`, and
+            // Embedded Swift has no existentials.
+            let handle: Backend.Node
+            if let existing = navigationIconHandle {
+                handle = existing
+            } else {
+                handle = try installIconLink()
+            }
             backend.setAttribute(name: "href", value: icon.href, on: handle)
             if let mimeType = icon.mimeType {
                 backend.setAttribute(name: "type", value: mimeType, on: handle)
