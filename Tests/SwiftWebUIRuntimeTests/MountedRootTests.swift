@@ -26,6 +26,11 @@ extension RuntimeMountTests {
             let text = span.children[0]
             backend.operations.removeAll()
             model.count += 1
+            // Writes are coalesced: nothing rebuilds until the next frame.
+            #expect(backend.buildCount == 1)
+            #expect(backend.operations == ["requestAnimationFrame"])
+            backend.operations.removeAll()
+            backend.runScheduledWork()
 
             #expect(backend.buildCount == 2)
             #expect(backend.operations == ["setText \(text.id) 1"])

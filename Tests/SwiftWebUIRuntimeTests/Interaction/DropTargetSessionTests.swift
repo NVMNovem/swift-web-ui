@@ -160,6 +160,7 @@ extension RuntimeMountTests {
 
             // Entering sets `isTargeted`, which rerenders while the drag is in progress.
             #expect(inbox.deliverDrag(.enter, plainText) == .copy)
+            backend.runScheduledWork()
             #expect(texts(inbox) == ["Release to add"])
             #expect(backend.root.children[0] === inbox)
             #expect(!backend.operations.contains { $0.hasPrefix("removeDropAction") })
@@ -168,6 +169,7 @@ extension RuntimeMountTests {
             #expect(inbox.deliverDrag(.drop, dropped("card-3")) == .copy)
 
             #expect(received == ["card-3"])
+            backend.runScheduledWork()
             #expect(texts(inbox) == ["Drop here"])
         }
 

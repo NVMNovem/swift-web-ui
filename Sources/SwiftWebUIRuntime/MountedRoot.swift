@@ -32,6 +32,9 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
 
     /// Owns `@State` storage for everything mounted under this root.
     let stateSlots = StateSlotStore()
+    /// Owns what `onAppear`, `onDisappear`, `task` and `onChange` remember, and runs
+    /// what they queue once the DOM shows the build that queued it.
+    let lifecycle = ViewLifecycleStore()
     /// Owns the document body's scroll lock for everything mounted under this root.
     ///
     /// Only the presentation primitive drives it. There is deliberately no
@@ -44,8 +47,9 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     /// Counts builds, so a change reported against an older build can be told
     /// apart from one against the tree on screen.
     private var buildGeneration = 0
-    /// The rebuild an observed change has asked for and that has not run yet.
-    private var pendingObservedRebuild: Backend.ScheduledWork?
+    /// The rebuild a state write or an observed change has asked for and that has
+    /// not run yet. Every request before it runs shares it.
+    private var pendingRebuild: Backend.ScheduledWork?
     /// How callbacks that may outlive this root reach it. See ``WeakReference``.
     private let weakSelf = WeakReference<MountedRoot>()
 
@@ -92,17 +96,15 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
 
     func start() {
         StateSlotStorage.install(stateSlots)
+        ViewLifecycleStorage.install(lifecycle)
         ViewInvalidation.install { [self] in
-            invalidate()
+            scheduleRebuild()
         }
         initialMount()
     }
 
     func stop() {
-        if let pendingObservedRebuild {
-            backend.cancel(pendingObservedRebuild)
-            self.pendingObservedRebuild = nil
-        }
+        cancelPendingRebuild()
         // Retires every tracking registration still waiting on a change.
         buildGeneration &+= 1
         transitions.cancelAll()
@@ -110,7 +112,31 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         removeNavigationIcon()
         ViewInvalidation.clear()
         StateSlotStorage.clear()
+        ViewLifecycleStorage.clear()
+        lifecycle.removeAll()
         stateSlots.releaseAll()
+    }
+
+    /// Asks for one rebuild on the browser's next animation frame.
+    ///
+    /// A `State` write lands here. So does an observed change, through
+    /// ``observedChange(in:)``. However many arrive before the frame, they share one
+    /// rebuild, which reads every value as it is by then. That is also what makes it
+    /// safe to answer Observation's `willSet`: the rebuild cannot run before the
+    /// new value is stored.
+    private func scheduleRebuild() {
+        guard pendingRebuild == nil else { return }
+        pendingRebuild = backend.onNextAnimationFrame { [weakSelf] in
+            guard let self = weakSelf.object else { return }
+            self.pendingRebuild = nil
+            self.invalidate()
+        }
+    }
+
+    private func cancelPendingRebuild() {
+        guard let pendingRebuild else { return }
+        backend.cancel(pendingRebuild)
+        self.pendingRebuild = nil
     }
 
     /// Rebuilds the presentation tree, reclaiming state for views that disappeared.
@@ -122,7 +148,9 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     private func buildTrackingState() -> LoweredView {
         isRebuilding = true
         stateSlots.beginBuild()
+        lifecycle.beginBuild()
         defer {
+            lifecycle.endBuild()
             stateSlots.endBuild()
             isRebuilding = false
         }
@@ -137,7 +165,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     ///
     /// Observation reports a change from `willSet`, before the new value is
     /// stored, so rebuilding here would draw the old one. The rebuild is
-    /// scheduled instead, and several changes in one turn share it.
+    /// scheduled instead, and shares the frame with every other change.
     ///
     /// A report against an older build is ignored. There is no public way to
     /// withdraw a tracking registration, so every build leaves one behind until
@@ -145,22 +173,22 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     /// matters and reports it itself; an older one tracked a tree that is no
     /// longer on screen.
     fileprivate func observedChange(in generation: Int) {
-        guard generation == buildGeneration, pendingObservedRebuild == nil else { return }
-        pendingObservedRebuild = backend.schedule(afterMilliseconds: 0) { [weakSelf] in
-            guard let self = weakSelf.object else { return }
-            self.pendingObservedRebuild = nil
-            // A rebuild since the change — a `State` write in the same turn —
-            // already read the new value.
-            guard generation == self.buildGeneration else { return }
-            self.invalidate()
-        }
+        guard generation == buildGeneration else { return }
+        scheduleRebuild()
     }
 
+    /// Rebuilds now and brings the DOM up to date, then runs the lifecycle work the
+    /// build queued.
+    ///
+    /// State writes and observed changes do not call this directly: they go
+    /// through ``scheduleRebuild()``, so a burst of them costs one rebuild.
     func invalidate() {
         // A state write while `body` is running would restart the liveness sweep
         // mid-traversal and release slots the traversal has not reached yet. The
         // resulting tree is built from the already-updated state either way.
         guard !isRebuilding else { return }
+        // This rebuild reads everything a scheduled one would have.
+        cancelPendingRebuild()
         guard var mountedNode, previousWebNode != nil else {
             initialMount()
             return
@@ -193,6 +221,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         previousWebNode = newWebNode
         applyNavigationTitle(loweredView.documentMetadata.navigationTitle)
         applyNavigationIcon(loweredView.documentMetadata.navigationIcon)
+        lifecycle.commit()
     }
 
     private func initialMount() {
@@ -218,6 +247,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         self.mountedNode = mountedNode
         applyNavigationTitle(loweredView.documentMetadata.navigationTitle)
         applyNavigationIcon(loweredView.documentMetadata.navigationIcon)
+        lifecycle.commit()
     }
 
     private func applyNavigationTitle(_ title: String?) {

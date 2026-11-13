@@ -35,11 +35,11 @@ extension RuntimeMountTests {
             counter.count = 1
             // Observation reports from `willSet`, so nothing is drawn yet.
             #expect(backend.buildCount == 1)
-            #expect(backend.operations == ["setTimeout 0"])
+            #expect(backend.operations == ["requestAnimationFrame"])
 
             backend.runScheduledWork()
             #expect(backend.buildCount == 2)
-            #expect(backend.operations == ["setTimeout 0", "setText \(text.id) 1"])
+            #expect(backend.operations == ["requestAnimationFrame", "setText \(text.id) 1"])
         }
 
         @Test func severalWritesInOneTurnShareOneRebuild() {
@@ -76,7 +76,7 @@ extension RuntimeMountTests {
             #expect(backend.scheduled.isEmpty)
         }
 
-        @Test func aStateWriteInTheSameTurnMakesTheScheduledRebuildRedundant() {
+        @Test func aStateWriteAndAnObservedChangeShareOneRebuild() {
             final class Model { @State var flag = false }
             let model = Model()
             let counter = Counter()
@@ -88,12 +88,13 @@ extension RuntimeMountTests {
             defer { root.stop() }
 
             root.start()
-            counter.count = 1
-            model.flag = true               // rebuilds now, reading count == 1
             let builds = backend.buildCount
+            counter.count = 1
+            model.flag = true               // shares the frame the observed change asked for
+            #expect(backend.scheduled.count == 1)
 
             backend.runScheduledWork()
-            #expect(backend.buildCount == builds)
+            #expect(backend.buildCount == builds + 1)
             #expect(backend.root.children[0].children[0].text == "1 true")
         }
 
@@ -111,6 +112,7 @@ extension RuntimeMountTests {
 
             root.start()
             model.flag = true
+            backend.runScheduledWork()
             counter.count = 1               // only the first build's registration fires
             #expect(backend.scheduled.isEmpty)
         }
