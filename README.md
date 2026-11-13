@@ -119,6 +119,70 @@ screen and loader unless the application brings its own, places the WASI shim, a
 reports the bundle's size. See [Getting started in the browser](Documentation/GettingStarted.md)
 and `Examples/Starter`.
 
+## Embedded Swift
+
+The same application builds with [Embedded Swift](https://www.swift.org/documentation/embedded/)
+as well as with the full WebAssembly SDK, with no change to its code. Embedded Swift
+links only the parts of the runtime and standard library the application reaches, so
+the bundle a visitor downloads is much smaller: [ordessa-web](https://github.com/NVMNovem/ordessa-web),
+a whole ordering site on SwiftWebUI, went from 11.07 MB (3.94 MB compressed) to
+5.11 MB (about 1.6 MB) by switching.
+
+`Examples/Starter` is set up for both. To build it with Embedded Swift:
+
+```sh
+cd Examples/Starter
+export JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM=true    # JavaScriptKit's Embedded variant
+swift package --swift-sdk swift-6.3.3-RELEASE_wasm-embedded js -c release
+swift package --allow-writing-to-package-directory web
+swift package --allow-network-connections local web-serve
+```
+
+The Embedded SDK comes in the same artifact bundle as the full one. Compared with the
+full SDK, an Embedded application needs two things of its own:
+
+- **Linker settings in its manifest.** `swift package js` passes the reactor flags only
+  for the full SDK, and Embedded Swift also needs the `swiftUnicodeDataTables` library
+  and an 8 MB stack. `Examples/Starter/Package.swift` adds all of them when
+  `JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM` is `true`; copy that block.
+- **`App.main()`.** It does what Embedded Swift leaves to the application: it runs the
+  main actor on JavaScriptKit's event loop, exports the functions JavaScriptKit's
+  JavaScript calls, and defines the concurrency runtime functions Embedded Swift 6.3
+  leaves out. An application that is an `App` gets all of that for free.
+
+CI builds the Starter in release with Embedded Swift and presses its button in Chromium,
+so both of these are checked on every change.
+
+### What changes in the API
+
+Embedded Swift has no runtime metadata, reflection or key paths, and no existentials of
+a protocol with generic requirements, which `View` is. SwiftWebUI is written so that
+code reads the same in both builds, and where SwiftUI's API depends on one of those, it
+offers a spelling that works everywhere:
+
+- **Environment values are keyed by type, not by key path.** Declare an
+  `EnvironmentKey`, place a value with `.environment(AccentKey.self, .red)` and read it
+  with `@Environment(AccentKey.self)`. Objects are read by their type, as in SwiftUI:
+  `@Environment(Basket.self)`.
+- **No key paths anywhere.** `ForEach` takes `id:` as a closure (`id: { $0.code }`)
+  rather than `\.code`.
+- **No `AnyView`.** A builder block holds up to ten expressions (nest more in a `Group`
+  or a stack), and every iteration of a `ForEach` produces the same view type.
+- **`@Observable` comes from `SwiftObservation`**, from
+  [swift-observation](https://github.com/NVMNovem/swift-observation). Apple's
+  `Observation` is not available to Embedded Swift 6.3; `SwiftObservation` re-exports it
+  wherever it exists and supplies its own otherwise, so a model is written once.
+- **Keep views visible to the compiler.** A `private` or `fileprivate` view, view
+  helper returning `some View`, or `View` extension is read as an existential and
+  refused. In a release build the same holds for any non-public `some View` in a
+  generic context (an internal `extension View` helper, a generic view); make it public
+  or build with `-Xswiftc -enable-testing`.
+- **Your own code follows Embedded Swift's rules**: no Foundation, typed `throws`
+  instead of `any Error`, no `weak`, no `@MainActor` (use a global actor of your own).
+
+See [Embedded compatibility](Documentation/EmbeddedCompatibility.md) for how the core
+and the runtime are built to fit, and the compiler limits behind each rule.
+
 ## Localization
 
 A string literal in `Text`, `Button` or `Link` is a localization key, as in SwiftUI; a
