@@ -62,6 +62,10 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
         node.getAttribute!(name).string
     }
 
+    // Not optimized: Swift 6.3.3 crashes in CopyPropagation ("Found outside of
+    // lifetime use") on this function when it compiles Embedded Swift with -O.
+    // It runs once per icon change, so nothing is lost.
+    @_optimize(none)
     func documentIconLinks() -> [JSObject] {
         guard let matches = document.querySelectorAll?("link[rel~=\"icon\"]").object else {
             return []
@@ -236,6 +240,11 @@ final class JavaScriptDOMBackend: BrowserHeadBackend {
     }
 
     /// The formats a drag carries. `Files` is listed too, and is not a MIME type.
+    ///
+    /// Not optimized, for the same CopyPropagation crash as `documentIconLinks()`:
+    /// both read a JavaScript array's `length` and then index it. It runs once
+    /// per drop event.
+    @_optimize(none)
     private static func transferTypes(of transfer: JSObject) -> [String] {
         guard let types = transfer.types.object, let count = types.length.number.map(Int.init) else {
             return []
