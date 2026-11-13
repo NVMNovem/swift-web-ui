@@ -2151,6 +2151,27 @@ extension ButtonStyleToken {
     ))
 }
 
+@Test func stylesheetModifierEmitsHeadStylesheetsAfterTheGeneratedCSS() {
+    let rendered = HTMLRenderer().renderView(
+        Text("Content")
+            .foregroundStyle(Color("red"))
+            .stylesheet(.external("theme.css"))
+            .stylesheet(.inline(".x{color:blue}"))
+    )
+    let html = WebDocument(renderedView: rendered).htmlString(prettyPrinted: false)
+
+    #expect(rendered.stylesheets == [.external("theme.css"), .inline(".x{color:blue}")])
+    // The generated CSS is linked as styles.css by default.
+    let generated = html.range(of: "href=\"styles.css\"")
+    let link = html.range(of: "<link rel=\"stylesheet\" href=\"theme.css\">")
+    let inline = html.range(of: "<style>.x{color:blue}</style>")
+    #expect(generated != nil && link != nil && inline != nil)
+    if let generated, let link, let inline {
+        #expect(generated.lowerBound < link.lowerBound)
+        #expect(link.lowerBound < inline.lowerBound)
+    }
+}
+
 @Test func navigationIconModifierSuppliesWebDocumentFaviconLink() {
     let rendered = HTMLRenderer().renderView(
         Text("Content").navigationIcon(.svg("<svg viewBox=\"0 0 16 16\"/>"))

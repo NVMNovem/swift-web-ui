@@ -585,3 +585,28 @@ private func requireElement(_ node: WebNode) -> WebElementNode? {
     }
     return element
 }
+
+@Test func sharedLowererCollectsStylesheetsOnceEachInTreeOrder() {
+    let lowered = ViewNodeToWebNodeLowerer().lowerView(
+        VStack {
+            Text("First")
+                .stylesheet(.inline("a"))
+                .stylesheet(.inline("b"))
+            ForEach(["k"], id: { $0 }) { _ in
+                Text("Keyed").stylesheet(.external("keyed.css"))
+            }
+        }
+        .padding(.px(4))
+        .stylesheet(.external("outer.css"))
+        .makeViewNode()
+    )
+
+    #expect(lowered.documentMetadata.stylesheets == [
+        .external("outer.css"),
+        .inline("a"),
+        .inline("b"),
+        .external("keyed.css"),
+    ])
+    let element = requireElement(lowered.webNode)
+    #expect(element?.attributes.allSatisfy { !$0.name.contains("stylesheet") } == true)
+}
