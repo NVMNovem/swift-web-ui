@@ -2,7 +2,7 @@
 
 ## Status
 
-The production `SwiftWebUI` target is the shared Embedded-compatible DSL/core. It builds with Swift 6.3.3 and `swift-6.3.3-RELEASE_wasm-embedded`. Static rendering is a separate `SwiftWebUIStatic` target and is not required to build under Embedded. The browser executable is packaged with the standard Wasm SDK because exhaustive SwiftCSS values may require full standard-library Unicode support; that backend choice does not weaken the independently validated core boundary.
+The production `SwiftWebUI` target is the shared Embedded-compatible DSL/core. It builds with Swift 6.3.3 and `swift-6.3.3-RELEASE_wasm-embedded`. Static rendering is a separate `SwiftWebUIStatic` target and is not required to build under Embedded. A browser application builds with either SDK: with `swift-6.3.3-RELEASE_wasm-embedded`, it links the `swiftUnicodeDataTables` library for the full standard-library Unicode support SwiftCSS values need (see [Runtime](#runtime)).
 
 ```text
 SwiftWebUI
