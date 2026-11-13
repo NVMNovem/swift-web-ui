@@ -29,28 +29,37 @@ public extension View {
     /// and the lowering of its result are marked while they run so that a read is
     /// recognised as this view reading its own environment.
     func makeViewNode(in context: ViewContext) -> ViewNode {
-        guard !context.isDetached else {
-            let previous = StateSlotStorage.beginScope(nil)
-            defer { StateSlotStorage.endScope(previous) }
-            return EnvironmentStorage.lowering(
-                locale: context.localization.effectiveLocale,
-                evaluate: { body },
-                lower: { $0.makeViewNode(in: context) }
-            )
-        }
-        let scoped = context.appending(.body)
-        StateSlotStorage.markVisited(scoped.path)
-        let previous = StateSlotStorage.beginScope(scoped.path)
-        defer { StateSlotStorage.endScope(previous) }
-        return EnvironmentStorage.lowering(
-            locale: scoped.localization.effectiveLocale,
-            evaluate: { body },
-            lower: { $0.makeViewNode(in: scoped) }
-        )
+        lowerComposed(in: context) { body }
     }
 
     /// Lowers the view from the root of a fresh traversal.
     func makeViewNode() -> ViewNode {
         makeViewNode(in: .root)
     }
+}
+
+/// Lowers what a composed view produces: a `body`, or a ``ViewModifier``'s
+/// `body(content:)`.
+///
+/// Installs the structural identity as the state scope and marks the evaluation for
+/// ``Environment``, as described on ``View/makeViewNode(in:)``.
+func lowerComposed<Body: View>(in context: ViewContext, evaluate: () -> Body) -> ViewNode {
+    guard !context.isDetached else {
+        let previous = StateSlotStorage.beginScope(nil)
+        defer { StateSlotStorage.endScope(previous) }
+        return EnvironmentStorage.lowering(
+            locale: context.localization.effectiveLocale,
+            evaluate: evaluate,
+            lower: { $0.makeViewNode(in: context) }
+        )
+    }
+    let scoped = context.appending(.body)
+    StateSlotStorage.markVisited(scoped.path)
+    let previous = StateSlotStorage.beginScope(scoped.path)
+    defer { StateSlotStorage.endScope(previous) }
+    return EnvironmentStorage.lowering(
+        locale: scoped.localization.effectiveLocale,
+        evaluate: evaluate,
+        lower: { $0.makeViewNode(in: scoped) }
+    )
 }

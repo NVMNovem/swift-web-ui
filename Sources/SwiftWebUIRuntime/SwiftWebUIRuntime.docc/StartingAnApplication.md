@@ -32,11 +32,24 @@ the element whose `id` is the page's mount point — `app` unless
 
 ### Loading data
 
-There is no `.task` modifier yet, so a view cannot start work of its own. The
-application's `init()` runs after the event loop is installed, so it can start a
-`Task` that loads into an observable model the views read. The page is mounted at
-once in whatever state that model starts in, and rebuilds when the model changes.
-In the Swift 6 language mode, what the task captures has to be `Sendable`.
+A view starts the work it needs with `.task`. The task starts once the page shows
+the view and is cancelled when the view goes away. It writes what it loads into the
+view's `State`, or into an observable model:
+
+```swift
+struct RootView: View {
+    @State private var shop: Shop?
+
+    var body: some View {
+        Text(shop?.name ?? "Loading…")
+            .task { shop = await loadShop() }
+    }
+}
+```
+
+The page is mounted once, showing the loading state, and rebuilds when the task
+writes. The application's `init()` also runs after the event loop is installed, so
+work that belongs to no view can still start there with `Task { … }`.
 
 ### Building
 

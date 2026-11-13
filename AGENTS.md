@@ -22,7 +22,7 @@
 - Shared semantic changes require shared-lowerer tests and static/runtime backend tests where applicable.
 - Keep the SwiftWebUI core Embedded-compatible: do not add Foundation, filesystem access, HTML strings, generated JavaScript, or static resource registries.
 - Do not use dynamic casts for view traversal, state serialization, or style discovery.
-- Normal composition must not use AnyView, view existential storage, or type-erased rendering closures.
+- Normal composition must not use AnyView, view existential storage, or type-erased rendering closures. The one exception is `ViewModifierContent`, which SwiftUI's `ViewModifier` shape requires.
 - Do not create custom HTML node systems in SwiftWebUI.
 - Do not implement CSS rendering directly in SwiftWebUI.
 - Do not reintroduce SwiftWebUI.Border or SwiftWebUI.Shadow thin wrappers.

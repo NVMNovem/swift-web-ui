@@ -57,7 +57,7 @@ struct ProfilePage: View {
 
 SwiftWebUI state is not SwiftUI state. Binding-backed controls preserve initial value and identity in ``ViewNode``. `SwiftWebUIStatic` converts supported intent into data attributes and a generated tab runtime.
 
-`SwiftWebUIRuntime` installs one renderer-neutral invalidation callback. Mutating ``State`` or its projected ``Binding`` invokes that callback, rebuilds and lowers the root ``ViewNode``, diffs the previous and new `WebNode`, and applies positional patches to a runtime-only mounted tree. Unchanged browser elements remain mounted. Children of a keyed `ForEach` are moved rather than rewritten; this reconciler still does not provide multiple roots or production lifecycle semantics.
+`SwiftWebUIRuntime` installs one renderer-neutral invalidation callback. Mutating ``State`` or its projected ``Binding`` invokes that callback, which schedules one rebuild on the next animation frame. The rebuild lowers the root ``ViewNode``, diffs the previous and new `WebNode`, and applies positional patches to a runtime-only mounted tree. Unchanged browser elements remain mounted. Children of a keyed `ForEach` are moved rather than rewritten. The reconciler still supports only one root. Views appear and disappear by the identity described below. See <doc:LifecycleAndComposition>.
 
 ### State slots
 
@@ -89,7 +89,7 @@ A state that is never read or projected during `body` never binds, and falls bac
 
 When no store is installed -- static rendering, or lowering a view directly -- every state uses private per-instance storage, which is the pre-slot behavior.
 
-Each write still rebuilds the whole root; writes are not yet coalesced, so two mutations in one action run the pipeline twice.
+Each rebuild still starts from the root, but writes are coalesced: every write before the next animation frame shares one rebuild, so two mutations in one action run the pipeline once.
 
 ### Collection identity
 

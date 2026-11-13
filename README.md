@@ -92,8 +92,22 @@ struct ShopApp: App {
 ```
 
 `Page` is the web's `WindowGroup`. `App` supplies `main()`: it installs the JavaScript
-event loop, creates the application and mounts the page into `#app`. Two commands turn
-the package into a deployable `dist/`:
+event loop, creates the application and mounts the page into `#app`. A view starts
+its own work with `.task`, which runs once the view is on the page and is cancelled
+when it leaves:
+
+```swift
+struct RootView: View {
+    @State private var shop: Shop?
+
+    var body: some View {
+        Text(shop?.name ?? "Loading…")
+            .task { shop = await loadShop() }
+    }
+}
+```
+
+Two commands turn the package into a deployable `dist/`:
 
 ```sh
 swift package --swift-sdk <wasm sdk> js -c release       # JavaScriptKit: compile
