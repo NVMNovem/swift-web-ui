@@ -31,7 +31,9 @@ let package = Package(
 
 JavaScriptKit is listed because SwiftPM only offers a package the command plugins of
 its direct dependencies, and `swift package js`, used below, is JavaScriptKit's. No
-linker flags are needed: that command passes the ones a browser build requires.
+linker flags are needed for the full WebAssembly SDK: that command passes the ones a
+browser build requires. An Embedded Swift build needs a few in the manifest; see
+[Embedded compatibility](EmbeddedCompatibility.md) and `Examples/Starter/Package.swift`.
 
 ## 2. The application
 

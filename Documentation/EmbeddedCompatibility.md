@@ -45,10 +45,17 @@ reached through `App.main()`:
   nine runtime functions that no Embedded library defines.
   `EmbeddedConcurrencyRuntime.swift` defines them.
 
-An application with large views may also need a bigger stack than wasm-ld's default
-64 KB, which an overflow does not report: it writes over the data section. Pass
-`-Xlinker -z -Xlinker stack-size=8388608` (the full SDK's size) in the executable's
-`unsafeFlags` for an Embedded build.
+The application's executable needs linker settings of its own for an Embedded build,
+because `swift package js` passes its usual ones only for the full SDK:
+
+- `-Xclang-linker -mexec-model=reactor` and `-Xlinker --export-if-defined=__main_argc_argv`,
+  without which the page fails with "JavaScriptKit supports only WASI reactor ABI";
+- the `swiftUnicodeDataTables` library;
+- `-Xlinker -z -Xlinker stack-size=8388608`, the full SDK's stack. wasm-ld's default is
+  64 KB, and an overflow is not reported: it writes over the data section.
+
+`Examples/Starter/Package.swift` sets all of them when
+`JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM` is `true`.
 
 Runtime stylesheet declarations and browser-head installation also remain in the
 separate `SwiftWebUIRuntime` target. They contain browser URLs or inline CSS text but
