@@ -46,6 +46,31 @@
 /// @Environment(Basket.self) private var basket: Basket?
 /// ```
 ///
+/// ## Values
+///
+/// A value travels down the tree under a key type that conforms to ``EnvironmentKey``,
+/// which also supplies the value read where none was placed:
+///
+/// ```swift
+/// struct AccentKey: EnvironmentKey {
+///     static let defaultValue = Color.blue
+/// }
+///
+/// struct Badge: View {
+///     @Environment(AccentKey.self) private var accent
+///
+///     var body: some View {
+///         Text("New").foregroundStyle(accent)
+///     }
+/// }
+///
+/// Badge().environment(AccentKey.self, .red)
+/// ```
+///
+/// This is SwiftUI's `@Environment(\.accent)` with an `EnvironmentValues` extension.
+/// It is keyed by type because key paths are unavailable in Embedded Swift. A value is
+/// read under the same rules as an object, and a read never fails.
+///
 /// ## The locale
 ///
 /// The locale that localized text resolves in is read the same way, and follows the same
@@ -77,6 +102,16 @@ public struct Environment<Value> {
     public init<Object: AnyObject>(_ type: Object.Type) where Value == Object? {
         typeName = EnvironmentStorage.name(of: type)
         lookup = { .some($0.object(of: type)) }
+    }
+
+    /// Reads the value placed under `key`, or the key's default.
+    ///
+    /// ```swift
+    /// @Environment(AccentKey.self) private var accent
+    /// ```
+    public init<Key: EnvironmentKey>(_ key: Key.Type) where Value == Key.Value {
+        typeName = EnvironmentStorage.name(of: key)
+        lookup = { $0.value(for: key) }
     }
 
     /// Reads the locale that localized text resolves in.
@@ -128,9 +163,11 @@ public struct Environment<Value> {
     }
 }
 
-/// The objects placed by a view's ancestors, keyed by type.
+/// The objects and values placed by a view's ancestors, keyed by type.
 public struct EnvironmentObjects {
     private var storage: [ObjectIdentifier: AnyObject] = [:]
+    /// Values, boxed, keyed by their ``EnvironmentKey`` type.
+    private var values: [ObjectIdentifier: AnyObject] = [:]
 
     /// The locale in effect for the composed view being lowered. `nil` outside one.
     private(set) var locale: LocaleIdentifier?
@@ -139,6 +176,19 @@ public struct EnvironmentObjects {
 
     public func object<Object: AnyObject>(of type: Object.Type) -> Object? {
         storage[ObjectIdentifier(type)] as? Object
+    }
+
+    /// The value placed under `key`, or the key's default.
+    public func value<Key: EnvironmentKey>(for key: Key.Type) -> Key.Value {
+        // The key decides the value's type, so a box under it always holds one.
+        guard let box = values[EnvironmentKeyToken<Key>.identifier] else { return Key.defaultValue }
+        return unsafeDowncast(box, to: EnvironmentValueBox<Key.Value>.self).value
+    }
+
+    func settingValue<Key: EnvironmentKey>(_ value: Key.Value, for key: Key.Type) -> EnvironmentObjects {
+        var copy = self
+        copy.values[EnvironmentKeyToken<Key>.identifier] = EnvironmentValueBox(value)
+        return copy
     }
 
     func settingLocale(_ locale: LocaleIdentifier) -> EnvironmentObjects {
@@ -152,6 +202,21 @@ public struct EnvironmentObjects {
         copy.storage[ObjectIdentifier(Object.self)] = object
         return copy
     }
+}
+
+/// Names an ``EnvironmentKey`` in the value store.
+///
+/// Embedded Swift cannot take the metatype of a struct key, so `ObjectIdentifier(Key.self)`
+/// is not available. A class specialized on the key is a class, and each
+/// specialization has metadata of its own, so its identifier names the key.
+final class EnvironmentKeyToken<Key: EnvironmentKey> {
+    static var identifier: ObjectIdentifier { ObjectIdentifier(EnvironmentKeyToken<Key>.self) }
+}
+
+/// Holds an environment value as an object, so values of every type share one store.
+final class EnvironmentValueBox<Value> {
+    let value: Value
+    init(_ value: Value) { self.value = value }
 }
 
 /// The objects in effect for the `body` currently being evaluated.

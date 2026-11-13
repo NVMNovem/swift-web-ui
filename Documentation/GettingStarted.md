@@ -127,7 +127,4 @@ into a build failure, which is the cheapest way to notice.
 
 ## What `App` does not do yet
 
-- A view cannot start asynchronous work of its own; there is no `.task`. Start it from
-  the application's `init()`, which runs after the event loop is installed, and hand
-  the result to the views through an observable model.
 - One page per application. Routing between addresses is the application's.

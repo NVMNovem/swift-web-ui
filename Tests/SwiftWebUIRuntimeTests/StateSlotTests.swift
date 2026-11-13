@@ -152,9 +152,12 @@ extension RuntimeMountTests {
 
             #expect(texts(backend.root) == ["a:0", "+"])
             buttons(backend.root)[0].action?()
+            backend.runScheduledWork()
             #expect(texts(backend.root) == ["a:1", "+"])
             buttons(backend.root)[0].action?()
+            backend.runScheduledWork()
             buttons(backend.root)[0].action?()
+            backend.runScheduledWork()
             #expect(texts(backend.root) == ["a:3", "+"])
         }
 
@@ -180,6 +183,7 @@ extension RuntimeMountTests {
 
             backend.operations.removeAll()
             button.action?()
+            backend.runScheduledWork()
 
             #expect(backend.operations.contains("setText \(originalText.id) a:1"))
             #expect(!backend.operations.contains { $0.hasPrefix("createElement") })
@@ -194,9 +198,12 @@ extension RuntimeMountTests {
 
             #expect(texts(backend.root) == ["a:0", "+", "b:0", "+"])
             buttons(backend.root)[0].action?()
+            backend.runScheduledWork()
             buttons(backend.root)[0].action?()
+            backend.runScheduledWork()
             #expect(texts(backend.root) == ["a:2", "+", "b:0", "+"])
             buttons(backend.root)[1].action?()
+            backend.runScheduledWork()
             #expect(texts(backend.root) == ["a:2", "+", "b:1", "+"])
         }
 
@@ -210,7 +217,9 @@ extension RuntimeMountTests {
             root.start()
 
             buttons(backend.root)[0].action?()
+            backend.runScheduledWork()
             buttons(backend.root)[0].action?()
+            backend.runScheduledWork()
             #expect(texts(backend.root) == ["f:2", "+"])
 
             flag.value = true
@@ -231,7 +240,9 @@ extension RuntimeMountTests {
 
             #expect(texts(backend.root) == ["x:0", "+", "y:0", "+", "z:0", "+"])
             buttons(backend.root)[1].action?()
+            backend.runScheduledWork()
             buttons(backend.root)[1].action?()
+            backend.runScheduledWork()
             #expect(texts(backend.root) == ["x:0", "+", "y:2", "+", "z:0", "+"])
 
             items.value = ["y", "z"]
@@ -248,6 +259,7 @@ extension RuntimeMountTests {
             root.start()
 
             buttons(backend.root)[1].action?()
+            backend.runScheduledWork()
             #expect(texts(backend.root) == ["x:0", "+", "y:1", "+"])
 
             items.value = [Row(id: "y")]
@@ -264,7 +276,9 @@ extension RuntimeMountTests {
             root.start()
 
             buttons(backend.root)[1].action?()
+            backend.runScheduledWork()
             buttons(backend.root)[1].action?()
+            backend.runScheduledWork()
             #expect(texts(backend.root) == ["x:0", "+", "y:2", "+", "z:0", "+"])
 
             items.value = ["y", "z"]
@@ -283,7 +297,9 @@ extension RuntimeMountTests {
             root.start()
 
             buttons(backend.root)[0].action?()
+            backend.runScheduledWork()
             buttons(backend.root)[0].action?()
+            backend.runScheduledWork()
             #expect(texts(backend.root) == ["+", "n=2"])
 
             expanded.value = false

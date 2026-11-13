@@ -73,6 +73,10 @@ Normal composition uses fixed-arity generic carriers rather than `AnyView` or vi
 
 ### Composition and Modifiers
 
+- <doc:LifecycleAndComposition>
+- ``ViewModifier``
+- ``ModifiedContent``
+- ``EnvironmentKey``
 - ``ModifiedView``
 - ``OptionalView``
 - ``ConditionalView``
