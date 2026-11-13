@@ -22,6 +22,26 @@ public extension View {
     /// reconciliation, then removes it when the root stops.
     func navigationIcon(_ icon: NavigationIcon) -> ModifiedView<Self> { modified(.navigationIcon(icon)) }
 
+    /// Adds a stylesheet to the document while this view is shown.
+    ///
+    /// ```swift
+    /// ShopView(shop: shop)
+    ///     .stylesheet(.inline(shop.paletteCSS))
+    /// ```
+    ///
+    /// Use it for styles that depend on what a view shows, such as a theme known
+    /// only once data has loaded. A mounted runtime application installs the
+    /// stylesheet when a build first contains it and removes it when a build no
+    /// longer does. A stylesheet that stays the same across builds is not touched.
+    /// Static documents emit it in the head.
+    ///
+    /// The document's stylesheets come in tree order, after those a `Page`
+    /// installs, so a later one overrides an earlier one. Stylesheets that apply to
+    /// the whole application belong on the `Page`.
+    ///
+    /// SwiftUI has no counterpart. Styles there are not documents.
+    func stylesheet(_ stylesheet: DocumentStylesheet) -> ModifiedView<Self> { modified(.stylesheet(stylesheet)) }
+
     func `class`(_ name: String) -> ModifiedView<Self> { modified(.cssClass(name)) }
     func id(_ value: String) -> ModifiedView<Self> { modified(.identifier(value)) }
     func attribute(_ name: String, _ value: String) -> ModifiedView<Self> { modified(.attribute(name: name, value: value)) }

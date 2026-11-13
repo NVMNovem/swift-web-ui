@@ -10,13 +10,18 @@
 public struct ViewDocumentMetadata: Equatable, Sendable {
     public var navigationTitle: String?
     public var navigationIcon: NavigationIcon?
+    /// Every ``View/stylesheet(_:)`` in the tree, in tree order: an ancestor's before
+    /// its descendants', and siblings in order.
+    public var stylesheets: [DocumentStylesheet]
 
     public init(
         navigationTitle: String? = nil,
-        navigationIcon: NavigationIcon? = nil
+        navigationIcon: NavigationIcon? = nil,
+        stylesheets: [DocumentStylesheet] = []
     ) {
         self.navigationTitle = navigationTitle
         self.navigationIcon = navigationIcon
+        self.stylesheets = stylesheets
     }
 }
 

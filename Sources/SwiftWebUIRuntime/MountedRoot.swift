@@ -29,6 +29,9 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
     /// authored rather than one this root created, which is what decides
     /// whether unmounting restores it or removes it.
     private var adoptedNavigationIcon: (href: String?, type: String?)?
+    /// The stylesheets the tree's `stylesheet(_:)` modifiers placed, in the order
+    /// they stand in the head, each with its element.
+    private var viewStylesheets: [(stylesheet: DocumentStylesheet, handle: Backend.Node)] = []
 
     /// Owns `@State` storage for everything mounted under this root.
     let stateSlots = StateSlotStore()
@@ -110,6 +113,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         transitions.cancelAll()
         restoreDocumentTitle()
         removeNavigationIcon()
+        applyStylesheets([])
         ViewInvalidation.clear()
         StateSlotStorage.clear()
         ViewLifecycleStorage.clear()
@@ -221,6 +225,7 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         previousWebNode = newWebNode
         applyNavigationTitle(loweredView.documentMetadata.navigationTitle)
         applyNavigationIcon(loweredView.documentMetadata.navigationIcon)
+        applyStylesheets(loweredView.documentMetadata.stylesheets)
         lifecycle.commit()
     }
 
@@ -247,7 +252,46 @@ final class MountedRoot<Backend: BrowserHeadBackend> {
         self.mountedNode = mountedNode
         applyNavigationTitle(loweredView.documentMetadata.navigationTitle)
         applyNavigationIcon(loweredView.documentMetadata.navigationIcon)
+        applyStylesheets(loweredView.documentMetadata.stylesheets)
         lifecycle.commit()
+    }
+
+    /// Brings the head's view stylesheets in line with what the build placed.
+    ///
+    /// The stylesheets both lists start with stay as they are, so an unchanged
+    /// stylesheet is never reloaded. From the first difference on, the new ones are
+    /// appended before the old ones are removed, so nothing is ever unstyled in
+    /// between.
+    private func applyStylesheets(_ stylesheets: [DocumentStylesheet]) {
+        var kept = 0
+        while kept < viewStylesheets.count, kept < stylesheets.count,
+              viewStylesheets[kept].stylesheet == stylesheets[kept] {
+            kept += 1
+        }
+        guard kept < viewStylesheets.count || kept < stylesheets.count else { return }
+
+        var installed: [(stylesheet: DocumentStylesheet, handle: Backend.Node)] = []
+        do throws(BrowserHeadBackendError) {
+            let head = try backend.documentHead()
+            let installer = RuntimeStylesheetInstaller(backend: backend)
+            for stylesheet in stylesheets[kept...] {
+                let handle = try installer.element(for: stylesheet)
+                backend.append(handle, to: head)
+                installed.append((stylesheet, handle))
+            }
+            for (_, handle) in viewStylesheets[kept...] {
+                backend.remove(handle, from: head)
+            }
+            viewStylesheets = Array(viewStylesheets[..<kept]) + installed
+        } catch {
+            // Leave the head as it was rather than half-changed.
+            if let head = try? backend.documentHead() {
+                for (_, handle) in installed {
+                    backend.remove(handle, from: head)
+                }
+            }
+            print("[SwiftWebUIRuntime] stylesheet installation failed: \(error)")
+        }
     }
 
     private func applyNavigationTitle(_ title: String?) {

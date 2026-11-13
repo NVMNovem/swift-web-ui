@@ -36,6 +36,17 @@ public struct ViewNodeToWebNodeLowerer {
             if case .navigationIcon(let icon) = modifier { return icon }
             return nil
         }.last
+        // Stylesheets collect once per view, where its modifier chain reaches the
+        // view itself and `modifiers` holds the whole chain in declaration order.
+        // That happens before the children lower, so an ancestor's come first and
+        // a descendant's can override them.
+        if !node.carriesModifiersInward {
+            for modifier in modifiers {
+                if case .stylesheet(let stylesheet) = modifier {
+                    metadata.stylesheets.append(stylesheet)
+                }
+            }
+        }
         defer {
             // Children lower first. Metadata on their containing view therefore
             // overrides descendant metadata, while the last sibling wins when a
@@ -514,7 +525,7 @@ public struct ViewNodeToWebNodeLowerer {
 
         for modifier in modifiers {
             switch modifier {
-            case .navigationTitle, .navigationIcon: break
+            case .navigationTitle, .navigationIcon, .stylesheet: break
             case .cssClass(let name): classNames.append(name)
             case .identifier(let value): identifier = value
             case .attribute(let name, let value):
@@ -913,4 +924,15 @@ private func fontFamily(_ design: Font.Design) -> String? {
 
 private func formatNumber(_ value: Double) -> String {
     value.rounded() == value ? String(Int(value)) : String(value)
+}
+
+private extension ViewNode {
+    /// Whether lowering this node hands its modifiers on to the node it wraps, so
+    /// they are the wrapped node's to collect.
+    var carriesModifiersInward: Bool {
+        switch self {
+        case .modified, .keyed: true
+        default: false
+        }
+    }
 }

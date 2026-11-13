@@ -234,6 +234,22 @@ public struct WebDocument {
                 nodes.append(element("style", children: [.rawText(css)]))
             }
         }
+        // After the generated CSS, as a mounted runtime places them after the
+        // page's own, so they override it the same way in both.
+        for stylesheet in renderedView.stylesheets {
+            switch stylesheet {
+            case .external(let href):
+                nodes.append(
+                    element(
+                        "link",
+                        attributes: [.init("rel", "stylesheet"), .init("href", href)],
+                        isVoid: true
+                    )
+                )
+            case .inline(let css):
+                nodes.append(element("style", children: [.rawText(css)]))
+            }
+        }
         nodes.append(contentsOf: headScripts.map(\.htmlNode))
         return nodes
     }

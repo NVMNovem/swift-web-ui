@@ -85,17 +85,21 @@ public struct RenderedView: Sendable {
     public var navigationTitle: String?
     /// Browser tab icon supplied by the rendered view, when present.
     public var navigationIcon: NavigationIcon?
+    /// Stylesheets placed by the rendered view's `stylesheet(_:)` modifiers, in tree order.
+    public var stylesheets: [DocumentStylesheet]
 
     public init(
         content: RenderedContent,
         resources: RenderedResources,
         navigationTitle: String? = nil,
-        navigationIcon: NavigationIcon? = nil
+        navigationIcon: NavigationIcon? = nil,
+        stylesheets: [DocumentStylesheet] = []
     ) {
         self.content = content
         self.resources = resources
         self.navigationTitle = navigationTitle
         self.navigationIcon = navigationIcon
+        self.stylesheets = stylesheets
     }
 
     public func htmlString(prettyPrinted: Bool = false) -> String {
