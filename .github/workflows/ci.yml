@@ -144,12 +144,51 @@ jobs:
           key: wasm-embedded-starter-spm-${{ hashFiles('Package.swift', 'Examples/Starter/Package.swift') }}
           restore-keys: wasm-embedded-starter-spm-
 
-      - name: Build
+      # The same two commands the README gives an application: compile, then
+      # assemble dist/.
+      - name: Build and assemble
         working-directory: Examples/Starter
         env:
           JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM: "true"
-        run: >
-          swift build
-          -c release
-          --product Starter
-          --swift-sdk swift-${SWIFT_VERSION}-RELEASE_wasm-embedded
+        run: |
+          swift package --swift-sdk swift-${SWIFT_VERSION}-RELEASE_wasm-embedded js -c release
+          swift package --allow-writing-to-package-directory web
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: starter-embedded
+          path: Examples/Starter/dist
+          retention-days: 7
+
+  # Opens that bundle in Chromium and presses its button. A bundle that builds
+  # can still fail at runtime under Embedded Swift: missing JavaScriptKit
+  # exports, or a main actor nothing runs.
+  embedded-app-browser:
+    name: WASM embedded app in a browser (Starter)
+    needs: embedded-app
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: starter-embedded
+          path: dist
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Press the button
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 --directory dist > /dev/null 2>&1 &
+          sleep 1
+          node .github/scripts/starter-smoke-test.mjs http://127.0.0.1:8080/ starter.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: starter-screenshot
+          path: starter.png
+          retention-days: 7

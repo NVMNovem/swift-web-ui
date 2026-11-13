@@ -37,7 +37,10 @@ import JavaScriptEventLoop
 /// otherwise writes by hand, in this order:
 ///
 /// 1. installs the JavaScript event loop as Swift Concurrency's global executor, without
-///    which an `await` never resumes in the browser;
+///    which an `await` never resumes in the browser. Under Embedded Swift it also
+///    makes that event loop the main actor's executor, and the bundle carries the
+///    JavaScriptKit exports and concurrency runtime functions Embedded Swift leaves
+///    out, so an Embedded application needs nothing of its own for either;
 /// 2. creates the application with ``init()``;
 /// 3. mounts the scene from ``body``.
 ///
@@ -64,6 +67,10 @@ public extension App {
     static func main() {
         #if arch(wasm32)
         JavaScriptEventLoop.installGlobalExecutor()
+        #if hasFeature(Embedded)
+        // The main actor too, or it never runs: see `EmbeddedExecutors`.
+        EmbeddedExecutors.install()
+        #endif
         #endif
         Self().body._mountScene()
     }

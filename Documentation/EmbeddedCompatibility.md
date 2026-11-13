@@ -29,6 +29,34 @@ Both `WebNode` and `ViewNodeToWebNodeLowerer` are in the Embedded-compatible cor
 - **No `weak`.** Callbacks that may outlive a `MountedRoot` or a `TransitionScheduler` reach it through `WeakReference`, which the object clears in its own `deinit`. That is sound because the runtime runs on the browser's one thread.
 - **No key paths.** Closures such as `{ $0.firstDOMHandle }` replace key-path literals.
 
+Running, not only building, took three more pieces, all in `SwiftWebUIRuntime` and all
+reached through `App.main()`:
+
+- **The main actor's executor.** Under Embedded Swift, JavaScriptKit's
+  `installGlobalExecutor()` installs only its enqueue hooks, so the main actor stays on
+  Embedded Swift's cooperative run loop, which nothing drives in a browser, and a `Task`
+  never runs. `App.main()` also installs `EmbeddedExecutors`, which puts every job on
+  JavaScriptKit's event loop.
+- **JavaScriptKit's exports.** `swjs_call_host_function`, `swjs_free_host_function` and
+  `swjs_library_features` are not emitted by JavaScriptKit's Embedded build, and without
+  the first one every event handler throws. `EmbeddedJavaScriptKitExports.swift`
+  exports them.
+- **Concurrency runtime functions.** Swift 6.3's Embedded `_Concurrency` library calls
+  nine runtime functions that no Embedded library defines.
+  `EmbeddedConcurrencyRuntime.swift` defines them.
+
+The application's executable needs linker settings of its own for an Embedded build,
+because `swift package js` passes its usual ones only for the full SDK:
+
+- `-Xclang-linker -mexec-model=reactor` and `-Xlinker --export-if-defined=__main_argc_argv`,
+  without which the page fails with "JavaScriptKit supports only WASI reactor ABI";
+- the `swiftUnicodeDataTables` library;
+- `-Xlinker -z -Xlinker stack-size=8388608`, the full SDK's stack. wasm-ld's default is
+  64 KB, and an overflow is not reported: it writes over the data section.
+
+`Examples/Starter/Package.swift` sets all of them when
+`JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM` is `true`.
+
 Runtime stylesheet declarations and browser-head installation also remain in the
 separate `SwiftWebUIRuntime` target. They contain browser URLs or inline CSS text but
 no filesystem paths or JavaScriptKit objects. Static asset discovery and copying are

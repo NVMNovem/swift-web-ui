@@ -3,8 +3,25 @@
 import PackageDescription
 
 // An Embedded Swift build (JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM=true) needs
-// the stdlib's Unicode tables, which Embedded Swift keeps in their own library.
+// linker settings `swift package js` only passes for the full SDK: the reactor
+// execution model JavaScriptKit requires, and the `main` export it calls. It
+// also needs the stdlib's Unicode tables, which Embedded Swift keeps in their own
+// library, and a stack the size the full SDK gives (wasm-ld's default is 64 KB,
+// and an overflow silently overwrites data).
 let embedded = Context.environment["JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM"] == "true"
+let embeddedLinkerSettings: [LinkerSetting] = embedded
+    ? [
+        .linkedLibrary("swiftUnicodeDataTables", .when(platforms: [.wasi])),
+        .unsafeFlags(
+            [
+                "-Xclang-linker", "-mexec-model=reactor",
+                "-Xlinker", "--export-if-defined=__main_argc_argv",
+                "-Xlinker", "-z", "-Xlinker", "stack-size=8388608",
+            ],
+            .when(platforms: [.wasi])
+        ),
+    ]
+    : []
 
 // The smallest SwiftWebUI application that runs in a browser.
 //
@@ -30,9 +47,7 @@ let package = Package(
                 .product(name: "SwiftWebUIRuntime", package: "swift-web-ui"),
                 .product(name: "JavaScriptKit", package: "JavaScriptKit"),
             ],
-            linkerSettings: embedded
-                ? [.linkedLibrary("swiftUnicodeDataTables", .when(platforms: [.wasi]))]
-                : []
+            linkerSettings: embeddedLinkerSettings
         ),
     ],
     swiftLanguageModes: [.v6]
