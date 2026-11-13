@@ -124,9 +124,7 @@ and `Examples/Starter`.
 The same application builds with [Embedded Swift](https://www.swift.org/documentation/embedded/)
 as well as with the full WebAssembly SDK, with no change to its code. Embedded Swift
 links only the parts of the runtime and standard library the application reaches, so
-the bundle a visitor downloads is much smaller: [ordessa-web](https://github.com/NVMNovem/ordessa-web),
-a whole ordering site on SwiftWebUI, went from 11.07 MB (3.94 MB compressed) to
-5.11 MB (about 1.6 MB) by switching.
+the bundle a visitor downloads is much smaller.
 
 `Examples/Starter` is set up for both. To build it with Embedded Swift:
 
